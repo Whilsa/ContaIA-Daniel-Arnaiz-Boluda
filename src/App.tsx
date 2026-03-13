@@ -762,7 +762,7 @@ export default function App() {
         }]
       }));
 
-      const response = await ai.models.generateContent({
+      const stream = await ai.models.generateContentStream({
         model,
         contents: [
           ...history,
@@ -775,7 +775,25 @@ export default function App() {
         }
       });
 
-      const { cleanText, balance, journal } = parseAIResponse(response.text || '');
+      let fullText = '';
+      const botMessageId = (Date.now() + 1).toString();
+      
+      // Create an initial empty bot message
+      setMessages(prev => [...prev, {
+        id: botMessageId,
+        role: 'bot',
+        text: '',
+        timestamp: new Date(),
+      }]);
+
+      for await (const chunk of stream) {
+        fullText += chunk.text;
+        setMessages(prev => prev.map(m => 
+          m.id === botMessageId ? { ...m, text: fullText } : m
+        ));
+      }
+
+      const { cleanText, balance, journal } = parseAIResponse(fullText);
       
       if (balance) {
         setTargetBalance(balance);
@@ -802,7 +820,6 @@ export default function App() {
           const lastTotalHaber = lastEntry.reduce((acc, r) => acc + r.haber, 0);
           const isLastBalanced = Math.abs(lastTotalDebe - lastTotalHaber) < 0.01 && lastEntry.length > 0;
 
-          // Check if it's a continuation: new journal starts with all lines of the last entry
           const isContinuation = journal.length >= lastEntry.length && 
             lastEntry.every((row, i) => 
               row.account === journal[i].account && 
@@ -815,10 +832,8 @@ export default function App() {
             next[next.length - 1] = journal;
             return next;
           } else if (isLastBalanced) {
-            // If the last one was finished, we start a new one
             return [...prev, journal];
           } else {
-            // If not a continuation and not balanced, we assume the AI is correcting/resetting the current one
             const next = [...prev];
             next[next.length - 1] = journal;
             return next;
@@ -826,16 +841,15 @@ export default function App() {
         });
       }
 
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'bot',
-        text: cleanText || 'Lo siento, he tenido un problema procesando tu consulta.',
-        timestamp: new Date(),
-        balance: balance,
-        journal: journal
-      };
-
-      setMessages(prev => [...prev, botMessage]);
+      // Update the final message with parsed data and clean text
+      setMessages(prev => prev.map(m => 
+        m.id === botMessageId ? { 
+          ...m, 
+          text: cleanText || fullText,
+          balance: balance,
+          journal: journal
+        } : m
+      ));
     } catch (error) {
       console.error("Error calling Gemini:", error);
       setMessages(prev => [...prev, {
