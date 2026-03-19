@@ -19,7 +19,12 @@ import {
   Maximize2,
   Minimize2,
   Save,
-  FolderOpen
+  FolderOpen,
+  Type,
+  Minus,
+  Columns,
+  Layout,
+  GripVertical
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -38,6 +43,7 @@ interface JournalEntry {
   account: string;
   debe: number;
   haber: number;
+  date?: string;
 }
 
 interface BalanceItem {
@@ -390,7 +396,7 @@ const FlyingAccount = ({ name, amount, targetId, onComplete }: {
         times: [0, 0.2, 1],
         ease: "easeInOut" 
       }}
-      className="fixed z-[100] pointer-events-none"
+      className="fixed z-[100] pointer-events-none app-content"
     >
       <div className="bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-2xl font-black flex flex-col items-center gap-1 border-2 border-white/20 backdrop-blur-sm">
         <span className="text-xs uppercase tracking-widest opacity-80">Contabilizando...</span>
@@ -603,6 +609,11 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [isPizarraMode, setIsPizarraMode] = useState(false);
+  const [pizarraColumns, setPizarraColumns] = useState<1 | 2>(2);
+  const [pizarraSplit, setPizarraSplit] = useState(50); // Percentage for balance column
+  const [balanceFontScale, setBalanceFontScale] = useState(100);
+  const [journalFontScale, setJournalFontScale] = useState(100);
+  const [draftDate, setDraftDate] = useState('');
   const [draft, setDraft] = useState<AccountDraft[]>([
     { code: '', account: '', debe: '', haber: '' }
   ]);
@@ -616,27 +627,67 @@ export default function App() {
   
   const [isJournalFullscreen, setIsJournalFullscreen] = useState(false);
   const [showToast, setShowToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [fontScale, setFontScale] = useState(100);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const pizarraContainerRef = useRef<HTMLDivElement>(null);
+  const [isResizing, setIsResizing] = useState(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing || !pizarraContainerRef.current) return;
+      const containerRect = pizarraContainerRef.current.getBoundingClientRect();
+      const newSplit = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      if (newSplit > 20 && newSplit < 80) {
+        setPizarraSplit(newSplit);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const saveSession = () => {
+  const saveSession = (silent = false) => {
     const sessionData = {
       messages,
       currentBalance,
       currentJournal,
+      fontScale,
+      balanceFontScale,
+      journalFontScale,
+      pizarraColumns,
+      pizarraSplit,
       timestamp: new Date().toISOString()
     };
     localStorage.setItem('contaia_session', JSON.stringify(sessionData));
-    setShowToast({ message: 'Progreso guardado correctamente', type: 'success' });
-    setTimeout(() => setShowToast(null), 3000);
+    if (!silent) {
+      setShowToast({ message: 'Progreso guardado correctamente', type: 'success' });
+      setTimeout(() => setShowToast(null), 3000);
+    }
   };
 
-  const loadSession = () => {
+  const loadSession = (silent = false) => {
     const saved = localStorage.getItem('contaia_session');
     if (saved) {
       try {
@@ -649,18 +700,70 @@ export default function App() {
         setCurrentBalance(data.currentBalance);
         setTargetBalance(data.currentBalance);
         setCurrentJournal(data.currentJournal);
-        setShowToast({ message: 'Progreso cargado correctamente', type: 'success' });
-        setTimeout(() => setShowToast(null), 3000);
+        if (data.fontScale) setFontScale(data.fontScale);
+        if (data.balanceFontScale) setBalanceFontScale(data.balanceFontScale);
+        if (data.journalFontScale) setJournalFontScale(data.journalFontScale);
+        if (data.pizarraColumns) setPizarraColumns(data.pizarraColumns);
+        if (data.pizarraSplit) setPizarraSplit(data.pizarraSplit);
+        if (!silent) {
+          setShowToast({ message: 'Progreso cargado correctamente', type: 'success' });
+          setTimeout(() => setShowToast(null), 3000);
+        }
       } catch (e) {
         console.error("Error loading session", e);
-        setShowToast({ message: 'Error al cargar el progreso', type: 'error' });
-        setTimeout(() => setShowToast(null), 3000);
+        if (!silent) {
+          setShowToast({ message: 'Error al cargar el progreso', type: 'error' });
+          setTimeout(() => setShowToast(null), 3000);
+        }
       }
-    } else {
+    } else if (!silent) {
       setShowToast({ message: 'No hay progreso guardado', type: 'error' });
       setTimeout(() => setShowToast(null), 3000);
     }
   };
+
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  
+  const resetSession = () => {
+    localStorage.removeItem('contaia_session');
+    setMessages([
+      {
+        id: '1',
+        role: 'bot',
+        text: '¡Hola! Soy tu tutor de contabilidad. He preparado un balance inicial más completo para hoy: contamos con Terrenos (75.000€), Construcciones (150.000€) y 10.000€ en el Banco. Esto se financia con Capital Social (10.000€) y deudas con entidades de crédito a largo (200.000€) y corto plazo (25.000€). ¿En qué operación te gustaría trabajar hoy?',
+        timestamp: new Date(),
+        balance: INITIAL_BALANCE
+      }
+    ]);
+    setCurrentBalance(INITIAL_BALANCE);
+    setTargetBalance(INITIAL_BALANCE);
+    setCurrentJournal([]);
+    setFontScale(100);
+    setBalanceFontScale(100);
+    setJournalFontScale(100);
+    setPizarraColumns(2);
+    setPizarraSplit(50);
+    setShowResetConfirm(false);
+    setShowToast({ message: 'Sesión reiniciada', type: 'success' });
+    setTimeout(() => setShowToast(null), 3000);
+  };
+
+  // Auto-load on mount
+  useEffect(() => {
+    loadSession(true);
+  }, []);
+
+  // Auto-save on changes
+  useEffect(() => {
+    // Skip initial save if messages is just the default one and nothing else changed
+    if (messages.length === 1 && currentJournal.length === 0 && JSON.stringify(currentBalance) === JSON.stringify(INITIAL_BALANCE)) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      saveSession(true);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [messages, currentBalance, currentJournal, fontScale, balanceFontScale, journalFontScale, pizarraColumns, pizarraSplit]);
 
   useEffect(() => {
     scrollToBottom();
@@ -875,16 +978,44 @@ export default function App() {
 
   const clearDraft = () => {
     setDraft([{ code: '', account: '', debe: '', haber: '' }]);
+    setDraftDate('');
   };
 
   const applyManualEntry = () => {
+    // Use draftDate entered in the top field
+    const firstDate = draftDate.trim() || 'xx/xx/xx';
+    
+    // Format the date to dd/mm/aa if it's a valid date string, otherwise use what's entered or fallback
+    let formattedDate = firstDate;
+    if (firstDate !== 'xx/xx/xx') {
+      const dateParts = firstDate.split(/[-/]/);
+      if (dateParts.length === 3) {
+        let day = dateParts[0];
+        let month = dateParts[1];
+        let year = dateParts[2];
+        
+        if (day.length === 4) {
+          year = day;
+          day = dateParts[2];
+        }
+        
+        day = day.padStart(2, '0');
+        month = month.padStart(2, '0');
+        if (year.length === 4) year = year.substring(2);
+        else year = year.padStart(2, '0');
+        
+        formattedDate = `${day}/${month}/${year}`;
+      }
+    }
+
     const newJournalEntries: JournalEntry[] = draft
       .filter(d => d.account.trim() !== '' && (parseFloat(d.debe) > 0 || parseFloat(d.haber) > 0))
       .map(d => ({
         code: d.code,
         account: d.account,
         debe: parseFloat(d.debe) || 0,
-        haber: parseFloat(d.haber) || 0
+        haber: parseFloat(d.haber) || 0,
+        date: formattedDate
       }));
 
     if (newJournalEntries.length === 0) return;
@@ -1145,7 +1276,7 @@ export default function App() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
+          className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden app-content"
         >
           <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
             <div className="flex items-center gap-3">
@@ -1285,9 +1416,47 @@ export default function App() {
     );
   };
 
+  const ResetConfirmModal = () => (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 border border-zinc-100"
+      >
+        <div className="flex flex-col items-center text-center gap-4">
+          <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center">
+            <RefreshCw className="w-8 h-8 text-red-600" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-black text-zinc-900 uppercase tracking-tight">¿Reiniciar sesión?</h3>
+            <p className="text-sm text-zinc-500 leading-relaxed">
+              Esta acción borrará todos tus mensajes, asientos contables y el estado actual del balance. 
+              <span className="block font-bold text-red-600 mt-1">No se puede deshacer.</span>
+            </p>
+          </div>
+          <div className="flex gap-3 w-full mt-4">
+            <button 
+              onClick={() => setShowResetConfirm(false)}
+              className="flex-1 px-6 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-2xl font-bold transition-all"
+            >
+              Cancelar
+            </button>
+            <button 
+              onClick={resetSession}
+              className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold shadow-lg shadow-red-200 transition-all"
+            >
+              Sí, reiniciar
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] font-sans selection:bg-emerald-100">
       {isCustomizing && <CustomizationModal />}
+      {showResetConfirm && <ResetConfirmModal />}
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-200 px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
@@ -1310,12 +1479,20 @@ export default function App() {
               <span className="hidden md:inline">Guardar</span>
             </button>
             <button 
-              onClick={loadSession}
+              onClick={() => loadSession(false)}
               className="flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs sm:text-sm font-bold transition-colors border border-blue-100"
               title="Cargar progreso"
             >
               <FolderOpen className="w-4 h-4" />
               <span className="hidden md:inline">Cargar</span>
+            </button>
+            <button 
+              onClick={() => setShowResetConfirm(true)}
+              className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-xs sm:text-sm font-bold transition-colors border border-red-100"
+              title="Reiniciar sesión"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span className="hidden md:inline">Reiniciar</span>
             </button>
           </div>
 
@@ -1341,6 +1518,19 @@ export default function App() {
             <span className="hidden md:inline">Pizarra</span>
           </button>
 
+          {isPizarraMode && (
+            <button 
+              onClick={() => setPizarraColumns(prev => prev === 1 ? 2 : 1)}
+              className="flex items-center gap-2 px-3 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-xs sm:text-sm font-bold transition-colors border border-zinc-200"
+              title={pizarraColumns === 1 ? "Cambiar a 2 columnas" : "Cambiar a 1 columna"}
+            >
+              {pizarraColumns === 1 ? <Columns className="w-4 h-4" /> : <Layout className="w-4 h-4" />}
+              <span className="hidden md:inline">{pizarraColumns === 1 ? '2 Columnas' : '1 Columna'}</span>
+            </button>
+          )}
+
+          <div className="h-6 w-px bg-zinc-200 hidden sm:block" />
+
           <div className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider hidden lg:block ${Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
             {Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'Cuadrado' : 'Descuadrado'}
           </div>
@@ -1359,237 +1549,372 @@ export default function App() {
         />
       )}
 
-      <main className="max-w-7xl mx-auto p-4 md:p-6 h-[calc(100vh-88px)] overflow-y-auto">
-        {isPizarraMode ? (
-          <div className="max-w-4xl mx-auto space-y-8 pb-12">
-            {/* Balance Sheet at Top */}
-            <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
-              <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
-                <span className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
-                  <Calculator className="w-4 h-4 text-emerald-600" /> Balance de Situación (Pizarra)
-                </span>
-                <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                  {Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'Cuadrado' : 'Descuadrado'}
-                </div>
-              </div>
-              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Assets side */}
-                <div className="space-y-4">
-                  <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Activo</h3>
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <h4 id="section-assets-noncurrent-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">No Corriente</h4>
-                      <div className="space-y-0.5">
-                        {[...currentBalance.assets.nonCurrent].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                          <BalanceRow key={item.name} item={item} />
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <h4 id="section-assets-current-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Corriente</h4>
-                      <div className="space-y-0.5">
-                        {[...currentBalance.assets.current].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                          <BalanceRow key={item.name} item={item} />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="pt-2 border-t border-zinc-200 flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-zinc-500 uppercase">Total Activo</span>
-                    <span className="text-lg font-black text-emerald-600"><AnimatedNumber value={totalAssets} /></span>
-                  </div>
-                </div>
+      <main className={`${isPizarraMode ? 'max-w-full' : 'max-w-7xl'} mx-auto p-4 md:p-6 h-[calc(100vh-88px)] overflow-y-auto app-content`}>
+        <style>
+          {`
+            .app-content {
+              --app-font-scale: ${isPizarraMode ? 1 : fontScale / 100};
+              font-size: calc(100% * var(--app-font-scale));
+            }
+            .pizarra-balance-container {
+              --app-font-scale: ${balanceFontScale / 100};
+            }
+            .pizarra-journal-container {
+              --app-font-scale: ${journalFontScale / 100};
+            }
+            /* Scale standard Tailwind text classes */
+            .app-content .text-xs { font-size: calc(0.75rem * var(--app-font-scale)) !important; }
+            .app-content .text-sm { font-size: calc(0.875rem * var(--app-font-scale)) !important; }
+            .app-content .text-base { font-size: calc(1rem * var(--app-font-scale)) !important; }
+            .app-content .text-lg { font-size: calc(1.125rem * var(--app-font-scale)) !important; }
+            .app-content .text-xl { font-size: calc(1.25rem * var(--app-font-scale)) !important; }
+            .app-content .text-2xl { font-size: calc(1.5rem * var(--app-font-scale)) !important; }
+            .app-content .text-3xl { font-size: calc(1.875rem * var(--app-font-scale)) !important; }
+            
+            /* Scale arbitrary pixel-based text classes found in the app */
+            ${[9, 10, 11, 12, 13, 14, 15, 17, 18].map(size => `
+              .app-content .text-\\[${size}px\\] { font-size: calc(${size}px * var(--app-font-scale)) !important; }
+            `).join('')}
 
-                {/* Liabilities & Equity side */}
-                <div className="space-y-4">
-                  <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Patrimonio Neto + Pasivo</h3>
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <h4 id="section-equity-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Patrimonio Neto</h4>
-                      <div className="space-y-0.5">
-                        {[...currentBalance.liabilitiesAndEquity.equity].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                          <BalanceRow key={item.name} item={item} />
-                        ))}
+            /* Scale monospace fonts specifically */
+            .app-content .font-mono {
+              font-size: calc(1em * var(--app-font-scale));
+            }
+
+            /* Ensure inputs, buttons, and all text scale */
+            .app-content input, 
+            .app-content button, 
+            .app-content textarea,
+            .app-content select,
+            .app-content span,
+            .app-content p,
+            .app-content h1,
+            .app-content h2,
+            .app-content h3,
+            .app-content h4,
+            .app-content div {
+              font-size: inherit;
+            }
+            
+            /* Re-apply Tailwind overrides for scaled elements */
+            .app-content [class*="text-"] {
+              font-size: inherit;
+            }
+          `}
+        </style>
+        {isPizarraMode ? (
+          <div 
+            ref={pizarraContainerRef}
+            className={`w-full flex flex-col ${pizarraColumns === 2 ? 'lg:flex-row' : ''} gap-0 pb-12 items-start relative`}
+          >
+            {/* Balance Column */}
+            <div 
+              className="flex-shrink-0"
+              style={{ width: pizarraColumns === 2 ? `${pizarraSplit}%` : '100%' }}
+            >
+              <div className={pizarraColumns === 2 ? "mr-4" : ""}>
+                <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
+                  <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
+                        <Calculator className="w-4 h-4 text-emerald-600" /> Balance actualizado
+                      </span>
+                      <div className="flex items-center bg-zinc-100 rounded-lg px-1 py-0.5">
+                        <button 
+                          onClick={() => setBalanceFontScale(prev => Math.max(70, prev - 10))}
+                          className="p-1 hover:bg-zinc-200 text-zinc-600 rounded transition-colors"
+                          title="Disminuir letra"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="text-[10px] font-bold text-zinc-500 min-w-[2.5rem] text-center">{balanceFontScale}%</span>
+                        <button 
+                          onClick={() => setBalanceFontScale(prev => Math.min(200, prev + 10))}
+                          className="p-1 hover:bg-zinc-200 text-zinc-600 rounded transition-colors"
+                          title="Aumentar letra"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
                       </div>
                     </div>
-                    <div className="space-y-1">
-                      <h4 id="section-liabilities-noncurrent-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Pasivo No Corriente</h4>
-                      <div className="space-y-0.5">
-                        {[...currentBalance.liabilitiesAndEquity.nonCurrent].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                          <BalanceRow key={item.name} item={item} />
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <h4 id="section-liabilities-current-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Pasivo Corriente</h4>
-                      <div className="space-y-0.5">
-                        {[...currentBalance.liabilitiesAndEquity.current].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                          <BalanceRow key={item.name} item={item} />
-                        ))}
-                      </div>
+                    <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                      {Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'Cuadrado' : 'Descuadrado'}
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-zinc-200 flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-zinc-500 uppercase">Total PN + P</span>
-                    <span className="text-lg font-black text-emerald-600"><AnimatedNumber value={totalLiabilities} /></span>
+                  <div className="p-6 pizarra-balance-container">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* Assets side */}
+                      <div className="space-y-4">
+                        <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Activo</h3>
+                        <div className="space-y-4">
+                          <div className="space-y-1">
+                            <h4 id="section-assets-noncurrent-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">No Corriente</h4>
+                            <div className="space-y-0.5">
+                              {[...currentBalance.assets.nonCurrent].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
+                                <BalanceRow key={item.name} item={item} />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <h4 id="section-assets-current-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Corriente</h4>
+                            <div className="space-y-0.5">
+                              {[...currentBalance.assets.current].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
+                                <BalanceRow key={item.name} item={item} />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="pt-2 border-t border-zinc-200 flex justify-between items-center">
+                          <span className="text-[11px] font-bold text-zinc-500 uppercase">Total Activo</span>
+                          <span className="text-lg font-black text-emerald-600"><AnimatedNumber value={totalAssets} /></span>
+                        </div>
+                      </div>
+
+                      {/* Liabilities & Equity side */}
+                      <div className="space-y-4">
+                        <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Patrimonio Neto + Pasivo</h3>
+                        <div className="space-y-4">
+                          <div className="space-y-1">
+                            <h4 id="section-equity-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Patrimonio Neto</h4>
+                            <div className="space-y-0.5">
+                              {[...currentBalance.liabilitiesAndEquity.equity].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
+                                <BalanceRow key={item.name} item={item} />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <h4 id="section-liabilities-noncurrent-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Pasivo No Corriente</h4>
+                            <div className="space-y-0.5">
+                              {[...currentBalance.liabilitiesAndEquity.nonCurrent].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
+                                <BalanceRow key={item.name} item={item} />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <h4 id="section-liabilities-current-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Pasivo Corriente</h4>
+                            <div className="space-y-0.5">
+                              {[...currentBalance.liabilitiesAndEquity.current].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
+                                <BalanceRow key={item.name} item={item} />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="pt-2 border-t border-zinc-200 flex justify-between items-center">
+                          <span className="text-[11px] font-bold text-zinc-500 uppercase">Total PN + P</span>
+                          <span className="text-lg font-black text-emerald-600"><AnimatedNumber value={totalLiabilities} /></span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Journal with Direct Entry */}
-            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 shadow-xl overflow-hidden flex flex-col">
-              <div className="p-4 border-b border-zinc-800 bg-zinc-800/50 flex items-center justify-between">
-                <span className="text-lg font-bold text-zinc-100 flex items-center gap-3">
-                  <BookOpen className="w-5 h-5 text-emerald-500" /> Libro Diario (Entrada Directa)
-                </span>
-                <div className="flex gap-3 items-center">
-                  <button 
-                    onClick={() => setIsJournalFullscreen(true)}
-                    className="p-2 hover:bg-zinc-700 rounded-lg transition-colors text-zinc-400"
-                    title="Pantalla Completa"
-                  >
-                    <Maximize2 className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={clearDraft}
-                    className="text-[13px] font-bold uppercase text-zinc-500 hover:text-zinc-300 transition-colors"
-                  >
-                    Limpiar Borrador
-                  </button>
-                  <button 
-                    onClick={() => setCurrentJournal([])}
-                    className="text-[13px] font-bold uppercase text-red-500 hover:text-red-400 transition-colors"
-                  >
-                    Borrar Diario
-                  </button>
-                </div>
+            {/* Resizable Divider */}
+            {pizarraColumns === 2 && (
+              <div 
+                onMouseDown={handleMouseDown}
+                className={`hidden lg:flex w-1 hover:w-3 -mx-0.5 hover:-mx-1.5 h-full absolute top-0 bottom-0 cursor-col-resize z-10 items-center justify-center group transition-all ${isResizing ? 'bg-emerald-500/20' : ''}`}
+                style={{ left: `${pizarraSplit}%` }}
+              >
+                <div className={`w-0.5 h-16 rounded-full bg-zinc-300 group-hover:bg-emerald-500 transition-colors ${isResizing ? 'bg-emerald-500' : ''}`} />
               </div>
-              
-              <div className="p-6 space-y-6">
-                {/* Entry Form */}
-                <div className="space-y-3">
-                  <div className="grid grid-cols-12 gap-4 text-[13px] font-bold text-zinc-500 uppercase tracking-widest px-2">
-                    <div className="col-span-2">Nº Cuenta</div>
-                    <div className="col-span-4">Concepto</div>
-                    <div className="col-span-2 text-right">Debe</div>
-                    <div className="col-span-2 text-right">Haber</div>
-                    <div className="col-span-2"></div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {draft.map((row, idx) => (
-                      <div key={idx} className="grid grid-cols-12 gap-4 items-center">
-                        <div className="col-span-2">
-                          <input 
-                            type="text"
-                            placeholder="Código"
-                            value={row.code}
-                            onChange={(e) => updateDraft(idx, 'code', e.target.value)}
-                            className="w-full bg-zinc-800 border-zinc-700 text-zinc-200 text-[15px] rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-emerald-500"
-                          />
-                        </div>
-                        <div className="col-span-4">
-                          <input 
-                            type="text"
-                            placeholder="Nombre de la cuenta"
-                            value={row.account}
-                            onChange={(e) => updateDraft(idx, 'account', e.target.value)}
-                            className="w-full bg-zinc-800 border-zinc-700 text-zinc-200 text-[15px] rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-emerald-500"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <input 
-                            type="number"
-                            placeholder="0"
-                            value={row.debe}
-                            onChange={(e) => updateDraft(idx, 'debe', e.target.value)}
-                            className="w-full bg-zinc-800 border-zinc-700 text-zinc-200 text-[15px] rounded-lg px-3 py-2 text-right outline-none focus:ring-1 focus:ring-emerald-500"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <input 
-                            type="number"
-                            placeholder="0"
-                            value={row.haber}
-                            onChange={(e) => updateDraft(idx, 'haber', e.target.value)}
-                            className="w-full bg-zinc-800 border-zinc-700 text-zinc-200 text-[15px] rounded-lg px-3 py-2 text-right outline-none focus:ring-1 focus:ring-emerald-500"
-                          />
-                        </div>
-                        <div className="col-span-2 flex gap-2 items-center">
-                          <button 
-                            onClick={() => reflectLine(idx)}
-                            disabled={row.reflected || (!parseFloat(row.debe) && !parseFloat(row.haber)) || !row.account}
-                            className={`flex-1 py-1.5 rounded-lg text-[13px] font-bold uppercase transition-all ${
-                              row.reflected 
-                                ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30' 
-                                : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600 border border-zinc-600'
-                            } disabled:opacity-30`}
-                          >
-                            {row.reflected ? 'Reflejado' : 'Reflejar'}
-                          </button>
-                          {draft.length > 1 && (
-                            <button 
-                              onClick={() => setDraft(draft.filter((_, i) => i !== idx))}
-                              className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+            )}
 
-                  <div className="flex justify-between items-center pt-4">
-                    <button 
-                      onClick={addDraftRow}
-                      className="flex items-center gap-2 text-xs font-bold text-emerald-500 hover:text-emerald-400 transition-colors"
-                    >
-                      <Plus className="w-4 h-4" /> Añadir línea
-                    </button>
-                    
-                    <div className="flex items-center gap-6">
-                      <div className="flex gap-4 text-[15px] font-mono">
-                        <div className="text-zinc-400">Total Debe: <span className="text-emerald-500">{draft.reduce((acc, r) => acc + (parseFloat(r.debe) || 0), 0).toLocaleString()}€</span></div>
-                        <div className="text-zinc-400">Total Haber: <span className="text-emerald-500">{draft.reduce((acc, r) => acc + (parseFloat(r.haber) || 0), 0).toLocaleString()}€</span></div>
+            {/* Journal Column */}
+            <div className="flex-grow min-w-0">
+              <div className={pizarraColumns === 2 ? "ml-4" : "mt-8"}>
+                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 shadow-xl overflow-hidden flex flex-col">
+                  <div className="p-4 border-b border-zinc-800 bg-zinc-800/50 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <span className="text-lg font-bold text-zinc-100 flex items-center gap-3">
+                        <BookOpen className="w-5 h-5 text-emerald-500" /> Libro Diario
+                      </span>
+                      <div className="flex items-center bg-zinc-800 rounded-lg px-1 py-0.5 border border-zinc-700">
+                        <button 
+                          onClick={() => setJournalFontScale(prev => Math.max(70, prev - 10))}
+                          className="p-1 hover:bg-zinc-700 text-zinc-400 rounded transition-colors"
+                          title="Disminuir letra"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="text-[10px] font-bold text-zinc-500 min-w-[2.5rem] text-center">{journalFontScale}%</span>
+                        <button 
+                          onClick={() => setJournalFontScale(prev => Math.min(200, prev + 10))}
+                          className="p-1 hover:bg-zinc-700 text-zinc-400 rounded transition-colors"
+                          title="Aumentar letra"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
                       </div>
+                    </div>
+                    <div className="flex gap-3 items-center">
                       <button 
-                        onClick={applyManualEntry}
-                        className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold text-[17px] shadow-lg shadow-emerald-900/20 hover:bg-emerald-500 transition-all"
+                        onClick={() => setIsJournalFullscreen(true)}
+                        className="p-2 hover:bg-zinc-700 rounded-lg transition-colors text-zinc-400"
+                        title="Pantalla Completa"
                       >
-                        Contabilizar Asiento
+                        <Maximize2 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={clearDraft}
+                        className="text-[13px] font-bold uppercase text-zinc-500 hover:text-zinc-300 transition-colors"
+                      >
+                        Limpiar Borrador
+                      </button>
+                      <button 
+                        onClick={() => setCurrentJournal([])}
+                        className="text-[13px] font-bold uppercase text-red-500 hover:text-red-400 transition-colors"
+                      >
+                        Borrar Diario
                       </button>
                     </div>
                   </div>
-                </div>
+                  
+                  <div className="p-6 space-y-6 pizarra-journal-container">
+                    {/* Entry Form */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4 px-2">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Fecha del Asiento</label>
+                          <input 
+                            type="text"
+                            placeholder="dd/mm/aa"
+                            value={draftDate}
+                            onChange={(e) => setDraftDate(e.target.value)}
+                            className="bg-zinc-800 border-zinc-700 text-zinc-200 text-[14px] rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-emerald-500 w-32"
+                          />
+                        </div>
+                      </div>
 
-                {/* Historical Journal */}
-                <div className="pt-8 border-t border-zinc-800 space-y-4">
-                  <h4 className="text-[13px] font-bold text-zinc-500 uppercase tracking-widest">Asientos Realizados</h4>
-                  <div className="space-y-4 font-mono">
-                    {currentJournal.map((asiento, aIdx) => (
-                      <div key={aIdx} className={aIdx > 0 ? "border-t border-white pt-4" : ""}>
-                        {asiento.map((row, idx) => (
-                          <div key={idx} className="grid grid-cols-12 gap-4 text-[14px] py-1 px-2 hover:bg-zinc-800/50 rounded transition-colors">
-                            <div className={`col-span-6 ${row.haber > 0 ? 'pl-4 text-zinc-400' : 'text-emerald-400 font-bold'}`}>
-                              {row.haber > 0 ? 'a ' : ''}
-                              {row.code && <span className="text-[10px] opacity-50 mr-1">{row.code}</span>}
-                              {row.account}
+                      <div className="grid grid-cols-12 gap-3 text-[12px] font-bold text-zinc-500 uppercase tracking-widest px-2">
+                        <div className="col-span-2">Nº Cuenta</div>
+                        <div className="col-span-4">Concepto</div>
+                        <div className="col-span-2 text-right">Debe</div>
+                        <div className="col-span-2 text-right">Haber</div>
+                        <div className="col-span-2"></div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {draft.map((row, idx) => (
+                          <div key={idx} className="grid grid-cols-12 gap-3 items-center">
+                            <div className="col-span-2">
+                              <input 
+                                type="text"
+                                placeholder="Código"
+                                value={row.code}
+                                onChange={(e) => updateDraft(idx, 'code', e.target.value)}
+                                className="w-full bg-zinc-800 border-zinc-700 text-zinc-200 text-[14px] rounded-lg px-2 py-2 outline-none focus:ring-1 focus:ring-emerald-500"
+                              />
                             </div>
-                            <div className="col-span-3 text-right text-zinc-300">
-                              {row.debe > 0 ? row.debe.toLocaleString() + '€' : '-'}
+                            <div className="col-span-4">
+                              <input 
+                                type="text"
+                                placeholder="Cuenta"
+                                value={row.account}
+                                onChange={(e) => updateDraft(idx, 'account', e.target.value)}
+                                className="w-full bg-zinc-800 border-zinc-700 text-zinc-200 text-[14px] rounded-lg px-2 py-2 outline-none focus:ring-1 focus:ring-emerald-500"
+                              />
                             </div>
-                            <div className="col-span-3 text-right text-zinc-300">
-                              {row.haber > 0 ? row.haber.toLocaleString() + '€' : '-'}
+                            <div className="col-span-2">
+                              <input 
+                                type="number"
+                                placeholder="0"
+                                value={row.debe}
+                                onChange={(e) => updateDraft(idx, 'debe', e.target.value)}
+                                className="w-full bg-zinc-800 border-zinc-700 text-zinc-200 text-[14px] rounded-lg px-2 py-2 text-right outline-none focus:ring-1 focus:ring-emerald-500"
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <input 
+                                type="number"
+                                placeholder="0"
+                                value={row.haber}
+                                onChange={(e) => updateDraft(idx, 'haber', e.target.value)}
+                                className="w-full bg-zinc-800 border-zinc-700 text-zinc-200 text-[14px] rounded-lg px-2 py-2 text-right outline-none focus:ring-1 focus:ring-emerald-500"
+                              />
+                            </div>
+                            <div className="col-span-2 flex gap-1 items-center">
+                              <button 
+                                onClick={() => reflectLine(idx)}
+                                disabled={row.reflected || (!parseFloat(row.debe) && !parseFloat(row.haber)) || !row.account}
+                                className={`flex-1 py-1.5 rounded-lg transition-all ${
+                                  row.reflected 
+                                    ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30' 
+                                    : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600 border border-zinc-600'
+                                } disabled:opacity-30 flex items-center justify-center`}
+                                title={row.reflected ? 'Reflejado' : 'Reflejar'}
+                              >
+                                <RefreshCw className={`w-3 h-3 ${row.reflected ? 'animate-pulse' : ''}`} />
+                              </button>
+                              {draft.length > 1 && (
+                                <button 
+                                  onClick={() => setDraft(draft.filter((_, i) => i !== idx))}
+                                  className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
                       </div>
-                    ))}
-                    {currentJournal.length === 0 && (
-                      <p className="text-[13px] text-zinc-600 italic text-center py-4">No hay asientos registrados aún</p>
-                    )}
+
+                      <div className="flex justify-between items-center pt-4">
+                        <button 
+                          onClick={addDraftRow}
+                          className="flex items-center gap-2 text-xs font-bold text-emerald-500 hover:text-emerald-400 transition-colors"
+                        >
+                          <Plus className="w-4 h-4" /> Añadir línea
+                        </button>
+                        
+                        <div className="flex items-center gap-6">
+                          <div className="flex gap-4 text-[15px] font-mono">
+                            <div className="text-zinc-400">Total Debe: <span className="text-emerald-500">{draft.reduce((acc, r) => acc + (parseFloat(r.debe) || 0), 0).toLocaleString()}€</span></div>
+                            <div className="text-zinc-400">Total Haber: <span className="text-emerald-500">{draft.reduce((acc, r) => acc + (parseFloat(r.haber) || 0), 0).toLocaleString()}€</span></div>
+                          </div>
+                          <button 
+                            onClick={applyManualEntry}
+                            className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold text-[17px] shadow-lg shadow-emerald-900/20 hover:bg-emerald-500 transition-all"
+                          >
+                            Contabilizar Asiento
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Historical Journal */}
+                    <div className="pt-8 border-t border-zinc-800 space-y-4">
+                      <h4 className="text-[13px] font-bold text-zinc-500 uppercase tracking-widest">Asientos Realizados</h4>
+                      <div className="space-y-4 font-mono">
+                        {currentJournal.map((asiento, aIdx) => (
+                          <div key={aIdx} className={aIdx > 0 ? "border-t border-zinc-800 pt-4" : ""}>
+                            <div className="mb-2 px-2 flex flex-col">
+                              <span className="text-[11px] text-zinc-500">Asiento #{aIdx + 1}</span>
+                              <span className="text-[11px] font-bold text-emerald-500/80">{asiento[0]?.date || 'xx/xx/xx'}</span>
+                            </div>
+                            {asiento.map((row, idx) => (
+                              <div key={idx} className="grid grid-cols-12 gap-4 text-[14px] py-1 px-2 hover:bg-zinc-800/50 rounded transition-colors">
+                                <div className={`col-span-6 ${row.haber > 0 ? 'pl-4 text-zinc-400' : 'text-emerald-400 font-bold'}`}>
+                                  {row.haber > 0 ? 'a ' : ''}
+                                  {row.code && <span className="text-[10px] opacity-50 mr-1">{row.code}</span>}
+                                  {row.account}
+                                </div>
+                                <div className="col-span-3 text-right text-zinc-300">
+                                  {row.debe > 0 ? row.debe.toLocaleString() + '€' : '-'}
+                                </div>
+                                <div className="col-span-3 text-right text-zinc-300">
+                                  {row.haber > 0 ? row.haber.toLocaleString() + '€' : '-'}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                        {currentJournal.length === 0 && (
+                          <p className="text-[13px] text-zinc-600 italic text-center py-4">No hay asientos registrados aún</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1860,7 +2185,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] bg-zinc-950 flex flex-col p-6"
+            className="fixed inset-0 z-[300] bg-zinc-950 flex flex-col p-6 app-content"
           >
             <div className="flex items-center justify-between mb-6 border-b border-zinc-800 pb-4">
               <div className="flex items-center gap-4">
@@ -1882,7 +2207,7 @@ export default function App() {
 
             <div className="flex-1 overflow-hidden flex flex-col bg-zinc-900 rounded-3xl border border-zinc-800 shadow-2xl">
               <div className="p-6 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
-                <div className="max-w-5xl mx-auto space-y-8">
+                <div className="w-full space-y-8">
                   {/* Header for columns */}
                   <div className="grid grid-cols-12 gap-6 text-sm font-bold text-zinc-500 uppercase tracking-widest px-4 border-b border-zinc-800 pb-4">
                     <div className="col-span-6">Cuenta / Concepto</div>
