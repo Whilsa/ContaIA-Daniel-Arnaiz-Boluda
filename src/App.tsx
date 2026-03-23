@@ -260,6 +260,57 @@ const categorizeAccount = (code: string): { section: 'assets' | 'liabilitiesAndE
   return null;
 };
 
+const getUpdatedBalance = (currentBalance: BalanceState, row: AccountDraft): { nextBalance: BalanceState, targetId: string, targetName: string, amount: number } => {
+  const debe = parseFloat(row.debe) || 0;
+  const haber = parseFloat(row.haber) || 0;
+  const code = row.code;
+  
+  const category = categorizeAccount(code);
+  const nextBalance = JSON.parse(JSON.stringify(currentBalance));
+  
+  let targetId = '';
+  let targetName = row.account;
+  let targetCode = code;
+  let amount = 0;
+
+  if (category) {
+    const isAsset = category.section === 'assets';
+    amount = isAsset ? (debe - haber) : (haber - debe);
+    
+    const isPnL = code.startsWith('6') || code.startsWith('7');
+    targetCode = isPnL ? '129' : code;
+    targetName = isPnL ? 'Resultado del ejercicio' : row.account;
+
+    if (isAsset) {
+      targetId = category.subSection === 'nonCurrent' ? 'section-assets-noncurrent-pizarra' : 'section-assets-current-pizarra';
+      const list = category.subSection === 'nonCurrent' ? nextBalance.assets.nonCurrent : nextBalance.assets.current;
+      const existing = list.find((a: any) => a.code === targetCode);
+      if (existing) existing.amount += amount;
+      else list.push({ name: targetName, amount, code: targetCode });
+    } else {
+      if (category.subSection === 'equity') targetId = 'section-equity-pizarra';
+      else if (category.subSection === 'nonCurrent') targetId = 'section-liabilities-noncurrent-pizarra';
+      else targetId = 'section-liabilities-current-pizarra';
+      
+      const list = category.subSection === 'equity' ? nextBalance.liabilitiesAndEquity.equity : 
+                   category.subSection === 'nonCurrent' ? nextBalance.liabilitiesAndEquity.nonCurrent : 
+                   nextBalance.liabilitiesAndEquity.current;
+      
+      const existing = list.find((a: any) => a.code === targetCode);
+      if (existing) existing.amount += amount;
+      else list.push({ name: targetName, amount, code: targetCode });
+    }
+  } else {
+    amount = debe - haber;
+    targetId = 'section-assets-current-pizarra';
+    const existing = nextBalance.assets.current.find((a: any) => a.name === row.account);
+    if (existing) existing.amount += amount;
+    else nextBalance.assets.current.push({ name: row.account, amount, code });
+  }
+
+  return { nextBalance, targetId, targetName, amount };
+};
+
 const reorganizeBalance = (balance: BalanceState): BalanceState => {
   const newBalance: BalanceState = {
     assets: { nonCurrent: [], current: [] },
@@ -1028,6 +1079,20 @@ export default function App() {
       return;
     }
 
+    // Auto-reflect unreflected lines
+    const unreflectedLines = draft.filter(d => !d.reflected && d.account.trim() !== '' && (parseFloat(d.debe) > 0 || parseFloat(d.haber) > 0));
+    
+    if (unreflectedLines.length > 0) {
+      let nextBalance = JSON.parse(JSON.stringify(currentBalance));
+      
+      unreflectedLines.forEach(row => {
+        const result = getUpdatedBalance(nextBalance, row);
+        nextBalance = result.nextBalance;
+      });
+      
+      setCurrentBalance(nextBalance);
+    }
+
     setCurrentJournal(prev => [...prev, newJournalEntries]);
     clearDraft();
   };
@@ -1036,69 +1101,15 @@ export default function App() {
     const row = draft[index];
     if (!row.account || (!parseFloat(row.debe) && !parseFloat(row.haber))) return;
 
-    const debe = parseFloat(row.debe) || 0;
-    const haber = parseFloat(row.haber) || 0;
-    const code = row.code;
-    
-    // Determine target section using PGC logic
-    const category = categorizeAccount(code);
-    let targetId = '';
-    const nextBalance = JSON.parse(JSON.stringify(currentBalance));
-    
-    if (category) {
-      const isAsset = category.section === 'assets';
-      // Asset: Debe increases (+), Haber decreases (-)
-      // Liability/Equity: Haber increases (+), Debe decreases (-)
-      const amount = isAsset ? (debe - haber) : (haber - debe);
-      
-      // Special case: Groups 6 and 7 should modify account 129
-      const isPnL = code.startsWith('6') || code.startsWith('7');
-      const targetCode = isPnL ? '129' : code;
-      const targetName = isPnL ? 'Resultado del ejercicio' : row.account;
+    const { nextBalance, targetId, targetName, amount } = getUpdatedBalance(currentBalance, row);
 
-      if (isAsset) {
-        targetId = category.subSection === 'nonCurrent' ? 'section-assets-noncurrent-pizarra' : 'section-assets-current-pizarra';
-        const list = category.subSection === 'nonCurrent' ? nextBalance.assets.nonCurrent : nextBalance.assets.current;
-        const existing = list.find((a: any) => a.code === targetCode);
-        if (existing) existing.amount += amount;
-        else list.push({ name: targetName, amount, code: targetCode });
-      } else {
-        if (category.subSection === 'equity') targetId = 'section-equity-pizarra';
-        else if (category.subSection === 'nonCurrent') targetId = 'section-liabilities-noncurrent-pizarra';
-        else targetId = 'section-liabilities-current-pizarra';
-        
-        const list = category.subSection === 'equity' ? nextBalance.liabilitiesAndEquity.equity : 
-                     category.subSection === 'nonCurrent' ? nextBalance.liabilitiesAndEquity.nonCurrent : 
-                     nextBalance.liabilitiesAndEquity.current;
-        
-        const existing = list.find((a: any) => a.code === targetCode);
-        if (existing) existing.amount += amount;
-        else list.push({ name: targetName, amount, code: targetCode });
-      }
-
-      setFlyingAccount({
-        id: Date.now().toString(),
-        name: targetName,
-        amount,
-        targetId,
-        nextBalance
-      });
-    } else {
-      // Fallback if no category found (should not happen with good PGC codes)
-      const amount = debe - haber;
-      targetId = 'section-assets-current-pizarra';
-      const existing = nextBalance.assets.current.find((a: any) => a.name === row.account);
-      if (existing) existing.amount += amount;
-      else nextBalance.assets.current.push({ name: row.account, amount, code });
-
-      setFlyingAccount({
-        id: Date.now().toString(),
-        name: row.account,
-        amount,
-        targetId,
-        nextBalance
-      });
-    }
+    setFlyingAccount({
+      id: Date.now().toString(),
+      name: targetName,
+      amount,
+      targetId,
+      nextBalance
+    });
 
     const newDraft = [...draft];
     newDraft[index].reflected = true;
