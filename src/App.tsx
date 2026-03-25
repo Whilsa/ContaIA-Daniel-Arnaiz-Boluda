@@ -685,6 +685,7 @@ export default function App() {
   } | null>(null);
   
   const [isJournalFullscreen, setIsJournalFullscreen] = useState(false);
+  const [currentView, setCurrentView] = useState<'home' | 'app'>('home');
   const [showToast, setShowToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
   const [fontScale, setFontScale] = useState(100);
   
@@ -1472,6 +1473,117 @@ export default function App() {
     </div>
   );
 
+  if (currentView === 'home') {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6 font-sans">
+        <div className="max-w-4xl w-full space-y-12">
+          <div className="text-center space-y-4">
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-block px-4 py-1.5 bg-emerald-100 text-emerald-700 text-[11px] font-bold uppercase tracking-[0.2em] rounded-full mb-2"
+            >
+              Plataforma de Aprendizaje
+            </motion.div>
+            <motion.h1 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-5xl md:text-7xl font-black text-zinc-900 tracking-tight"
+            >
+              Tutor de <span className="text-emerald-600">Contabilidad</span>
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-xl text-zinc-500 font-medium max-w-2xl mx-auto"
+            >
+              Domina el ciclo contable con nuestra herramienta interactiva diseñada para estudiantes y profesionales.
+            </motion.p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Modo Contabilizar */}
+            <motion.button
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              whileHover={{ scale: 1.02, y: -5 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setCurrentView('app')}
+              className="group relative bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-zinc-200/50 border border-zinc-100 text-left transition-all hover:border-emerald-500/50"
+            >
+              <div className="w-20 h-20 bg-emerald-100 rounded-3xl flex items-center justify-center mb-8 group-hover:bg-emerald-600 transition-colors duration-300">
+                <Calculator className="w-10 h-10 text-emerald-600 group-hover:text-white" />
+              </div>
+              <h3 className="text-3xl font-bold text-zinc-900 mb-4">Contabilizar</h3>
+              <p className="text-zinc-500 leading-relaxed text-lg">
+                Practica asientos contables, gestiona el libro diario y visualiza el balance de situación en tiempo real con ayuda de IA.
+              </p>
+              <div className="mt-10 flex items-center text-emerald-600 font-bold text-sm uppercase tracking-widest">
+                Empezar ahora <ChevronRight className="ml-2 w-5 h-5" />
+              </div>
+            </motion.button>
+
+            {/* Modo Repasar Cuentas */}
+            <motion.button
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              whileHover={{ scale: 1.02, y: -5 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowToast({ message: "Este modo estará disponible muy pronto. ¡Estamos trabajando en ello!", type: 'success' })}
+              className="group relative bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-zinc-200/50 border border-zinc-100 text-left transition-all hover:border-zinc-200"
+            >
+              <div className="w-20 h-20 bg-zinc-100 rounded-3xl flex items-center justify-center mb-8">
+                <BookOpen className="w-10 h-10 text-zinc-400" />
+              </div>
+              <div className="absolute top-10 right-10 px-4 py-1.5 bg-zinc-100 text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full">
+                Próximamente
+              </div>
+              <h3 className="text-3xl font-bold text-zinc-900 mb-4">Repasar cuentas</h3>
+              <p className="text-zinc-500 leading-relaxed text-lg">
+                Aprende y memoriza el Plan General Contable con ejercicios interactivos de clasificación y definición de cuentas.
+              </p>
+              <div className="mt-10 flex items-center text-zinc-400 font-bold text-sm uppercase tracking-widest">
+                No disponible <X className="ml-2 w-5 h-5" />
+              </div>
+            </motion.button>
+          </div>
+
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-center pt-8"
+          >
+            <p className="text-zinc-400 text-sm font-medium">© 2026 Daniel Arnaiz Boluda. Todos los derechos reservados.</p>
+          </motion.div>
+        </div>
+
+        <AnimatePresence>
+          {showToast && (
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50"
+            >
+              <div className="bg-zinc-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-zinc-800">
+                <AlertCircle className="w-5 h-5 text-emerald-400" />
+                <span className="text-sm font-bold">{showToast.message}</span>
+                <button onClick={() => setShowToast(null)} className="ml-2 hover:text-emerald-400 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] font-sans selection:bg-emerald-100">
       {isCustomizing && <CustomizationModal />}
@@ -1479,9 +1591,13 @@ export default function App() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-200 px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
-            <Calculator className="text-white w-6 h-6" />
-          </div>
+          <button 
+            onClick={() => setCurrentView('home')}
+            className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors group"
+            title="Volver al menú principal"
+          >
+            <Calculator className="text-white w-6 h-6 group-hover:scale-110 transition-transform" />
+          </button>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-zinc-900">ContaIA ─ Daniel Arnaiz Boluda</h1>
             <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Balance Dinámico & Tutoría Socrática</p>
