@@ -72,6 +72,14 @@ interface AccountDraft {
   reflected?: boolean;
 }
 
+const formatCurrency = (value: number): string => {
+  const hasDecimals = value % 1 !== 0;
+  return new Intl.NumberFormat('es-ES', {
+    minimumFractionDigits: hasDecimals ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(value) + '€';
+};
+
 // --- Constants ---
 const ACCOUNT_MAPPING: Record<string, string> = {
   '100': 'Capital Social',
@@ -454,7 +462,7 @@ const FlyingAccount = ({ name, amount, targetId, onComplete }: {
         <div className="flex items-center gap-3">
           <span className="text-lg">{name}</span>
           <span className="bg-white/20 px-3 py-1 rounded-xl text-sm">
-            {amount > 0 ? '+' : ''}{amount.toLocaleString()}€
+            {amount > 0 ? '+' : ''}{formatCurrency(amount)}
           </span>
         </div>
       </div>
@@ -473,7 +481,7 @@ const AnimatedNumber = ({ value, duration = 5 }: { value: number, duration?: num
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / (duration * 1000), 1);
-      const current = Math.floor(progress * (value - startValue) + startValue);
+      const current = progress * (value - startValue) + startValue;
       setDisplayValue(current);
       if (progress < 1) {
         window.requestAnimationFrame(step);
@@ -485,7 +493,7 @@ const AnimatedNumber = ({ value, duration = 5 }: { value: number, duration?: num
     window.requestAnimationFrame(step);
   }, [value, duration]);
 
-  return <span>{displayValue.toLocaleString()}€</span>;
+  return <span>{formatCurrency(displayValue)}</span>;
 };
 
 const BalanceRow = ({ item }: { item: BalanceItem, key?: React.Key }) => {
@@ -1374,19 +1382,19 @@ export default function App() {
                   <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-zinc-400 uppercase">Total Activo</span>
                     <span className={`text-xl font-black ${isUnbalanced ? 'text-red-600' : 'text-emerald-600'}`}>
-                      {tempTotalAssets.toLocaleString()}€
+                      {formatCurrency(tempTotalAssets)}
                     </span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-zinc-400 uppercase">Total P.N. + Pasivo</span>
                     <span className={`text-xl font-black ${isUnbalanced ? 'text-red-600' : 'text-blue-600'}`}>
-                      {tempTotalLiabilities.toLocaleString()}€
+                      {formatCurrency(tempTotalLiabilities)}
                     </span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-zinc-400 uppercase">Diferencia</span>
                     <span className={`text-xl font-black ${isUnbalanced ? 'text-red-600' : 'text-emerald-600'}`}>
-                      {(tempTotalAssets - tempTotalLiabilities).toLocaleString()}€
+                      {formatCurrency(tempTotalAssets - tempTotalLiabilities)}
                     </span>
                   </div>
                 </div>
@@ -1881,8 +1889,8 @@ export default function App() {
                         
                         <div className="flex items-center gap-6">
                           <div className="flex gap-4 text-[15px] font-mono">
-                            <div className="text-zinc-400">Total Debe: <span className="text-emerald-500">{draft.reduce((acc, r) => acc + (parseFloat(r.debe) || 0), 0).toLocaleString()}€</span></div>
-                            <div className="text-zinc-400">Total Haber: <span className="text-emerald-500">{draft.reduce((acc, r) => acc + (parseFloat(r.haber) || 0), 0).toLocaleString()}€</span></div>
+                            <div className="text-zinc-400">Total Debe: <span className="text-emerald-500">{formatCurrency(draft.reduce((acc, r) => acc + (parseFloat(r.debe) || 0), 0))}</span></div>
+                            <div className="text-zinc-400">Total Haber: <span className="text-emerald-500">{formatCurrency(draft.reduce((acc, r) => acc + (parseFloat(r.haber) || 0), 0))}</span></div>
                           </div>
                           <button 
                             onClick={applyManualEntry}
@@ -1912,10 +1920,10 @@ export default function App() {
                                   {row.account}
                                 </div>
                                 <div className="col-span-3 text-right text-zinc-300">
-                                  {row.debe > 0 ? row.debe.toLocaleString() + '€' : '-'}
+                                  {row.debe > 0 ? formatCurrency(row.debe) : '-'}
                                 </div>
                                 <div className="col-span-3 text-right text-zinc-300">
-                                  {row.haber > 0 ? row.haber.toLocaleString() + '€' : '-'}
+                                  {row.haber > 0 ? formatCurrency(row.haber) : '-'}
                                 </div>
                               </div>
                             ))}
@@ -2156,10 +2164,10 @@ export default function App() {
                               {row.account}
                             </div>
                             <div className="col-span-3 text-right text-zinc-300">
-                              {row.debe > 0 ? row.debe.toLocaleString() + '€' : '-'}
+                              {row.debe > 0 ? formatCurrency(row.debe) : '-'}
                             </div>
                             <div className="col-span-3 text-right text-zinc-300">
-                              {row.haber > 0 ? row.haber.toLocaleString() + '€' : '-'}
+                              {row.haber > 0 ? formatCurrency(row.haber) : '-'}
                             </div>
                           </motion.div>
                         ))}
@@ -2177,8 +2185,8 @@ export default function App() {
                     <div className="pt-3 mt-3 border-t border-zinc-800 flex justify-between items-center text-[13px] font-bold flex-shrink-0">
                       <div className="text-zinc-500 uppercase">Sumas y Saldos</div>
                       <div className="flex gap-4">
-                        <div className="text-emerald-500">D: {currentJournal.flat().reduce((acc, r) => acc + r.debe, 0).toLocaleString()}€</div>
-                        <div className="text-zinc-400">H: {currentJournal.flat().reduce((acc, r) => acc + r.haber, 0).toLocaleString()}€</div>
+                        <div className="text-emerald-500">D: {formatCurrency(currentJournal.flat().reduce((acc, r) => acc + r.debe, 0))}</div>
+                        <div className="text-zinc-400">H: {formatCurrency(currentJournal.flat().reduce((acc, r) => acc + r.haber, 0))}</div>
                       </div>
                     </div>
                   )}
@@ -2241,10 +2249,10 @@ export default function App() {
                               {row.account}
                             </div>
                             <div className="col-span-3 text-right text-zinc-200">
-                              {row.debe > 0 ? row.debe.toLocaleString() + '€' : '-'}
+                              {row.debe > 0 ? formatCurrency(row.debe) : '-'}
                             </div>
                             <div className="col-span-3 text-right text-zinc-200">
-                              {row.haber > 0 ? row.haber.toLocaleString() + '€' : '-'}
+                              {row.haber > 0 ? formatCurrency(row.haber) : '-'}
                             </div>
                           </div>
                         ))}
@@ -2268,11 +2276,11 @@ export default function App() {
                     <div className="flex gap-12 text-2xl font-mono font-black">
                       <div className="flex flex-col items-end">
                         <span className="text-[10px] text-zinc-500 uppercase mb-1">Total Debe</span>
-                        <span className="text-emerald-500">{currentJournal.flat().reduce((acc, r) => acc + r.debe, 0).toLocaleString()}€</span>
+                        <span className="text-emerald-500">{formatCurrency(currentJournal.flat().reduce((acc, r) => acc + r.debe, 0))}</span>
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="text-[10px] text-zinc-500 uppercase mb-1">Total Haber</span>
-                        <span className="text-zinc-300">{currentJournal.flat().reduce((acc, r) => acc + r.haber, 0).toLocaleString()}€</span>
+                        <span className="text-zinc-300">{formatCurrency(currentJournal.flat().reduce((acc, r) => acc + r.haber, 0))}</span>
                       </div>
                     </div>
                   </div>
