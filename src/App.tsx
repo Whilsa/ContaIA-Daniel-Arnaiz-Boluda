@@ -24,7 +24,10 @@ import {
   Minus,
   Columns,
   Layout,
-  GripVertical
+  GripVertical,
+  Heart,
+  Trophy,
+  History
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -81,6 +84,161 @@ const formatCurrency = (value: number): string => {
 };
 
 // --- Constants ---
+const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: string[] }[]> = {
+  1: [
+    { code: '100', name: 'Capital social', examples: ['Aportaciones de los socios al constituir una sociedad anónima o limitada y ampliaciones de capital acordadas para incorporar nuevos accionistas'] },
+    { code: '101', name: 'Fondo social', examples: ['Aportación inicial de los miembros al crear una entidad sin ánimo de lucro o asociación'] },
+    { code: '102', name: 'Capital', examples: ['Aportación inicial de dinero realizada por un empresario individual para crear su negocio'] },
+    { code: '103', name: 'Socios por desembolsos no exigidos', examples: ['Parte del capital social suscrito que los accionistas aún no han aportado y que la sociedad todavía no les ha reclamado'] },
+    { code: '112', name: 'Reserva legal' },
+    { code: '203', name: 'Propiedad industrial', examples: ['Adquisición de una patente (por ejemplo, para fabricar carne vegetal)'] },
+    { code: '205', name: 'Derechos de traspaso', examples: ['Pago realizado al anterior arrendatario de un local para subrogarse en su contrato y convertirse en el nuevo inquilino'] },
+    { code: '206', name: 'Aplicaciones informáticas', examples: ['Compra de software, programas informáticos o gastos de desarrollo de una página web'] },
+    { code: '210', name: 'Terrenos y bienes naturales', examples: ['Valor del suelo o solares urbanos donde se asientan las oficinas, naves o edificios de la empresa'] },
+    { code: '211', name: 'Construcciones', examples: ['Edificaciones como locales de oficinas, naves industriales u hoteles propiedad de la firma'] },
+    { code: '212', name: 'Instalaciones técnicas', examples: ['Equipos especializados como aparatos quirúrgicos, equipos de generación de energía o maquinaria avanzada de proceso productivo'] },
+    { code: '213', name: 'Maquinaria', examples: ['Máquinas de uso industrial general o equipos industriales para la fabricación'] },
+    { code: '215', name: 'Otras instalaciones', examples: ['Instalaciones deportivas para empleados (pistas de fútbol/baloncesto) u otros elementos no clasificados anteriormente'] },
+    { code: '216', name: 'Mobiliario', examples: ['Sillas, mesas de oficina y estanterías'] },
+    { code: '217', name: 'Equipos para procesos de información', examples: ['Ordenadores, servidores y conjuntos electrónicos'] },
+    { code: '218', name: 'Elementos de transporte', examples: ['Vehículos como furgonetas o camiones para el transporte de personas o mercancías'] },
+    { code: '240', name: 'Participaciones a largo plazo en partes vinculadas', examples: ['Compra de acciones de una empresa del mismo grupo sin intención de venderlas pronto'] },
+    { code: '251', name: 'Valores representativos de deuda a largo plazo', examples: ['Inversión en bonos del Tesoro o títulos de renta fija con vencimiento a cinco años'] },
+    { code: '430', name: 'Clientes', examples: ['Derechos de cobro en factura por la venta habitual de productos o servicios (ej. asesoría o viajes combinados)'] },
+    { code: '431', name: 'Clientes, efectos comerciales a cobrar', examples: ['Derechos de cobro sobre clientes que han aceptado una letra de cambio o pagaré'] },
+    { code: '472', name: 'Hacienda Pública, IVA soportado', examples: ['Impuesto pagado al comprar bienes o servicios (maquinaria, mercaderías, luz)'] },
+    { code: '540', name: 'Inversiones financieras a corto plazo en instrumentos de patrimonio', examples: ['Compra de acciones en bolsa con intención especulativa (venta rápida)'] },
+    { code: '541', name: 'Valores representativos de deuda a corto plazo', examples: ['Bonos del Tesoro o de empresas con vencimiento a 12 meses o menos'] },
+    { code: '542', name: 'Créditos a corto plazo', examples: ['Dinero prestado a un tercero a devolver en seis meses'] },
+    { code: '548', name: 'Imposiciones a corto plazo', examples: ['Depósitos bancarios "a plazo" de tres o seis meses'] },
+    { code: '558', name: 'Socios por desembolsos exigidos', examples: ['Capital que la empresa ya ha reclamado formalmente a los accionistas para que lo aporten'] },
+    { code: '565', name: 'Fianzas constituidas a corto plazo', examples: ['Garantía en efectivo pagada al firmar un contrato que será devuelta en 12 meses'] },
+    { code: '570', name: 'Caja', examples: ['Dinero en efectivo (billetes y monedas) disponible en la caja fuerte'] },
+    { code: '572', name: 'Bancos', examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'] },
+    { code: '573', name: 'Bancos, moneda extranjera', examples: ['Saldo en cuentas bancarias denominadas en divisas como dólares'] },
+    { code: '170', name: 'Deudas a largo plazo con entidades de crédito', examples: ['Préstamos bancarios con vencimiento superior a un año y deudas que, tras una reclasificación, permanecen a largo plazo'] },
+    { code: '173', name: 'Proveedores de inmovilizado a largo plazo', examples: ['Deuda con el vendedor de una máquina o furgoneta a pagar en un plazo de 18 meses o más'] },
+    { code: '175', name: 'Efectos a pagar a largo plazo', examples: ['Letras de cambio aceptadas por la compra de un edificio con vencimiento a dos años'] },
+    { code: '180', name: 'Fianzas recibidas a largo plazo', examples: ['Dinero recibido de un inquilino como garantía de cumplimiento de un contrato de alquiler a seis años'] },
+    { code: '400', name: 'Proveedores', examples: ['Deudas en factura por compra de electrodomésticos, material de oficina o suministros de limpieza para el tráfico comercial'] },
+    { code: '401', name: 'Proveedores, efectos comerciales a pagar', examples: ['Deuda comercial formalizada mediante la aceptación de una letra de cambio o pagaré'] },
+    { code: '477', name: 'Hacienda Pública, IVA repercutido', examples: ['Impuesto cobrado a los clientes al venderles productos o prestarles servicios'] },
+    { code: '5200', name: 'Préstamos a corto plazo con entidades de crédito', examples: ['Deuda bancaria que vence en el año actual o parte de un préstamo a largo plazo reclasificado'] },
+    { code: '523', name: 'Proveedores de inmovilizado a corto plazo', examples: ['Deuda con el vendedor de un ordenador o mobiliario a pagar en menos de un año'] },
+    { code: '525', name: 'Efectos a pagar a corto plazo' },
+    { code: '560', name: 'Fianzas recibidas a corto plazo' }
+  ],
+  2: [
+    { code: '100', name: 'Capital social', examples: ['Aportaciones de los socios al constituir una sociedad anónima o limitada y ampliaciones de capital acordadas para incorporar nuevos accionistas'] },
+    { code: '103', name: 'Socios por desembolsos no exigidos', examples: ['Parte del capital social suscrito que los accionistas aún no han aportado y que la sociedad todavía no les ha reclamado'] },
+    { code: '112', name: 'Reserva legal' },
+    { code: '170', name: 'Deudas a largo plazo con entidades de crédito', examples: ['Préstamos bancarios con vencimiento superior a un año y deudas que, tras una reclasificación, permanecen a largo plazo'] },
+    { code: '173', name: 'Proveedores de inmovilizado a largo plazo', examples: ['Deuda con el vendedor de una máquina o furgoneta a pagar en un plazo de 18 meses o más'] },
+    { code: '175', name: 'Efectos a pagar a largo plazo', examples: ['Letras de cambio aceptadas por la compra de un edificio con vencimiento a dos años'] },
+    { code: '180', name: 'Fianzas recibidas a largo plazo', examples: ['Dinero recibido de un inquilino como garantía de cumplimiento de un contrato de alquiler a seis años'] },
+    { code: '203', name: 'Propiedad industrial', examples: ['Adquisición de una patente (por ejemplo, para fabricar carne vegetal)'] },
+    { code: '205', name: 'Derechos de traspaso', examples: ['Pago realizado al anterior arrendatario de un local para subrogarse en su contrato y convertirse en el nuevo inquilino'] },
+    { code: '206', name: 'Aplicaciones informáticas', examples: ['Compra de software, programas informáticos o gastos de desarrollo de una página web'] },
+    { code: '210', name: 'Terrenos y bienes naturales', examples: ['Valor del suelo o solares urbanos donde se asientan las oficinas, naves o edificios de la empresa'] },
+    { code: '211', name: 'Construcciones', examples: ['Edificaciones como locales de oficinas, naves industriales u hoteles propiedad de la firma'] },
+    { code: '212', name: 'Instalaciones técnicas', examples: ['Equipos especializados como aparatos quirúrgicos, equipos de generación de energía o maquinaria avanzada de proceso productivo'] },
+    { code: '216', name: 'Mobiliario', examples: ['Sillas, mesas de oficina y estanterías'] },
+    { code: '217', name: 'Equipos para procesos de información', examples: ['Ordenadores, servidores y conjuntos electrónicos'] },
+    { code: '218', name: 'Elementos de transporte', examples: ['Vehículos como furgonetas o camiones para el transporte de personas o mercancías'] },
+    { code: '251', name: 'Valores representativos de deuda a largo plazo', examples: ['Inversión en bonos del Tesoro o títulos de renta fija con vencimiento a cinco años'] },
+    { code: '472', name: 'Hacienda Pública, IVA soportado', examples: ['Impuesto pagado al comprar bienes o servicios (maquinaria, mercaderías, luz)'] },
+    { code: '477', name: 'Hacienda Pública, IVA repercutido', examples: ['Impuesto cobrado a los clientes al venderles productos o prestarles servicios'] },
+    { code: '5200', name: 'Préstamos a corto plazo con entidades de crédito', examples: ['Deuda bancaria que vence en el año actual o parte de un préstamo a largo plazo reclasificado'] },
+    { code: '523', name: 'Proveedores de inmovilizado a corto plazo', examples: ['Deuda con el vendedor de un ordenador o mobiliario a pagar en menos de un año'] },
+    { code: '540', name: 'Inversiones financieras a corto plazo en instrumentos de patrimonio', examples: ['Compra de acciones en bolsa con intención especulativa (venta rápida)'] },
+    { code: '541', name: 'Valores representativos de deuda a corto plazo', examples: ['Bonos del Tesoro o de empresas con vencimiento a 12 meses o menos'] },
+    { code: '542', name: 'Créditos a corto plazo', examples: ['Dinero prestado a un tercero a devolver en seis meses'] },
+    { code: '558', name: 'Socios por desembolsos exigidos', examples: ['Capital que la empresa ya ha reclamado formalmente a los accionistas para que lo aporten'] },
+    { code: '565', name: 'Fianzas constituidas a corto plazo', examples: ['Garantía en efectivo pagada al firmar un contrato que será devuelta en 12 meses'] },
+    { code: '572', name: 'Bancos', examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'] },
+    { code: '573', name: 'Bancos, moneda extranjera', examples: ['Saldo en cuentas bancarias denominadas en divisas como dólares'] },
+    { code: '214', name: 'Utillaje', examples: ['Herramientas y utensilios para el almacén o la fábrica'] },
+    { code: '219', name: 'Otro inmovilizado material', examples: ['Papeleras, contenedores y envases que no se consumen inmediatamente'] },
+    { code: '250', name: 'Inversiones financieras a largo plazo en instrumentos de patrimonio' },
+    { code: '252', name: 'Créditos a largo plazo', examples: ['Dinero prestado a un tercero (amigo o empresa no vinculada) a devolver en más de un año'] },
+    { code: '258', name: 'Imposiciones a largo plazo', examples: ['Depósitos bancarios "a plazo" con compromiso de no retirar el dinero en 18 meses'] },
+    { code: '260', name: 'Garantías financieras a largo plazo (Avales)', examples: ['Avales en efectivo recibidos por aceptar flexibilidad en las obligaciones de un contrato'] }
+  ],
+  3: [
+    { code: '600', name: 'Compra de mercaderías', examples: ['Adquisición de productos para reventa (fruta, ordenadores, electrodomésticos), incluyendo el transporte de las compras a cargo del comprador'] },
+    { code: '601', name: 'Compra de materias primas', examples: ['Compra de madera para fabricar muebles'] },
+    { code: '602', name: 'Compras de otros aprovisionamientos', examples: ['Compra de materiales fungibles (papel, tinta, artículos de limpieza, gasolina o envases no retornables)'] },
+    { code: '606', name: 'Descuentos sobre compras por pronto pago' },
+    { code: '608', name: 'Devoluciones de compras' },
+    { code: '609', name: '"Rappels" por compras', examples: ['Descuentos fuera de factura por haber alcanzado un gran volumen de pedidos'] },
+    { code: '610', name: 'Variación de existencias' },
+    { code: '620', name: 'Gastos en I+D' },
+    { code: '621', name: 'Arrendamientos y cánones', examples: ['Alquiler del local', 'Alquiler de una furgoneta'] },
+    { code: '622', name: 'Reparaciones y conservación', examples: ['Reparación de una máquina', 'Pintado de la oficina'] },
+    { code: '623', name: 'Servicios de profesionales independientes', examples: ['Honorarios de economistas, abogados, auditores, notarios, gestorías y contratas de limpieza'] },
+    { code: '624', name: 'Transportes (en ventas)', examples: ['Gasto por enviar las ventas a los clientes mediante un transportista externo'] },
+    { code: '625', name: 'Primas de seguros', examples: ['Seguro del local contra incendios', 'Seguro de responsabilidad civil'] },
+    { code: '626', name: 'Servicios bancarios', examples: ['Comisiones de mantenimiento de cuenta o por descubierto'] },
+    { code: '628', name: 'Suministros', examples: ['Consumo de agua, gas y electricidad'] },
+    { code: '629', name: 'Otros servicios (teléfono, viajes)', examples: ['Gastos de teléfono, viajes del personal o el transporte de empleados a la fábrica'] },
+    { code: '650', name: 'Pérdidas de créditos comerciales incobrables', examples: ['Deudas de clientes declarados en concurso de acreedores o insolventes que se dan por perdidas'] },
+    { code: '662', name: 'Intereses de deudas' },
+    { code: '678', name: 'Gastos excepcionales (multas, incendios)', examples: ['Recoge multas fiscales, pérdidas por incendios (furgoneta carbonizada), inundaciones o sanciones'] },
+    { code: '700', name: 'Venta de mercaderías', examples: ['Ingresos por la venta habitual de los productos de la empresa'] },
+    { code: '701', name: 'Venta de productos terminados' },
+    { code: '704', name: 'Venta de envases y embalajes' },
+    { code: '705', name: 'Prestación de servicios', examples: ['Facturación por alojamiento en hoteles, restauración, servicios postventa o asesoramiento laboral'] },
+    { code: '706', name: 'Descuentos sobre ventas por pronto pago' },
+    { code: '708', name: 'Devoluciones de ventas' },
+    { code: '709', name: '"Rappels" sobre ventas' },
+    { code: '752', name: 'Ingresos por arrendamientos', examples: ['Cobro del alquiler de una oficina o sala de conferencias propiedad de la firma'] },
+    { code: '754', name: 'Ingresos por comisiones' },
+    { code: '755', name: 'Ingresos por servicios al personal' },
+    { code: '760', name: 'Ingresos de participaciones en instrumentos de patrimonio (dividendos)', examples: ['Cobro de dividendos de las acciones de las que la empresa es titular'] },
+    { code: '766', name: 'Beneficios en participaciones y valores representativos de deuda' },
+    { code: '769', name: 'Otros ingresos financieros (intereses bancarios)', examples: ['Intereses a favor generados por el dinero en el banco'] },
+    { code: '129', name: 'Resultado del ejercicio' },
+    { code: '300', name: 'Mercaderías (existencias en almacén)', examples: ['Valor de los productos en almacén para reventa como muebles de cocina, tinta de impresora o frutas'] },
+    { code: '4009', name: 'Proveedores, facturas pendientes de recibir', examples: ['Compra de mercaderías cuando la mercancía ya ha llegado pero la factura aún no se ha recibido'] },
+    { code: '404', name: 'Proveedores, empresas asociadas' },
+    { code: '406', name: 'Envases a devolver a proveedores', examples: ['Recipientes retornables que el suministrador carga en factura con facultad de devolución'] },
+    { code: '407', name: 'Anticipos a proveedores', examples: ['Dinero entregado "a cuenta" para asegurar una futura compra de productos'] },
+    { code: '410', name: 'Acreedores por prestación de servicios', examples: ['Deuda por reparaciones en la oficina, honorarios de abogados/gestores, servicios de teléfono o limpieza'] },
+    { code: '434', name: 'Clientes, empresas asociadas' },
+    { code: '438', name: 'Anticipos de clientes', examples: ['Dinero recibido de un comprador antes de entregarle los productos o servicios'] },
+    { code: '440', name: 'Deudores', examples: ['Derechos de cobro por actividades secundarias como mediación (comisiones) o alquiler accidental de salas'] },
+    { code: '473', name: 'Hacienda Pública, retenciones y pagos a cuenta', examples: ['Pagos anticipados de impuestos retenidos por el banco al abonarnos intereses o dividendos'] }
+  ],
+  5: [
+    { code: '100', name: 'Capital social', examples: ['Aportaciones de los socios al constituir una sociedad anónima o limitada y ampliaciones de capital acordadas para incorporar nuevos accionistas'] },
+    { code: '112', name: 'Reserva legal' },
+    { code: '129', name: 'Resultado del ejercicio' },
+    { code: '170', name: 'Deudas a largo plazo con entidades de crédito', examples: ['Préstamos bancarios con vencimiento superior a un año y deudas que, tras una reclasificación, permanecen a largo plazo'] },
+    { code: '216', name: 'Mobiliario', examples: ['Sillas, mesas de oficina y estanterías'] },
+    { code: '217', name: 'Equipos para procesos de información', examples: ['Ordenadores, servidores y conjuntos electrónicos'] },
+    { code: '218', name: 'Elementos de transporte', examples: ['Vehículos como furgonetas o camiones para el transporte de personas o mercancías'] },
+    { code: '300', name: 'Mercaderías (existencias en almacén)', examples: ['Valor de los productos en almacén para reventa como muebles de cocina, tinta de impresora o frutas'] },
+    { code: '400', name: 'Proveedores', examples: ['Deudas en factura por compra de electrodomésticos, material de oficina o suministros de limpieza para el tráfico comercial'] },
+    { code: '407', name: 'Anticipos a proveedores', examples: ['Dinero entregado "a cuenta" para asegurar una futura compra de productos'] },
+    { code: '430', name: 'Clientes', examples: ['Derechos de cobro en factura por la venta habitual de productos o servicios (ej. asesoría o viajes combinados)'] },
+    { code: '431', name: 'Clientes, efectos comerciales a cobrar', examples: ['Derechos de cobro sobre clientes que han aceptado una letra de cambio o pagaré'] },
+    { code: '472', name: 'Hacienda Pública, IVA soportado', examples: ['Impuesto pagado al comprar bienes o servicios (maquinaria, mercaderías, luz)'] },
+    { code: '477', name: 'Hacienda Pública, IVA repercutido', examples: ['Impuesto cobrado a los clientes al venderles productos o prestarles servicios'] },
+    { code: '5200', name: 'Préstamos a corto plazo con entidades de crédito', examples: ['Deuda bancaria que vence en el año actual o parte de un préstamo a largo plazo reclasificado'] },
+    { code: '523', name: 'Proveedores de inmovilizado a corto plazo', examples: ['Deuda con el vendedor de un ordenador o mobiliario a pagar en menos de un año'] },
+    { code: '572', name: 'Bancos', examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'] },
+    { code: '600', name: 'Compra de mercaderías', examples: ['Adquisición de productos para reventa (fruta, ordenadores, electrodomésticos), incluyendo el transporte de las compras a cargo del comprador'] },
+    { code: '609', name: '"Rappels" por compras', examples: ['Descuentos fuera de factura por haber alcanzado un gran volumen de pedidos'] },
+    { code: '610', name: 'Variación de existencias' },
+    { code: '624', name: 'Transportes (en ventas)', examples: ['Gasto por enviar las ventas a los clientes mediante un transportista externo'] },
+    { code: '628', name: 'Suministros', examples: ['Consumo de agua, gas y electricidad'] },
+    { code: '700', name: 'Venta de mercaderías', examples: ['Ingresos por la venta habitual de los productos de la empresa'] },
+    { code: '706', name: 'Descuentos sobre ventas por pronto pago' },
+    { code: '4700', name: 'Hacienda Pública, deudora por IVA (a devolver)' },
+    { code: '4750', name: 'Hacienda Pública, acreedora por IVA (a pagar)' }
+  ]
+};
+
 const ACCOUNT_MAPPING: Record<string, string> = {
   '100': 'Capital Social',
   '101': 'Fondo social',
@@ -685,9 +843,24 @@ export default function App() {
   } | null>(null);
   
   const [isJournalFullscreen, setIsJournalFullscreen] = useState(false);
-  const [currentView, setCurrentView] = useState<'home' | 'app'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'app' | 'repasar'>('home');
   const [showToast, setShowToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
   const [fontScale, setFontScale] = useState(100);
+
+  // Game states
+  const [gameScore, setGameScore] = useState(0);
+  const [gameLives, setGameLives] = useState(5);
+  const [gameSelectedModules, setGameSelectedModules] = useState<number[]>([]);
+  const [gameStatus, setGameStatus] = useState<'selection' | 'playing' | 'gameover'>('selection');
+  const [gameQuestionType, setGameQuestionType] = useState<'code' | 'balance'>('code');
+  const [gameDifficulty, setGameDifficulty] = useState<'facil' | 'normal' | 'extremo'>('normal');
+  const [gameTimer, setGameTimer] = useState(20);
+  const [currentQuestion, setCurrentQuestion] = useState<{ code: string, name: string, examples?: string[] } | null>(null);
+  const [currentQuestionText, setCurrentQuestionText] = useState('');
+  const [userAnswer, setUserAnswer] = useState('');
+  const [selectedBalances, setSelectedBalances] = useState<string[]>([]);
+  const [gameHistory, setGameHistory] = useState<{ score: number, date: string, modules: number[] }[]>([]);
+  const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -1473,6 +1646,501 @@ export default function App() {
     </div>
   );
 
+  const getCorrectBalances = (code: string): string[] => {
+    const firstDigit = code[0];
+    const firstTwo = code.substring(0, 2);
+    const firstThree = code.substring(0, 3);
+    
+    // Default: Nulo is always possible
+    const results = ['Saldo nulo'];
+
+    if (code === '129') {
+      results.push('Saldo deudor', 'Saldo acreedor');
+      return results;
+    }
+
+    // Assets & Expenses
+    const isDeudor = 
+      firstDigit === '2' || 
+      firstDigit === '3' || 
+      firstDigit === '6' ||
+      firstTwo === '43' && code !== '438' ||
+      firstTwo === '44' ||
+      firstThree === '470' ||
+      firstThree === '472' ||
+      firstThree === '473' ||
+      code === '407' ||
+      code === '406' ||
+      firstTwo === '54' ||
+      firstTwo === '55' ||
+      firstTwo === '56' && code !== '560' ||
+      firstTwo === '57' ||
+      code === '103';
+
+    // Liabilities, Equity & Income
+    const isAcreedor = 
+      firstDigit === '1' && code !== '103' && code !== '129' ||
+      firstDigit === '7' ||
+      firstTwo === '40' && code !== '407' && code !== '406' ||
+      firstTwo === '41' ||
+      code === '438' ||
+      firstThree === '475' ||
+      firstThree === '477' ||
+      firstTwo === '52' ||
+      code === '560';
+
+    if (isDeudor) results.push('Saldo deudor');
+    if (isAcreedor) results.push('Saldo acreedor');
+    
+    return results;
+  };
+
+  // Game logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (gameStatus === 'playing' && gameTimer > 0 && lastAnswerCorrect === null) {
+      interval = setInterval(() => {
+        setGameTimer(prev => prev - 1);
+      }, 1000);
+    } else if (gameTimer === 0 && gameStatus === 'playing' && lastAnswerCorrect === null) {
+      // Time's up
+      handleWrongAnswer('¡Tiempo agotado!');
+    }
+    return () => clearInterval(interval);
+  }, [gameStatus, gameTimer, lastAnswerCorrect]);
+
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('contabilidad_game_history');
+    if (savedHistory) {
+      setGameHistory(JSON.parse(savedHistory));
+    }
+  }, []);
+
+  const saveScore = (score: number) => {
+    const newEntry = {
+      score,
+      date: new Date().toLocaleString('es-ES'),
+      modules: gameSelectedModules
+    };
+    const updatedHistory = [newEntry, ...gameHistory].slice(0, 10);
+    setGameHistory(updatedHistory);
+    localStorage.setItem('contabilidad_game_history', JSON.stringify(updatedHistory));
+  };
+
+  const getAvailableAccounts = () => {
+    const accounts: { code: string, name: string, examples?: string[] }[] = [];
+    gameSelectedModules.forEach(m => {
+      accounts.push(...MODULE_ACCOUNTS[m]);
+    });
+    // Remove duplicates
+    return Array.from(new Map(accounts.map(item => [item.code, item])).values());
+  };
+
+  const generateQuestion = () => {
+    const accounts = getAvailableAccounts();
+    if (accounts.length === 0) return;
+    const randomAccount = accounts[Math.floor(Math.random() * accounts.length)];
+    setCurrentQuestion(randomAccount);
+    setUserAnswer('');
+    setSelectedBalances([]);
+    setLastAnswerCorrect(null);
+    
+    const difficultyTimes = {
+      facil: 30,
+      normal: 20,
+      extremo: 10
+    };
+    setGameTimer(difficultyTimes[gameDifficulty]);
+    
+    const type = Math.random() > 0.4 ? 'code' : 'balance';
+    setGameQuestionType(type);
+
+    // Pick question text
+    if (type === 'code' && randomAccount.examples && randomAccount.examples.length > 0) {
+      const example = randomAccount.examples[Math.floor(Math.random() * randomAccount.examples.length)];
+      setCurrentQuestionText(example);
+    } else {
+      setCurrentQuestionText(randomAccount.name);
+    }
+  };
+
+  const handleWrongAnswer = (message?: string) => {
+    setGameLives(prev => {
+      const newLives = prev - 1;
+      if (newLives <= 0) {
+        setGameStatus('gameover');
+        saveScore(gameScore);
+      }
+      return newLives;
+    });
+    setGameScore(prev => Math.max(0, prev - 5));
+    setLastAnswerCorrect(false);
+    if (message) {
+      setShowToast({ message, type: 'error' });
+    }
+    setTimeout(() => {
+      setLastAnswerCorrect(null);
+      setUserAnswer('');
+      setSelectedBalances([]);
+      if (gameStatus === 'playing') {
+        generateQuestion();
+      }
+    }, 1500);
+  };
+
+  const startGame = () => {
+    if (gameSelectedModules.length === 0) {
+      setShowToast({ message: "Selecciona al menos un módulo para empezar", type: 'error' });
+      return;
+    }
+    setGameScore(0);
+    setGameLives(5);
+    setGameStatus('playing');
+    generateQuestion();
+  };
+
+  const handleGameAnswer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentQuestion) return;
+
+    if (gameQuestionType === 'code') {
+      if (userAnswer.trim() === currentQuestion.code) {
+        setGameScore(prev => prev + 10);
+        setLastAnswerCorrect(true);
+        setTimeout(() => {
+          generateQuestion();
+        }, 1000);
+      } else {
+        handleWrongAnswer();
+      }
+    } else {
+      const correct = getCorrectBalances(currentQuestion.code);
+      const isCorrect = 
+        selectedBalances.length === correct.length && 
+        selectedBalances.every(b => correct.includes(b));
+
+      if (isCorrect) {
+        setGameScore(prev => prev + 15); // Bonus for balance questions
+        setLastAnswerCorrect(true);
+        setTimeout(() => {
+          generateQuestion();
+        }, 1000);
+      } else {
+        handleWrongAnswer();
+      }
+    }
+  };
+
+  if (currentView === 'repasar') {
+    return (
+      <div className="min-h-screen bg-zinc-50 font-sans p-4 md:p-8">
+        <div className="max-w-4xl mx-auto space-y-8">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setCurrentView('home')}
+                className="p-2 bg-white rounded-xl shadow-sm border border-zinc-200 hover:bg-zinc-100 transition-colors"
+              >
+                <X className="w-6 h-6 text-zinc-600" />
+              </button>
+              <h2 className="text-2xl font-black text-zinc-900 tracking-tight uppercase">Repasar Cuentas</h2>
+            </div>
+            {gameStatus === 'playing' && (
+              <div className="flex items-center gap-6">
+                <div className="relative w-16 h-16 flex items-center justify-center">
+                  <div className={`absolute inset-0 rounded-full blur-xl transition-all duration-500 ${
+                    gameTimer <= 3 ? 'bg-red-500/20 opacity-100' : 'bg-emerald-500/10 opacity-0'
+                  }`} />
+                  <svg className="w-full h-full -rotate-90 drop-shadow-sm">
+                    <circle 
+                      cx="32" cy="32" r="28" 
+                      fill="white" stroke="#F3F4F6" strokeWidth="6" 
+                    />
+                    <motion.circle 
+                      cx="32" cy="32" r="28" 
+                      fill="none" 
+                      stroke={gameTimer <= 3 ? "#EF4444" : "#10B981"} 
+                      strokeWidth="6" 
+                      strokeDasharray="175.9"
+                      animate={{ strokeDashoffset: 175.9 * (1 - gameTimer / (gameDifficulty === 'facil' ? 30 : gameDifficulty === 'normal' ? 20 : 10)) }}
+                      transition={{ duration: 0.3, ease: "linear" }}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span className={`absolute font-black text-xl tabular-nums ${
+                    gameTimer <= 3 ? 'text-red-600 animate-pulse scale-110' : 'text-zinc-700'
+                  } transition-all duration-300`}>
+                    {gameTimer}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-amber-500" />
+                  <span className="text-xl font-black text-zinc-900">{gameScore}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Heart 
+                      key={i} 
+                      className={`w-5 h-5 ${i < gameLives ? 'text-red-500 fill-red-500' : 'text-zinc-300'}`} 
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {gameStatus === 'selection' && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="grid md:grid-cols-2 gap-8"
+            >
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-zinc-100 space-y-6">
+                <h3 className="text-xl font-bold text-zinc-900">Selecciona Módulos</h3>
+                <div className="space-y-3">
+                  {/* Master Option: Contabilidad Financiera I */}
+                  <label 
+                    className={`flex items-center justify-between p-4 pl-2 rounded-2xl border-2 cursor-pointer transition-all ${
+                      gameSelectedModules.length === 4 
+                        ? 'border-emerald-600 bg-emerald-100' 
+                        : 'border-zinc-200 bg-zinc-50 hover:border-zinc-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${
+                        gameSelectedModules.length === 4 ? 'bg-emerald-600 border-emerald-600' : 'border-zinc-300 bg-white'
+                      }`}>
+                        {gameSelectedModules.length === 4 && <CheckCircle2 className="w-4 h-4 text-white" />}
+                      </div>
+                      <span className="font-black text-zinc-900 text-sm uppercase tracking-tight">Contabilidad Financiera I</span>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      className="hidden"
+                      checked={gameSelectedModules.length === 4}
+                      onChange={() => {
+                        if (gameSelectedModules.length === 4) setGameSelectedModules([]);
+                        else setGameSelectedModules([1, 2, 3, 5]);
+                      }}
+                    />
+                  </label>
+
+                  <div className="h-px bg-zinc-100 my-2" />
+
+                  {[1, 2, 3, 5].map(m => (
+                    <label 
+                      key={m} 
+                      className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                        gameSelectedModules.includes(m) 
+                          ? 'border-emerald-500 bg-emerald-50' 
+                          : 'border-zinc-100 hover:border-zinc-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${
+                          gameSelectedModules.includes(m) ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-300'
+                        }`}>
+                          {gameSelectedModules.includes(m) && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        </div>
+                        <span className="font-bold text-zinc-700">Módulo {m}</span>
+                      </div>
+                      <input 
+                        type="checkbox" 
+                        className="hidden"
+                        checked={gameSelectedModules.includes(m)}
+                        onChange={() => {
+                          setGameSelectedModules(prev => 
+                            prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
+                          );
+                        }}
+                      />
+                    </label>
+                  ))}
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-zinc-900">Dificultad</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    {(['facil', 'normal', 'extremo'] as const).map((d) => (
+                      <button
+                        key={d}
+                        onClick={() => setGameDifficulty(d)}
+                        className={`py-3 px-2 rounded-2xl border-2 font-bold text-xs uppercase tracking-wider transition-all ${
+                          gameDifficulty === d
+                            ? 'border-emerald-600 bg-emerald-100 text-emerald-700'
+                            : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'
+                        }`}
+                      >
+                        {d === 'facil' ? 'Fácil (30s)' : d === 'normal' ? 'Normal (20s)' : 'Extremo (10s)'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button 
+                  onClick={startGame}
+                  className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-lg shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95"
+                >
+                  EMPEZAR JUEGO
+                </button>
+              </div>
+
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-zinc-100 space-y-6">
+                <div className="flex items-center gap-2">
+                  <History className="w-5 h-5 text-zinc-400" />
+                  <h3 className="text-xl font-bold text-zinc-900">Últimas Puntuaciones</h3>
+                </div>
+                {gameHistory.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-zinc-400 space-y-2">
+                    <Trophy className="w-12 h-12 opacity-20" />
+                    <p className="font-medium">Aún no hay partidas</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {gameHistory.map((entry, i) => (
+                      <div key={i} className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{entry.date}</span>
+                          <span className="text-xs font-bold text-zinc-600">
+                            {entry.modules.length === 4 ? 'Contabilidad Financiera I' : `Módulos: ${entry.modules.join(', ')}`}
+                          </span>
+                        </div>
+                        <span className="text-xl font-black text-emerald-600">{entry.score}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {gameStatus === 'playing' && currentQuestion && (
+            <motion.div 
+              key={currentQuestion.code}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              className="max-w-2xl mx-auto"
+            >
+              <div className="bg-white p-12 rounded-[3rem] shadow-2xl border border-zinc-100 text-center space-y-10">
+                <div className="space-y-4">
+                  <span className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em]">
+                    {gameQuestionType === 'code' ? '¿Cuál es el número de cuenta?' : '¿Qué saldos puede tener esta cuenta?'}
+                  </span>
+                  <div className="flex flex-col items-center gap-2">
+                    <h3 className="text-4xl font-black text-zinc-900 leading-tight">
+                      {gameQuestionType === 'code' ? currentQuestionText : `${currentQuestion.code} - ${currentQuestion.name}`}
+                    </h3>
+                  </div>
+                </div>
+
+                <form onSubmit={handleGameAnswer} className="space-y-6">
+                  {gameQuestionType === 'code' ? (
+                    <div className="relative">
+                      <input 
+                        autoFocus
+                        type="text"
+                        value={userAnswer}
+                        onChange={(e) => setUserAnswer(e.target.value)}
+                        placeholder="Escribe el código..."
+                        className={`w-full text-center text-5xl font-black p-8 rounded-[2rem] border-4 transition-all outline-none ${
+                          lastAnswerCorrect === true ? 'border-emerald-500 bg-emerald-50 text-emerald-600' :
+                          lastAnswerCorrect === false ? 'border-red-500 bg-red-50 text-red-600 animate-shake' :
+                          'border-zinc-100 bg-zinc-50 focus:border-emerald-500 focus:bg-white'
+                        }`}
+                      />
+                      {lastAnswerCorrect === true && (
+                        <motion.div 
+                          initial={{ scale: 0 }} animate={{ scale: 1 }}
+                          className="absolute -top-4 -right-4 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg"
+                        >
+                          <CheckCircle2 className="w-6 h-6 text-white" />
+                        </motion.div>
+                      )}
+                      {lastAnswerCorrect === false && (
+                        <motion.div 
+                          initial={{ scale: 0 }} animate={{ scale: 1 }}
+                          className="absolute -top-4 -right-4 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center shadow-lg"
+                        >
+                          <X className="w-6 h-6 text-white" />
+                        </motion.div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3">
+                      {['Saldo deudor', 'Saldo acreedor', 'Saldo nulo'].map(balance => (
+                        <button
+                          key={balance}
+                          type="button"
+                          onClick={() => {
+                            setSelectedBalances(prev => 
+                              prev.includes(balance) ? prev.filter(b => b !== balance) : [...prev, balance]
+                            );
+                          }}
+                          className={`p-5 rounded-2xl border-4 font-bold text-xl transition-all flex items-center justify-between ${
+                            selectedBalances.includes(balance)
+                              ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                              : 'border-zinc-100 bg-zinc-50 text-zinc-500 hover:border-zinc-200'
+                          } ${
+                            lastAnswerCorrect === false && getCorrectBalances(currentQuestion.code).includes(balance)
+                              ? 'border-emerald-200 bg-emerald-50'
+                              : ''
+                          }`}
+                        >
+                          {balance}
+                          <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${
+                            selectedBalances.includes(balance) ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-300'
+                          }`}>
+                            {selectedBalances.includes(balance) && <CheckCircle2 className="w-4 h-4 text-white" />}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <button 
+                    type="submit"
+                    disabled={gameQuestionType === 'balance' && selectedBalances.length === 0}
+                    className="w-full py-5 bg-zinc-900 text-white rounded-[1.5rem] font-black text-xl shadow-xl hover:bg-black transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    {gameQuestionType === 'balance' ? 'CONFIRMAR SELECCIÓN' : 'COMPROBAR'}
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          )}
+
+          {gameStatus === 'gameover' && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-md mx-auto"
+            >
+              <div className="bg-white p-12 rounded-[3rem] shadow-2xl border border-zinc-100 text-center space-y-8">
+                <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                  <AlertCircle className="w-12 h-12 text-red-600" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-4xl font-black text-zinc-900 uppercase tracking-tight">GAME OVER</h3>
+                  <p className="text-zinc-500 font-medium">¡Te has quedado sin vidas!</p>
+                </div>
+                <div className="p-6 bg-zinc-50 rounded-3xl border border-zinc-100">
+                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest block mb-1">Puntuación Final</span>
+                  <span className="text-5xl font-black text-emerald-600">{gameScore}</span>
+                </div>
+                <button 
+                  onClick={() => setGameStatus('selection')}
+                  className="w-full py-5 bg-emerald-600 text-white rounded-[1.5rem] font-black text-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95"
+                >
+                  VOLVER A INTENTAR
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (currentView === 'home') {
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6 font-sans">
@@ -1499,7 +2167,7 @@ export default function App() {
               transition={{ delay: 0.2 }}
               className="text-xl text-zinc-500 font-medium max-w-2xl mx-auto"
             >
-              Domina el ciclo contable con nuestra herramienta interactiva diseñada para estudiantes y profesionales.
+              Domina el ciclo contable con la herramienta interactiva diseñada para estudiantes y profesionales por Daniel Arnaiz Boluda.
             </motion.p>
           </div>
 
@@ -1533,21 +2201,21 @@ export default function App() {
               transition={{ delay: 0.4 }}
               whileHover={{ scale: 1.02, y: -5 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setShowToast({ message: "Este modo estará disponible muy pronto. ¡Estamos trabajando en ello!", type: 'success' })}
+              onClick={() => setCurrentView('repasar')}
               className="group relative bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-zinc-200/50 border border-zinc-100 text-left transition-all hover:border-zinc-200"
             >
               <div className="w-20 h-20 bg-zinc-100 rounded-3xl flex items-center justify-center mb-8">
-                <BookOpen className="w-10 h-10 text-zinc-400" />
+                <BookOpen className="w-10 h-10 text-zinc-400 group-hover:text-emerald-600 transition-colors" />
               </div>
-              <div className="absolute top-10 right-10 px-4 py-1.5 bg-zinc-100 text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full">
-                Próximamente
+              <div className="absolute top-10 right-10 px-4 py-1.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full">
+                Nuevo
               </div>
               <h3 className="text-3xl font-bold text-zinc-900 mb-4">Repasar cuentas</h3>
               <p className="text-zinc-500 leading-relaxed text-lg">
                 Aprende y memoriza el Plan General Contable con ejercicios interactivos de clasificación y definición de cuentas.
               </p>
-              <div className="mt-10 flex items-center text-zinc-400 font-bold text-sm uppercase tracking-widest">
-                No disponible <X className="ml-2 w-5 h-5" />
+              <div className="mt-10 flex items-center text-emerald-600 font-bold text-sm uppercase tracking-widest">
+                Jugar ahora <ChevronRight className="ml-2 w-5 h-5" />
               </div>
             </motion.button>
           </div>
