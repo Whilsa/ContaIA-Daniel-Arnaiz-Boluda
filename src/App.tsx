@@ -165,7 +165,7 @@ const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: s
     { code: '260', name: 'Garantías financieras a largo plazo (Avales)', examples: ['Avales en efectivo recibidos por aceptar flexibilidad en las obligaciones de un contrato'] }
   ],
   3: [
-    { code: '600', name: 'Compra de mercaderías', examples: ['Adquisición de productos para reventa (fruta, ordenadores, electrodomésticos), incluyendo el transporte de las compras a cargo del comprador'] },
+    { code: '600', name: 'Compra de mercaderías', examples: ['Adquisición de productos para reventa (fruta, ordenadores, electrodomésticos) como actividad principal de la empresa, incluyendo el transporte de las compras a cargo del comprador'] },
     { code: '601', name: 'Compra de materias primas', examples: ['Compra de madera para fabricar muebles'] },
     { code: '602', name: 'Compras de otros aprovisionamientos', examples: ['Compra de materiales fungibles (papel, tinta, artículos de limpieza, gasolina o envases no retornables)'] },
     { code: '606', name: 'Descuentos sobre compras por pronto pago' },
@@ -184,14 +184,14 @@ const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: s
     { code: '650', name: 'Pérdidas de créditos comerciales incobrables', examples: ['Deudas de clientes declarados en concurso de acreedores o insolventes que se dan por perdidas'] },
     { code: '662', name: 'Intereses de deudas' },
     { code: '678', name: 'Gastos excepcionales (multas, incendios)', examples: ['Recoge multas fiscales, pérdidas por incendios (furgoneta carbonizada), inundaciones o sanciones'] },
-    { code: '700', name: 'Venta de mercaderías', examples: ['Ingresos por la venta habitual de los productos de la empresa'] },
+    { code: '700', name: 'Venta de mercaderías', examples: ['Ingresos por la venta habitual de los productos de la empresa (actividad principal)'] },
     { code: '701', name: 'Venta de productos terminados' },
     { code: '704', name: 'Venta de envases y embalajes' },
-    { code: '705', name: 'Prestación de servicios', examples: ['Facturación por alojamiento en hoteles, restauración, servicios postventa o asesoramiento laboral'] },
+    { code: '705', name: 'Prestación de servicios', examples: ['Facturación por alojamiento en hoteles, restauración, servicios postventa o asesoramiento laboral (cuando es la actividad principal de la empresa)'] },
     { code: '706', name: 'Descuentos sobre ventas por pronto pago' },
     { code: '708', name: 'Devoluciones de ventas' },
     { code: '709', name: '"Rappels" sobre ventas' },
-    { code: '752', name: 'Ingresos por arrendamientos', examples: ['Cobro del alquiler de una oficina o sala de conferencias propiedad de la firma'] },
+    { code: '752', name: 'Ingresos por arrendamientos', examples: ['Cobro del alquiler de una oficina o sala de conferencias propiedad de la firma (cuando es una actividad secundaria o accidental)'] },
     { code: '754', name: 'Ingresos por comisiones' },
     { code: '755', name: 'Ingresos por servicios al personal' },
     { code: '760', name: 'Ingresos de participaciones en instrumentos de patrimonio (dividendos)', examples: ['Cobro de dividendos de las acciones de las que la empresa es titular'] },
@@ -227,12 +227,12 @@ const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: s
     { code: '5200', name: 'Préstamos a corto plazo con entidades de crédito', examples: ['Deuda bancaria que vence en el año actual o parte de un préstamo a largo plazo reclasificado'] },
     { code: '523', name: 'Proveedores de inmovilizado a corto plazo', examples: ['Deuda con el vendedor de un ordenador o mobiliario a pagar en menos de un año'] },
     { code: '572', name: 'Bancos', examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'] },
-    { code: '600', name: 'Compra de mercaderías', examples: ['Adquisición de productos para reventa (fruta, ordenadores, electrodomésticos), incluyendo el transporte de las compras a cargo del comprador'] },
+    { code: '600', name: 'Compra de mercaderías', examples: ['Adquisición de productos para reventa (fruta, ordenadores, electrodomésticos) como actividad principal de la empresa, incluyendo el transporte de las compras a cargo del comprador'] },
     { code: '609', name: '"Rappels" por compras', examples: ['Descuentos fuera de factura por haber alcanzado un gran volumen de pedidos'] },
     { code: '610', name: 'Variación de existencias' },
     { code: '624', name: 'Transportes (en ventas)', examples: ['Gasto por enviar las ventas a los clientes mediante un transportista externo'] },
     { code: '628', name: 'Suministros', examples: ['Consumo de agua, gas y electricidad'] },
-    { code: '700', name: 'Venta de mercaderías', examples: ['Ingresos por la venta habitual de los productos de la empresa'] },
+    { code: '700', name: 'Venta de mercaderías', examples: ['Ingresos por la venta habitual de los productos de la empresa (actividad principal)'] },
     { code: '706', name: 'Descuentos sobre ventas por pronto pago' },
     { code: '4700', name: 'Hacienda Pública, deudora por IVA (a devolver)' },
     { code: '4750', name: 'Hacienda Pública, acreedora por IVA (a pagar)' }
@@ -859,7 +859,14 @@ export default function App() {
   const [currentQuestionText, setCurrentQuestionText] = useState('');
   const [userAnswer, setUserAnswer] = useState('');
   const [selectedBalances, setSelectedBalances] = useState<string[]>([]);
-  const [gameHistory, setGameHistory] = useState<{ score: number, date: string, modules: number[] }[]>([]);
+  const [gameHistory, setGameHistory] = useState<{ score: number, date: string, timestamp: number, modules: number[], name?: string }[]>([]);
+  const [gameSortCriteria, setGameSortCriteria] = useState<'date' | 'score'>('date');
+  const [gameSortDirection, setGameSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [askedQuestionCodes, setAskedQuestionCodes] = useState<string[]>([]);
+  const [playerName, setPlayerName] = useState('');
+  const [isScoreSaved, setIsScoreSaved] = useState(false);
+  const [editingHistoryIndex, setEditingHistoryIndex] = useState<number | null>(null);
+  const [editingHistoryName, setEditingHistoryName] = useState('');
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -1659,6 +1666,21 @@ export default function App() {
       return results;
     }
 
+    if (['606', '608', '609'].includes(code)) {
+      results.push('Saldo acreedor');
+      return results;
+    }
+
+    if (['706', '708', '709'].includes(code)) {
+      results.push('Saldo deudor');
+      return results;
+    }
+
+    if (['610', '611', '612'].includes(code)) {
+      results.push('Saldo deudor', 'Saldo acreedor');
+      return results;
+    }
+
     // Assets & Expenses
     const isDeudor = 
       firstDigit === '2' || 
@@ -1716,15 +1738,26 @@ export default function App() {
     }
   }, []);
 
-  const saveScore = (score: number) => {
+  const saveScore = (score: number, name: string) => {
     const newEntry = {
       score,
+      name: name || 'Anónimo',
       date: new Date().toLocaleString('es-ES'),
+      timestamp: Date.now(),
       modules: gameSelectedModules
     };
     const updatedHistory = [newEntry, ...gameHistory].slice(0, 10);
     setGameHistory(updatedHistory);
     localStorage.setItem('contabilidad_game_history', JSON.stringify(updatedHistory));
+    setIsScoreSaved(true);
+  };
+
+  const updateHistoryName = (index: number, newName: string) => {
+    const updatedHistory = [...gameHistory];
+    updatedHistory[index].name = newName || 'Anónimo';
+    setGameHistory(updatedHistory);
+    localStorage.setItem('contabilidad_game_history', JSON.stringify(updatedHistory));
+    setEditingHistoryIndex(null);
   };
 
   const getAvailableAccounts = () => {
@@ -1736,11 +1769,27 @@ export default function App() {
     return Array.from(new Map(accounts.map(item => [item.code, item])).values());
   };
 
-  const generateQuestion = () => {
+  const generateQuestion = (currentAsked?: string[]) => {
     const accounts = getAvailableAccounts();
     if (accounts.length === 0) return;
-    const randomAccount = accounts[Math.floor(Math.random() * accounts.length)];
+    
+    const asked = currentAsked !== undefined ? currentAsked : askedQuestionCodes;
+    let availableAccounts = accounts.filter(a => !asked.includes(a.code));
+    
+    if (availableAccounts.length === 0) {
+      availableAccounts = accounts;
+      setAskedQuestionCodes([]);
+    }
+    
+    const randomAccount = availableAccounts[Math.floor(Math.random() * availableAccounts.length)];
     setCurrentQuestion(randomAccount);
+    setAskedQuestionCodes(prev => {
+      if (availableAccounts.length === accounts.length && prev.length > 0) {
+        return [randomAccount.code];
+      }
+      return [...prev, randomAccount.code];
+    });
+    
     setUserAnswer('');
     setSelectedBalances([]);
     setLastAnswerCorrect(null);
@@ -1769,7 +1818,8 @@ export default function App() {
       const newLives = prev - 1;
       if (newLives <= 0) {
         setGameStatus('gameover');
-        saveScore(gameScore);
+        setPlayerName('');
+        setIsScoreSaved(false);
       }
       return newLives;
     });
@@ -1796,7 +1846,8 @@ export default function App() {
     setGameScore(0);
     setGameLives(5);
     setGameStatus('playing');
-    generateQuestion();
+    setAskedQuestionCodes([]);
+    generateQuestion([]);
   };
 
   const handleGameAnswer = (e: React.FormEvent) => {
@@ -1832,6 +1883,16 @@ export default function App() {
   };
 
   if (currentView === 'repasar') {
+    const sortedHistory = [...gameHistory].sort((a, b) => {
+      let comparison = 0;
+      if (gameSortCriteria === 'date') {
+        comparison = (a.timestamp || 0) - (b.timestamp || 0);
+      } else {
+        comparison = a.score - b.score;
+      }
+      return gameSortDirection === 'asc' ? comparison : -comparison;
+    });
+
     return (
       <div className="min-h-screen bg-zinc-50 font-sans p-4 md:p-8">
         <div className="max-w-4xl mx-auto space-y-8">
@@ -1987,9 +2048,37 @@ export default function App() {
               </div>
 
               <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-zinc-100 space-y-6">
-                <div className="flex items-center gap-2">
-                  <History className="w-5 h-5 text-zinc-400" />
-                  <h3 className="text-xl font-bold text-zinc-900">Últimas Puntuaciones</h3>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <History className="w-5 h-5 text-zinc-400" />
+                    <h3 className="text-xl font-bold text-zinc-900">Últimas Puntuaciones</h3>
+                  </div>
+                  {gameHistory.length > 0 && (
+                    <div className="flex items-center gap-2 bg-zinc-100 p-1 rounded-xl">
+                      <button 
+                        onClick={() => {
+                          if (gameSortCriteria === 'date') setGameSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                          else { setGameSortCriteria('date'); setGameSortDirection('desc'); }
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
+                          gameSortCriteria === 'date' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
+                        }`}
+                      >
+                        Fecha {gameSortCriteria === 'date' && (gameSortDirection === 'asc' ? '↑' : '↓')}
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (gameSortCriteria === 'score') setGameSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                          else { setGameSortCriteria('score'); setGameSortDirection('desc'); }
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
+                          gameSortCriteria === 'score' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
+                        }`}
+                      >
+                        Puntos {gameSortCriteria === 'score' && (gameSortDirection === 'asc' ? '↑' : '↓')}
+                      </button>
+                    </div>
+                  )}
                 </div>
                 {gameHistory.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-zinc-400 space-y-2">
@@ -1998,17 +2087,64 @@ export default function App() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {gameHistory.map((entry, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{entry.date}</span>
-                          <span className="text-xs font-bold text-zinc-600">
-                            {entry.modules.length === 4 ? 'Contabilidad Financiera I' : `Módulos: ${entry.modules.join(', ')}`}
-                          </span>
+                    {sortedHistory.map((entry, i) => {
+                      // Find original index in gameHistory for editing
+                      const originalIndex = gameHistory.findIndex(h => h === entry);
+                      return (
+                        <div key={i} className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
+                          <div className="flex flex-col flex-grow mr-4">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {editingHistoryIndex === originalIndex ? (
+                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                  <input 
+                                    type="text"
+                                    value={editingHistoryName}
+                                    onChange={(e) => setEditingHistoryName(e.target.value)}
+                                    className="text-sm font-black text-zinc-900 bg-white border border-zinc-200 rounded px-2 py-1 outline-none focus:border-emerald-500 min-w-0 flex-grow"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') updateHistoryName(originalIndex, editingHistoryName);
+                                      if (e.key === 'Escape') setEditingHistoryIndex(null);
+                                    }}
+                                  />
+                                  <button 
+                                    onClick={() => updateHistoryName(originalIndex, editingHistoryName)}
+                                    className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                                  >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => setEditingHistoryIndex(null)}
+                                    className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2 group">
+                                  <span className="text-sm font-black text-zinc-900">{entry.name || 'Anónimo'}</span>
+                                  <button 
+                                    onClick={() => {
+                                      setEditingHistoryIndex(originalIndex);
+                                      setEditingHistoryName(entry.name || 'Anónimo');
+                                    }}
+                                    className="p-1 text-zinc-400 hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-all"
+                                    title="Editar nombre"
+                                  >
+                                    <Settings className="w-3 h-3" />
+                                  </button>
+                                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{entry.date}</span>
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs font-bold text-zinc-600">
+                              {entry.modules.length === 4 ? 'Contabilidad Financiera I' : `Módulos: ${entry.modules.join(', ')}`}
+                            </span>
+                          </div>
+                          <span className="text-xl font-black text-emerald-600 shrink-0">{entry.score}</span>
                         </div>
-                        <span className="text-xl font-black text-emerald-600">{entry.score}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -2127,12 +2263,41 @@ export default function App() {
                   <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest block mb-1">Puntuación Final</span>
                   <span className="text-5xl font-black text-emerald-600">{gameScore}</span>
                 </div>
-                <button 
-                  onClick={() => setGameStatus('selection')}
-                  className="w-full py-5 bg-emerald-600 text-white rounded-[1.5rem] font-black text-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95"
-                >
-                  VOLVER A INTENTAR
-                </button>
+                
+                {!isScoreSaved ? (
+                  <div className="space-y-4">
+                    <div className="text-left space-y-1.5">
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-4">Tu Nombre</label>
+                      <input 
+                        type="text"
+                        value={playerName}
+                        onChange={(e) => setPlayerName(e.target.value)}
+                        placeholder="Escribe tu nombre..."
+                        className="w-full p-4 bg-zinc-50 border-2 border-zinc-100 rounded-2xl focus:border-emerald-500 outline-none font-bold text-zinc-700 transition-all"
+                        autoFocus
+                      />
+                    </div>
+                    <button 
+                      onClick={() => saveScore(gameScore, playerName)}
+                      className="w-full py-5 bg-zinc-900 text-white rounded-[1.5rem] font-black text-xl shadow-xl hover:bg-black transition-all active:scale-95"
+                    >
+                      GUARDAR PUNTUACIÓN
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center gap-2 text-emerald-700 font-bold">
+                      <CheckCircle2 className="w-5 h-5" />
+                      ¡Puntuación guardada!
+                    </div>
+                    <button 
+                      onClick={() => setGameStatus('selection')}
+                      className="w-full py-5 bg-emerald-600 text-white rounded-[1.5rem] font-black text-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95"
+                    >
+                      VOLVER A INTENTAR
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
