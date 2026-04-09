@@ -27,9 +27,11 @@ import {
   GripVertical,
   Heart,
   Trophy,
-  History
+  History,
+  Monitor
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { DigitalWhiteboard } from './components/DigitalWhiteboard';
 
 // --- Types ---
 interface Message {
@@ -826,6 +828,9 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [isPizarraMode, setIsPizarraMode] = useState(false);
+  const [isDigitalWhiteboardOpen, setIsDigitalWhiteboardOpen] = useState(false);
+  const [whiteboardPages, setWhiteboardPages] = useState<any[]>([{ shapes: [], scale: 1, position: { x: 0, y: 0 } }]);
+  const [whiteboardCurrentPageIndex, setWhiteboardCurrentPageIndex] = useState(0);
   const [pizarraColumns, setPizarraColumns] = useState<1 | 2>(2);
   const [pizarraSplit, setPizarraSplit] = useState(50); // Percentage for balance column
   const [balanceFontScale, setBalanceFontScale] = useState(100);
@@ -918,6 +923,8 @@ export default function App() {
       journalFontScale,
       pizarraColumns,
       pizarraSplit,
+      whiteboardPages,
+      whiteboardCurrentPageIndex,
       timestamp: new Date().toISOString()
     };
     localStorage.setItem('contaia_session', JSON.stringify(sessionData));
@@ -945,6 +952,17 @@ export default function App() {
         if (data.journalFontScale) setJournalFontScale(data.journalFontScale);
         if (data.pizarraColumns) setPizarraColumns(data.pizarraColumns);
         if (data.pizarraSplit) setPizarraSplit(data.pizarraSplit);
+        if (data.whiteboardPages) {
+          // Migration: if pages are arrays (old format), convert to objects (new format)
+          const migratedPages = data.whiteboardPages.map((page: any) => {
+            if (Array.isArray(page)) {
+              return { shapes: page, scale: 1, position: { x: 0, y: 0 } };
+            }
+            return page;
+          });
+          setWhiteboardPages(migratedPages);
+        }
+        if (data.whiteboardCurrentPageIndex !== undefined) setWhiteboardCurrentPageIndex(data.whiteboardCurrentPageIndex);
         if (!silent) {
           setShowToast({ message: 'Progreso cargado correctamente', type: 'success' });
           setTimeout(() => setShowToast(null), 3000);
@@ -1003,7 +1021,7 @@ export default function App() {
       saveSession(true);
     }, 1000);
     return () => clearTimeout(timer);
-  }, [messages, currentBalance, currentJournal, fontScale, balanceFontScale, journalFontScale, pizarraColumns, pizarraSplit]);
+  }, [messages, currentBalance, currentJournal, fontScale, balanceFontScale, journalFontScale, pizarraColumns, pizarraSplit, whiteboardPages, whiteboardCurrentPageIndex]);
 
   useEffect(() => {
     scrollToBottom();
@@ -2439,7 +2457,7 @@ export default function App() {
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-1 sm:gap-2">
             <button 
-              onClick={saveSession}
+              onClick={() => saveSession()}
               className="flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs sm:text-sm font-bold transition-colors border border-emerald-100"
               title="Guardar progreso"
             >
@@ -2716,30 +2734,30 @@ export default function App() {
                         </button>
                       </div>
                     </div>
-                    <div className="flex gap-3 items-center">
-                      <button 
-                        onClick={() => setIsJournalFullscreen(true)}
-                        className="p-2 hover:bg-zinc-700 rounded-lg transition-colors text-zinc-400"
-                        title="Pantalla Completa"
-                      >
-                        <Maximize2 className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={clearDraft}
-                        className="text-[13px] font-bold uppercase text-zinc-500 hover:text-zinc-300 transition-colors"
-                      >
-                        Limpiar Borrador
-                      </button>
-                      <button 
-                        onClick={() => setCurrentJournal([])}
-                        className="text-[13px] font-bold uppercase text-red-500 hover:text-red-400 transition-colors"
-                      >
-                        Borrar Diario
-                      </button>
+                      <div className="flex gap-3 items-center">
+                        <button 
+                          onClick={() => setIsJournalFullscreen(true)}
+                          className="p-2 hover:bg-zinc-700 rounded-lg transition-colors text-zinc-400"
+                          title="Pantalla Completa"
+                        >
+                          <Maximize2 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={clearDraft}
+                          className="text-[13px] font-bold uppercase text-zinc-500 hover:text-zinc-300 transition-colors"
+                        >
+                          Limpiar Borrador
+                        </button>
+                        <button 
+                          onClick={() => setCurrentJournal([])}
+                          className="text-[13px] font-bold uppercase text-red-500 hover:text-red-400 transition-colors"
+                        >
+                          Borrar Diario
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="p-6 space-y-6 pizarra-journal-container">
+                    
+                    <div className="p-6 space-y-6 pizarra-journal-container flex-1 overflow-y-auto">
                     {/* Entry Form */}
                     <div className="space-y-4">
                       <div className="flex items-center gap-4 px-2">
@@ -2865,7 +2883,7 @@ export default function App() {
                               <div key={idx} className="grid grid-cols-12 gap-4 text-[14px] py-1 px-2 hover:bg-zinc-800/50 rounded transition-colors">
                                 <div className={`col-span-6 ${row.haber > 0 ? 'pl-4 text-zinc-400' : 'text-emerald-400 font-bold'}`}>
                                   {row.haber > 0 ? 'a ' : ''}
-                                  {row.code && <span className="text-[10px] opacity-50 mr-1">{row.code}</span>}
+                                  {row.code && <span className="text-[12px] opacity-80 mr-4 font-black text-emerald-500">{row.code}</span>}
                                   {row.account}
                                 </div>
                                 <div className="col-span-3 text-right text-zinc-300">
@@ -2881,6 +2899,18 @@ export default function App() {
                         {currentJournal.length === 0 && (
                           <p className="text-[13px] text-zinc-600 italic text-center py-4">No hay asientos registrados aún</p>
                         )}
+                      </div>
+
+                      {/* Pizarra Digital Button at the end of Journal */}
+                      <div className="pt-6 flex justify-center">
+                        <button 
+                          onClick={() => setIsDigitalWhiteboardOpen(true)}
+                          className="flex items-center gap-3 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl transition-all shadow-xl shadow-emerald-900/20 group scale-110"
+                          title="Activar Pizarra Digital"
+                        >
+                          <Monitor className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                          <span className="text-lg font-black uppercase tracking-wider">Pizarra Digital</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -3107,11 +3137,11 @@ export default function App() {
                             animate={{ opacity: 1, x: 0 }}
                             className="grid grid-cols-12 gap-2 text-[14px] py-1 px-2 hover:bg-zinc-800/50 rounded transition-colors"
                           >
-                            <div className={`col-span-6 ${row.haber > 0 ? 'pl-4 text-zinc-400' : 'text-emerald-400 font-bold'}`}>
-                              {row.haber > 0 ? 'a ' : ''}
-                              {row.code && <span className="text-[10px] opacity-50 mr-1">{row.code}</span>}
-                              {row.account}
-                            </div>
+                                <div className={`col-span-6 ${row.haber > 0 ? 'pl-4 text-zinc-400' : 'text-emerald-400 font-bold'}`}>
+                                  {row.haber > 0 ? 'a ' : ''}
+                                  {row.code && <span className="text-[12px] opacity-80 mr-4 font-black text-emerald-500">{row.code}</span>}
+                                  {row.account}
+                                </div>
                             <div className="col-span-3 text-right text-zinc-300">
                               {row.debe > 0 ? formatCurrency(row.debe) : '-'}
                             </div>
@@ -3236,6 +3266,28 @@ export default function App() {
                 </div>
               )}
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Digital Whiteboard Overlay */}
+      <AnimatePresence>
+        {isDigitalWhiteboardOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed inset-0 z-[200]"
+          >
+            <DigitalWhiteboard 
+              entries={currentJournal} 
+              onClose={() => setIsDigitalWhiteboardOpen(false)} 
+              pages={whiteboardPages}
+              setPages={setWhiteboardPages}
+              currentPageIndex={whiteboardCurrentPageIndex}
+              setCurrentPageIndex={setWhiteboardCurrentPageIndex}
+              formatCurrency={formatCurrency}
+            />
           </motion.div>
         )}
       </AnimatePresence>
