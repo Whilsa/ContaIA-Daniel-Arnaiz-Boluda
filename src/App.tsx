@@ -86,29 +86,94 @@ const formatCurrency = (value: number): string => {
 };
 
 // --- Constants ---
-const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: string[] }[]> = {
+const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: string[], scenarios?: { text: string, action: 'debit' | 'credit' }[] }[]> = {
   1: [
-    { code: '100', name: 'Capital social', examples: ['Aportaciones de los socios al constituir una sociedad anónima o limitada y ampliaciones de capital acordadas para incorporar nuevos accionistas'] },
+    { 
+      code: '100', 
+      name: 'Capital social', 
+      examples: ['Aportaciones de los socios al constituir una sociedad anónima o limitada y ampliaciones de capital acordadas para incorporar nuevos accionistas'],
+      scenarios: [
+        { text: 'Se constituye una sociedad anónima con aportaciones de los socios', action: 'credit' },
+        { text: 'Se realiza una ampliación de capital suscrita por nuevos accionistas', action: 'credit' }
+      ]
+    },
     { code: '101', name: 'Fondo social', examples: ['Aportación inicial de los miembros al crear una entidad sin ánimo de lucro o asociación'] },
     { code: '102', name: 'Capital', examples: ['Aportación inicial de dinero realizada por un empresario individual para crear su negocio'] },
     { code: '103', name: 'Socios por desembolsos no exigidos', examples: ['Parte del capital social suscrito que los accionistas aún no han aportado y que la sociedad todavía no les ha reclamado'] },
     { code: '112', name: 'Reserva legal' },
-    { code: '203', name: 'Propiedad industrial', examples: ['Adquisición de una patente (por ejemplo, para fabricar carne vegetal)'] },
+    { 
+      code: '203', 
+      name: 'Propiedad industrial', 
+      examples: ['Adquisición de una patente (por ejemplo, para fabricar carne vegetal)'],
+      scenarios: [
+        { text: 'La empresa adquiere una patente para un nuevo proceso de fabricación', action: 'debit' }
+      ]
+    },
     { code: '205', name: 'Derechos de traspaso', examples: ['Pago realizado al anterior arrendatario de un local para subrogarse en su contrato y convertirse en el nuevo inquilino'] },
-    { code: '206', name: 'Aplicaciones informáticas', examples: ['Compra de software, programas informáticos o gastos de desarrollo de una página web'] },
+    { 
+      code: '206', 
+      name: 'Aplicaciones informáticas', 
+      examples: ['Compra de software, programas informáticos o gastos de desarrollo de una página web'],
+      scenarios: [
+        { text: 'Se compra una licencia de software de gestión para la oficina', action: 'debit' }
+      ]
+    },
     { code: '210', name: 'Terrenos y bienes naturales', examples: ['Valor del suelo o solares urbanos donde se asientan las oficinas, naves o edificios de la empresa'] },
     { code: '211', name: 'Construcciones', examples: ['Edificaciones como locales de oficinas, naves industriales u hoteles propiedad de la firma'] },
     { code: '212', name: 'Instalaciones técnicas', examples: ['Equipos especializados como aparatos quirúrgicos, equipos de generación de energía o maquinaria avanzada de proceso productivo'] },
-    { code: '213', name: 'Maquinaria', examples: ['Máquinas de uso industrial general o equipos industriales para la fabricación'] },
+    { 
+      code: '213', 
+      name: 'Maquinaria', 
+      examples: ['Máquinas de uso industrial general o equipos industriales para la fabricación'],
+      scenarios: [
+        { text: 'Se adquiere una nueva máquina para la cadena de montaje', action: 'debit' }
+      ]
+    },
     { code: '215', name: 'Otras instalaciones', examples: ['Instalaciones deportivas para empleados (pistas de fútbol/baloncesto) u otros elementos no clasificados anteriormente'] },
-    { code: '216', name: 'Mobiliario', examples: ['Sillas, mesas de oficina y estanterías'] },
-    { code: '217', name: 'Equipos para procesos de información', examples: ['Ordenadores, servidores y conjuntos electrónicos'] },
-    { code: '218', name: 'Elementos de transporte', examples: ['Vehículos como furgonetas o camiones para el transporte de personas o mercancías'] },
+    { 
+      code: '216', 
+      name: 'Mobiliario', 
+      examples: ['Sillas, mesas de oficina y estanterías'],
+      scenarios: [
+        { text: 'Se compran mesas y sillas para la nueva sala de reuniones', action: 'debit' }
+      ]
+    },
+    { 
+      code: '217', 
+      name: 'Equipos para procesos de información', 
+      examples: ['Ordenadores, servidores y conjuntos electrónicos'],
+      scenarios: [
+        { text: 'Se adquieren tres ordenadores portátiles para el departamento comercial', action: 'debit' }
+      ]
+    },
+    { 
+      code: '218', 
+      name: 'Elementos de transporte', 
+      examples: ['Vehículos como furgonetas o camiones para el transporte de personas o mercancías'],
+      scenarios: [
+        { text: 'La empresa compra una furgoneta para el reparto de mercancías', action: 'debit' }
+      ]
+    },
     { code: '240', name: 'Participaciones a largo plazo en partes vinculadas', examples: ['Compra de acciones de una empresa del mismo grupo sin intención de venderlas pronto'] },
     { code: '251', name: 'Valores representativos de deuda a largo plazo', examples: ['Inversión en bonos del Tesoro o títulos de renta fija con vencimiento a cinco años'] },
-    { code: '430', name: 'Clientes', examples: ['Derechos de cobro en factura por la venta habitual de productos o servicios (ej. asesoría o viajes combinados)'] },
+    { 
+      code: '430', 
+      name: 'Clientes', 
+      examples: ['Derechos de cobro en factura por la venta habitual de productos o servicios (ej. asesoría o viajes combinados)'],
+      scenarios: [
+        { text: 'Se realiza una venta de mercaderías a crédito', action: 'debit' },
+        { text: 'Un cliente nos paga mediante transferencia bancaria una factura pendiente', action: 'credit' }
+      ]
+    },
     { code: '431', name: 'Clientes, efectos comerciales a cobrar', examples: ['Derechos de cobro sobre clientes que han aceptado una letra de cambio o pagaré'] },
-    { code: '472', name: 'Hacienda Pública, IVA soportado', examples: ['Impuesto pagado al comprar bienes o servicios (maquinaria, mercaderías, luz)'] },
+    { 
+      code: '472', 
+      name: 'Hacienda Pública, IVA soportado', 
+      examples: ['Impuesto pagado al comprar bienes o servicios (maquinaria, mercaderías, luz)'],
+      scenarios: [
+        { text: 'Se paga el IVA en la compra de suministros de oficina', action: 'debit' }
+      ]
+    },
     { code: '540', name: 'Inversiones financieras a corto plazo en instrumentos de patrimonio', examples: ['Compra de acciones en bolsa con intención especulativa (venta rápida)'] },
     { code: '541', name: 'Valores representativos de deuda a corto plazo', examples: ['Bonos del Tesoro o de empresas con vencimiento a 12 meses o menos'] },
     { code: '542', name: 'Créditos a corto plazo', examples: ['Dinero prestado a un tercero a devolver en seis meses'] },
@@ -116,25 +181,70 @@ const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: s
     { code: '558', name: 'Socios por desembolsos exigidos', examples: ['Capital que la empresa ya ha reclamado formalmente a los accionistas para que lo aporten'] },
     { code: '565', name: 'Fianzas constituidas a corto plazo', examples: ['Garantía en efectivo pagada al firmar un contrato que será devuelta en 12 meses'] },
     { code: '570', name: 'Caja', examples: ['Dinero en efectivo (billetes y monedas) disponible en la caja fuerte'] },
-    { code: '572', name: 'Bancos', examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'] },
+    { 
+      code: '572', 
+      name: 'Bancos', 
+      examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'],
+      scenarios: [
+        { text: 'Se recibe una transferencia de un cliente', action: 'debit' },
+        { text: 'Se paga mediante transferencia la factura de un proveedor', action: 'credit' },
+        { text: 'Se retira dinero del banco para ingresar en la caja de la empresa', action: 'credit' }
+      ]
+    },
     { code: '573', name: 'Bancos, moneda extranjera', examples: ['Saldo en cuentas bancarias denominadas en divisas como dólares'] },
-    { code: '170', name: 'Deudas a largo plazo con entidades de crédito', examples: ['Préstamos bancarios con vencimiento superior a un año y deudas que, tras una reclasificación, permanecen a largo plazo'] },
+    { 
+      code: '170', 
+      name: 'Deudas a largo plazo con entidades de crédito', 
+      examples: ['Préstamos bancarios con vencimiento superior a un año y deudas que, tras una reclasificación, permanecen a largo plazo'],
+      scenarios: [
+        { text: 'El banco nos concede un préstamo a devolver en 3 años', action: 'credit' }
+      ]
+    },
     { code: '173', name: 'Proveedores de inmovilizado a largo plazo', examples: ['Deuda con el vendedor de una máquina o furgoneta a pagar en un plazo de 18 meses o más'] },
     { code: '175', name: 'Efectos a pagar a largo plazo', examples: ['Letras de cambio aceptadas por la compra de un edificio con vencimiento a dos años'] },
     { code: '180', name: 'Fianzas recibidas a largo plazo', examples: ['Dinero recibido de un inquilino como garantía de cumplimiento de un contrato de alquiler a seis años'] },
-    { code: '400', name: 'Proveedores', examples: ['Deudas en factura por compra de electrodomésticos, material de oficina o suministros de limpieza para el tráfico comercial'] },
+    { 
+      code: '400', 
+      name: 'Proveedores', 
+      examples: ['Deudas en factura por compra de electrodomésticos, material de oficina o suministros de limpieza para el tráfico comercial'],
+      scenarios: [
+        { text: 'Se compran mercaderías a crédito', action: 'credit' },
+        { text: 'Se paga por banco la deuda que teníamos con un suministrador', action: 'debit' }
+      ]
+    },
     { code: '401', name: 'Proveedores, efectos comerciales a pagar', examples: ['Deuda comercial formalizada mediante la aceptación de una letra de cambio o pagaré'] },
-    { code: '477', name: 'Hacienda Pública, IVA repercutido', examples: ['Impuesto cobrado a los clientes al venderles productos o prestarles servicios'] },
+    { 
+      code: '477', 
+      name: 'Hacienda Pública, IVA repercutido', 
+      examples: ['Impuesto cobrado a los clientes al venderles productos o prestarles servicios'],
+      scenarios: [
+        { text: 'Se repercute el IVA en una venta de servicios', action: 'credit' }
+      ]
+    },
     { code: '5200', name: 'Préstamos a corto plazo con entidades de crédito', examples: ['Deuda bancaria que vence en el año actual o parte de un préstamo a largo plazo reclasificado'] },
     { code: '523', name: 'Proveedores de inmovilizado a corto plazo', examples: ['Deuda con el vendedor de un ordenador o mobiliario a pagar en menos de un año'] },
     { code: '525', name: 'Efectos a pagar a corto plazo' },
     { code: '560', name: 'Fianzas recibidas a corto plazo' }
   ],
   2: [
-    { code: '100', name: 'Capital social', examples: ['Aportaciones de los socios al constituir una sociedad anónima o limitada y ampliaciones de capital acordadas para incorporar nuevos accionistas'] },
+    { 
+      code: '100', 
+      name: 'Capital social', 
+      examples: ['Aportaciones de los socios al constituir una sociedad anónima o limitada y ampliaciones de capital acordadas para incorporar nuevos accionistas'],
+      scenarios: [
+        { text: 'Se constituye una sociedad anónima con aportaciones de los socios', action: 'credit' }
+      ]
+    },
     { code: '103', name: 'Socios por desembolsos no exigidos', examples: ['Parte del capital social suscrito que los accionistas aún no han aportado y que la sociedad todavía no les ha reclamado'] },
     { code: '112', name: 'Reserva legal' },
-    { code: '170', name: 'Deudas a largo plazo con entidades de crédito', examples: ['Préstamos bancarios con vencimiento superior a un año y deudas que, tras una reclasificación, permanecen a largo plazo'] },
+    { 
+      code: '170', 
+      name: 'Deudas a largo plazo con entidades de crédito', 
+      examples: ['Préstamos bancarios con vencimiento superior a un año y deudas que, tras una reclasificación, permanecen a largo plazo'],
+      scenarios: [
+        { text: 'Se solicita un préstamo al banco a devolver en 5 años', action: 'credit' }
+      ]
+    },
     { code: '173', name: 'Proveedores de inmovilizado a largo plazo', examples: ['Deuda con el vendedor de una máquina o furgoneta a pagar en un plazo de 18 meses o más'] },
     { code: '175', name: 'Efectos a pagar a largo plazo', examples: ['Letras de cambio aceptadas por la compra de un edificio con vencimiento a dos años'] },
     { code: '180', name: 'Fianzas recibidas a largo plazo', examples: ['Dinero recibido de un inquilino como garantía de cumplimiento de un contrato de alquiler a seis años'] },
@@ -142,11 +252,32 @@ const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: s
     { code: '205', name: 'Derechos de traspaso', examples: ['Pago realizado al anterior arrendatario de un local para subrogarse en su contrato y convertirse en el nuevo inquilino'] },
     { code: '206', name: 'Aplicaciones informáticas', examples: ['Compra de software, programas informáticos o gastos de desarrollo de una página web'] },
     { code: '210', name: 'Terrenos y bienes naturales', examples: ['Valor del suelo o solares urbanos donde se asientan las oficinas, naves o edificios de la empresa'] },
-    { code: '211', name: 'Construcciones', examples: ['Edificaciones como locales de oficinas, naves industriales u hoteles propiedad de la firma'] },
+    { 
+      code: '211', 
+      name: 'Construcciones', 
+      examples: ['Edificaciones como locales de oficinas, naves industriales u hoteles propiedad de la firma'],
+      scenarios: [
+        { text: 'Se adquiere un local para las nuevas oficinas centrales', action: 'debit' }
+      ]
+    },
     { code: '212', name: 'Instalaciones técnicas', examples: ['Equipos especializados como aparatos quirúrgicos, equipos de generación de energía o maquinaria avanzada de proceso productivo'] },
-    { code: '216', name: 'Mobiliario', examples: ['Sillas, mesas de oficina y estanterías'] },
+    { 
+      code: '216', 
+      name: 'Mobiliario', 
+      examples: ['Sillas, mesas de oficina y estanterías'],
+      scenarios: [
+        { text: 'Se compra mobiliario para la zona de recepción', action: 'debit' }
+      ]
+    },
     { code: '217', name: 'Equipos para procesos de información', examples: ['Ordenadores, servidores y conjuntos electrónicos'] },
-    { code: '218', name: 'Elementos de transporte', examples: ['Vehículos como furgonetas o camiones para el transporte de personas o mercancías'] },
+    { 
+      code: '218', 
+      name: 'Elementos de transporte', 
+      examples: ['Vehículos como furgonetas o camiones para el transporte de personas o mercancías'],
+      scenarios: [
+        { text: 'Se adquiere un camión para la distribución logística', action: 'debit' }
+      ]
+    },
     { code: '251', name: 'Valores representativos de deuda a largo plazo', examples: ['Inversión en bonos del Tesoro o títulos de renta fija con vencimiento a cinco años'] },
     { code: '472', name: 'Hacienda Pública, IVA soportado', examples: ['Impuesto pagado al comprar bienes o servicios (maquinaria, mercaderías, luz)'] },
     { code: '477', name: 'Hacienda Pública, IVA repercutido', examples: ['Impuesto cobrado a los clientes al venderles productos o prestarles servicios'] },
@@ -157,7 +288,14 @@ const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: s
     { code: '542', name: 'Créditos a corto plazo', examples: ['Dinero prestado a un tercero a devolver en seis meses'] },
     { code: '558', name: 'Socios por desembolsos exigidos', examples: ['Capital que la empresa ya ha reclamado formalmente a los accionistas para que lo aporten'] },
     { code: '565', name: 'Fianzas constituidas a corto plazo', examples: ['Garantía en efectivo pagada al firmar un contrato que será devuelta en 12 meses'] },
-    { code: '572', name: 'Bancos', examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'] },
+    { 
+      code: '572', 
+      name: 'Bancos', 
+      examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'],
+      scenarios: [
+        { text: 'Se paga por banco la cuota del préstamo recibido', action: 'credit' }
+      ]
+    },
     { code: '573', name: 'Bancos, moneda extranjera', examples: ['Saldo en cuentas bancarias denominadas en divisas como dólares'] },
     { code: '214', name: 'Utillaje', examples: ['Herramientas y utensilios para el almacén o la fábrica'] },
     { code: '219', name: 'Otro inmovilizado material', examples: ['Papeleras, contenedores y envases que no se consumen inmediatamente'] },
@@ -167,7 +305,14 @@ const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: s
     { code: '260', name: 'Garantías financieras a largo plazo (Avales)', examples: ['Avales en efectivo recibidos por aceptar flexibilidad en las obligaciones de un contrato'] }
   ],
   3: [
-    { code: '600', name: 'Compra de mercaderías', examples: ['Adquisición de productos para reventa (fruta, ordenadores, electrodomésticos) como actividad principal de la empresa, incluyendo el transporte de las compras a cargo del comprador'] },
+    { 
+      code: '600', 
+      name: 'Compra de mercaderías', 
+      examples: ['Adquisición de productos para reventa (fruta, ordenadores, electrodomésticos) como actividad principal de la empresa, incluyendo el transporte de las compras a cargo del comprador'],
+      scenarios: [
+        { text: 'Se compran mercaderías a un proveedor habitual', action: 'debit' }
+      ]
+    },
     { code: '601', name: 'Compra de materias primas', examples: ['Compra de madera para fabricar muebles'] },
     { code: '602', name: 'Compras de otros aprovisionamientos', examples: ['Compra de materiales fungibles (papel, tinta, artículos de limpieza, gasolina o envases no retornables)'] },
     { code: '606', name: 'Descuentos sobre compras por pronto pago' },
@@ -175,21 +320,49 @@ const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: s
     { code: '609', name: '"Rappels" por compras', examples: ['Descuentos fuera de factura por haber alcanzado un gran volumen de pedidos'] },
     { code: '610', name: 'Variación de existencias' },
     { code: '620', name: 'Gastos en I+D' },
-    { code: '621', name: 'Arrendamientos y cánones', examples: ['Alquiler del local', 'Alquiler de una furgoneta'] },
+    { 
+      code: '621', 
+      name: 'Arrendamientos y cánones', 
+      examples: ['Alquiler del local', 'Alquiler de una furgoneta'],
+      scenarios: [
+        { text: 'Se recibe la factura del alquiler mensual del local', action: 'debit' }
+      ]
+    },
     { code: '622', name: 'Reparaciones y conservación', examples: ['Reparación de una máquina', 'Pintado de la oficina'] },
     { code: '623', name: 'Servicios de profesionales independientes', examples: ['Honorarios de economistas, abogados, auditores, notarios, gestorías y contratas de limpieza'] },
     { code: '624', name: 'Transportes (en ventas)', examples: ['Gasto por enviar las ventas a los clientes mediante un transportista externo'] },
     { code: '625', name: 'Primas de seguros', examples: ['Seguro del local contra incendios', 'Seguro de responsabilidad civil'] },
     { code: '626', name: 'Servicios bancarios', examples: ['Comisiones de mantenimiento de cuenta o por descubierto'] },
-    { code: '628', name: 'Suministros', examples: ['Consumo de agua, gas y electricidad'] },
+    { 
+      code: '628', 
+      name: 'Suministros', 
+      examples: ['Consumo de agua, gas y electricidad'],
+      scenarios: [
+        { text: 'Se recibe el recibo de la luz del mes pasado', action: 'debit' }
+      ]
+    },
     { code: '629', name: 'Otros servicios (teléfono, viajes)', examples: ['Gastos de teléfono, viajes del personal o el transporte de empleados a la fábrica'] },
     { code: '650', name: 'Pérdidas de créditos comerciales incobrables', examples: ['Deudas de clientes declarados en concurso de acreedores o insolventes que se dan por perdidas'] },
     { code: '662', name: 'Intereses de deudas' },
     { code: '678', name: 'Gastos excepcionales (multas, incendios)', examples: ['Recoge multas fiscales, pérdidas por incendios (furgoneta carbonizada), inundaciones o sanciones'] },
-    { code: '700', name: 'Venta de mercaderías', examples: ['Ingresos por la venta habitual de los productos de la empresa (actividad principal)'] },
+    { 
+      code: '700', 
+      name: 'Venta de mercaderías', 
+      examples: ['Ingresos por la venta habitual de los productos de la empresa (actividad principal)'],
+      scenarios: [
+        { text: 'Se venden productos a un cliente habitual', action: 'credit' }
+      ]
+    },
     { code: '701', name: 'Venta de productos terminados' },
     { code: '704', name: 'Venta de envases y embalajes' },
-    { code: '705', name: 'Prestación de servicios', examples: ['Facturación por alojamiento en hoteles, restauración, servicios postventa o asesoramiento laboral (cuando es la actividad principal de la empresa)'] },
+    { 
+      code: '705', 
+      name: 'Prestación de servicios', 
+      examples: ['Facturación por alojamiento en hoteles, restauración, servicios postventa o asesoramiento laboral (cuando es la actividad principal de la empresa)'],
+      scenarios: [
+        { text: 'Se factura a un cliente por un servicio de asesoría prestado', action: 'credit' }
+      ]
+    },
     { code: '706', name: 'Descuentos sobre ventas por pronto pago' },
     { code: '708', name: 'Devoluciones de ventas' },
     { code: '709', name: '"Rappels" sobre ventas' },
@@ -220,21 +393,56 @@ const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: s
     { code: '217', name: 'Equipos para procesos de información', examples: ['Ordenadores, servidores y conjuntos electrónicos'] },
     { code: '218', name: 'Elementos de transporte', examples: ['Vehículos como furgonetas o camiones para el transporte de personas o mercancías'] },
     { code: '300', name: 'Mercaderías (existencias en almacén)', examples: ['Valor de los productos en almacén para reventa como muebles de cocina, tinta de impresora o frutas'] },
-    { code: '400', name: 'Proveedores', examples: ['Deudas en factura por compra de electrodomésticos, material de oficina o suministros de limpieza para el tráfico comercial'] },
+    { 
+      code: '400', 
+      name: 'Proveedores', 
+      examples: ['Deudas en factura por compra de electrodomésticos, material de oficina o suministros de limpieza para el tráfico comercial'],
+      scenarios: [
+        { text: 'Se compran suministros de oficina a crédito', action: 'credit' }
+      ]
+    },
     { code: '407', name: 'Anticipos a proveedores', examples: ['Dinero entregado "a cuenta" para asegurar una futura compra de productos'] },
-    { code: '430', name: 'Clientes', examples: ['Derechos de cobro en factura por la venta habitual de productos o servicios (ej. asesoría o viajes combinados)'] },
+    { 
+      code: '430', 
+      name: 'Clientes', 
+      examples: ['Derechos de cobro en factura por la venta habitual de productos o servicios (ej. asesoría o viajes combinados)'],
+      scenarios: [
+        { text: 'Se vende mercadería a un cliente con pago aplazado', action: 'debit' }
+      ]
+    },
     { code: '431', name: 'Clientes, efectos comerciales a cobrar', examples: ['Derechos de cobro sobre clientes que han aceptado una letra de cambio o pagaré'] },
     { code: '472', name: 'Hacienda Pública, IVA soportado', examples: ['Impuesto pagado al comprar bienes o servicios (maquinaria, mercaderías, luz)'] },
     { code: '477', name: 'Hacienda Pública, IVA repercutido', examples: ['Impuesto cobrado a los clientes al venderles productos o prestarles servicios'] },
     { code: '5200', name: 'Préstamos a corto plazo con entidades de crédito', examples: ['Deuda bancaria que vence en el año actual o parte de un préstamo a largo plazo reclasificado'] },
     { code: '523', name: 'Proveedores de inmovilizado a corto plazo', examples: ['Deuda con el vendedor de un ordenador o mobiliario a pagar en menos de un año'] },
-    { code: '572', name: 'Bancos', examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'] },
-    { code: '600', name: 'Compra de mercaderías', examples: ['Adquisición de productos para reventa (fruta, ordenadores, electrodomésticos) como actividad principal de la empresa, incluyendo el transporte de las compras a cargo del comprador'] },
+    { 
+      code: '572', 
+      name: 'Bancos', 
+      examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'],
+      scenarios: [
+        { text: 'Se paga por transferencia el seguro anual de la oficina', action: 'credit' }
+      ]
+    },
+    { 
+      code: '600', 
+      name: 'Compra de mercaderías', 
+      examples: ['Adquisición de productos para reventa (fruta, ordenadores, electrodomésticos) como actividad principal de la empresa, incluyendo el transporte de las compras a cargo del comprador'],
+      scenarios: [
+        { text: 'Se adquieren existencias para el almacén', action: 'debit' }
+      ]
+    },
     { code: '609', name: '"Rappels" por compras', examples: ['Descuentos fuera de factura por haber alcanzado un gran volumen de pedidos'] },
     { code: '610', name: 'Variación de existencias' },
     { code: '624', name: 'Transportes (en ventas)', examples: ['Gasto por enviar las ventas a los clientes mediante un transportista externo'] },
     { code: '628', name: 'Suministros', examples: ['Consumo de agua, gas y electricidad'] },
-    { code: '700', name: 'Venta de mercaderías', examples: ['Ingresos por la venta habitual de los productos de la empresa (actividad principal)'] },
+    { 
+      code: '700', 
+      name: 'Venta de mercaderías', 
+      examples: ['Ingresos por la venta habitual de los productos de la empresa (actividad principal)'],
+      scenarios: [
+        { text: 'Se realiza una venta de productos del almacén', action: 'credit' }
+      ]
+    },
     { code: '706', name: 'Descuentos sobre ventas por pronto pago' },
     { code: '4700', name: 'Hacienda Pública, deudora por IVA (a devolver)' },
     { code: '4750', name: 'Hacienda Pública, acreedora por IVA (a pagar)' }
@@ -857,7 +1065,9 @@ export default function App() {
   const [gameLives, setGameLives] = useState(5);
   const [gameSelectedModules, setGameSelectedModules] = useState<number[]>([]);
   const [gameStatus, setGameStatus] = useState<'selection' | 'playing' | 'gameover'>('selection');
-  const [gameQuestionType, setGameQuestionType] = useState<'code' | 'balance'>('code');
+  const [gameQuestionType, setGameQuestionType] = useState<'code' | 'balance' | 'entry'>('code');
+  const [userEntryChoice, setUserEntryChoice] = useState<'debit' | 'credit' | null>(null);
+  const [currentScenario, setCurrentScenario] = useState<{ text: string, action: 'debit' | 'credit' } | null>(null);
   const [gameDifficulty, setGameDifficulty] = useState<'facil' | 'normal' | 'extremo'>('normal');
   const [gameTimer, setGameTimer] = useState(20);
   const [currentQuestion, setCurrentQuestion] = useState<{ code: string, name: string, examples?: string[] } | null>(null);
@@ -996,11 +1206,7 @@ export default function App() {
     setCurrentBalance(INITIAL_BALANCE);
     setTargetBalance(INITIAL_BALANCE);
     setCurrentJournal([]);
-    setFontScale(100);
-    setBalanceFontScale(100);
-    setJournalFontScale(100);
-    setPizarraColumns(2);
-    setPizarraSplit(50);
+    // Font scales and layout are now preserved
     setShowResetConfirm(false);
     setShowToast({ message: 'Sesión reiniciada', type: 'success' });
     setTimeout(() => setShowToast(null), 3000);
@@ -1779,7 +1985,7 @@ export default function App() {
   };
 
   const getAvailableAccounts = () => {
-    const accounts: { code: string, name: string, examples?: string[] }[] = [];
+    const accounts: { code: string, name: string, examples?: string[], scenarios?: { text: string, action: 'debit' | 'credit' }[] }[] = [];
     gameSelectedModules.forEach(m => {
       accounts.push(...MODULE_ACCOUNTS[m]);
     });
@@ -1810,6 +2016,8 @@ export default function App() {
     
     setUserAnswer('');
     setSelectedBalances([]);
+    setUserEntryChoice(null);
+    setCurrentScenario(null);
     setLastAnswerCorrect(null);
     
     const difficultyTimes = {
@@ -1819,11 +2027,24 @@ export default function App() {
     };
     setGameTimer(difficultyTimes[gameDifficulty]);
     
-    const type = Math.random() > 0.4 ? 'code' : 'balance';
+    // Decide question type
+    let type: 'code' | 'balance' | 'entry' = 'code';
+    const rand = Math.random();
+    // Entry questions are now the most frequent (70% chance if scenarios available)
+    if (rand > 0.3 && randomAccount.scenarios && randomAccount.scenarios.length > 0) {
+      type = 'entry';
+    } else if (rand > 0.15) {
+      type = 'balance';
+    }
+    
     setGameQuestionType(type);
 
     // Pick question text
-    if (type === 'code' && randomAccount.examples && randomAccount.examples.length > 0) {
+    if (type === 'entry' && randomAccount.scenarios) {
+      const scenario = randomAccount.scenarios[Math.floor(Math.random() * randomAccount.scenarios.length)];
+      setCurrentScenario(scenario);
+      setCurrentQuestionText(scenario.text);
+    } else if (type === 'code' && randomAccount.examples && randomAccount.examples.length > 0) {
       const example = randomAccount.examples[Math.floor(Math.random() * randomAccount.examples.length)];
       setCurrentQuestionText(example);
     } else {
@@ -1835,9 +2056,11 @@ export default function App() {
     setGameLives(prev => {
       const newLives = prev - 1;
       if (newLives <= 0) {
-        setGameStatus('gameover');
-        setPlayerName('');
-        setIsScoreSaved(false);
+        setTimeout(() => {
+          setGameStatus('gameover');
+          setPlayerName('');
+          setIsScoreSaved(false);
+        }, 1500); // Show the loss for a moment
       }
       return newLives;
     });
@@ -1850,10 +2073,10 @@ export default function App() {
       setLastAnswerCorrect(null);
       setUserAnswer('');
       setSelectedBalances([]);
-      if (gameStatus === 'playing') {
+      if (gameStatus === 'playing' && gameLives > 1) {
         generateQuestion();
       }
-    }, 1500);
+    }, 2000); // Increased delay to show the error state
   };
 
   const startGame = () => {
@@ -1881,6 +2104,23 @@ export default function App() {
         }, 1000);
       } else {
         handleWrongAnswer();
+      }
+    } else if (gameQuestionType === 'entry') {
+      const isCodeCorrect = userAnswer.trim() === currentQuestion.code;
+      const isActionCorrect = userEntryChoice === currentScenario?.action;
+
+      if (isCodeCorrect && isActionCorrect) {
+        setGameScore(prev => prev + 20); // Higher reward for complex question
+        setLastAnswerCorrect(true);
+        setTimeout(() => {
+          generateQuestion();
+        }, 1000);
+      } else {
+        let msg = "";
+        if (!isCodeCorrect && !isActionCorrect) msg = "Código y acción incorrectos";
+        else if (!isCodeCorrect) msg = "Código de cuenta incorrecto";
+        else msg = "La cuenta debe " + (currentScenario?.action === 'debit' ? "cargarse (Debe)" : "abonarse (Haber)");
+        handleWrongAnswer(msg);
       }
     } else {
       const correct = getCorrectBalances(currentQuestion.code);
@@ -2176,48 +2416,124 @@ export default function App() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               className="max-w-2xl mx-auto"
             >
-              <div className="bg-white p-12 rounded-[3rem] shadow-2xl border border-zinc-100 text-center space-y-10">
+              <div className="bg-white p-12 rounded-[3rem] shadow-2xl border border-zinc-100 text-center space-y-10 relative overflow-hidden">
+                {/* Heart Break Animation */}
+                <AnimatePresence>
+                  {lastAnswerCorrect === false && (
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm"
+                    >
+                      <div className="relative w-32 h-32">
+                        {/* Left half of the heart */}
+                        <motion.div
+                          initial={{ x: 0, rotate: 0, opacity: 1 }}
+                          animate={{ x: -40, rotate: -25, y: 20, opacity: 0 }}
+                          transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+                          className="absolute inset-0 flex items-center justify-center"
+                        >
+                          <Heart className="w-32 h-32 text-red-500 fill-red-500" style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }} />
+                        </motion.div>
+                        {/* Right half of the heart */}
+                        <motion.div
+                          initial={{ x: 0, rotate: 0, opacity: 1 }}
+                          animate={{ x: 40, rotate: 25, y: 20, opacity: 0 }}
+                          transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+                          className="absolute inset-0 flex items-center justify-center"
+                        >
+                          <Heart className="w-32 h-32 text-red-500 fill-red-500" style={{ clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)' }} />
+                        </motion.div>
+                        {/* Initial full heart pop then disappear */}
+                        <motion.div
+                          initial={{ scale: 0, opacity: 1 }}
+                          animate={{ scale: [0, 1.2, 1], opacity: [1, 1, 0] }}
+                          transition={{ 
+                            scale: { duration: 0.3 },
+                            opacity: { delay: 0.3, duration: 0.01 }
+                          }}
+                          className="absolute inset-0 flex items-center justify-center"
+                        >
+                          <Heart className="w-32 h-32 text-red-500 fill-red-500" />
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div className="space-y-4">
                   <span className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em]">
-                    {gameQuestionType === 'code' ? '¿Cuál es el número de cuenta?' : '¿Qué saldos puede tener esta cuenta?'}
+                    {gameQuestionType === 'code' ? '¿Cuál es el número de cuenta?' : 
+                     gameQuestionType === 'entry' ? 'Indica el número de cuenta y si se carga o abona' :
+                     '¿Qué saldos puede tener esta cuenta?'}
                   </span>
                   <div className="flex flex-col items-center gap-2">
                     <h3 className="text-4xl font-black text-zinc-900 leading-tight">
-                      {gameQuestionType === 'code' ? currentQuestionText : `${currentQuestion.code} - ${currentQuestion.name}`}
+                      {gameQuestionType === 'balance' ? `${currentQuestion.code} - ${currentQuestion.name}` : currentQuestionText}
                     </h3>
                   </div>
                 </div>
 
                 <form onSubmit={handleGameAnswer} className="space-y-6">
-                  {gameQuestionType === 'code' ? (
-                    <div className="relative">
-                      <input 
-                        autoFocus
-                        type="text"
-                        value={userAnswer}
-                        onChange={(e) => setUserAnswer(e.target.value)}
-                        placeholder="Escribe el código..."
-                        className={`w-full text-center text-5xl font-black p-8 rounded-[2rem] border-4 transition-all outline-none ${
-                          lastAnswerCorrect === true ? 'border-emerald-500 bg-emerald-50 text-emerald-600' :
-                          lastAnswerCorrect === false ? 'border-red-500 bg-red-50 text-red-600 animate-shake' :
-                          'border-zinc-100 bg-zinc-50 focus:border-emerald-500 focus:bg-white'
-                        }`}
-                      />
-                      {lastAnswerCorrect === true && (
-                        <motion.div 
-                          initial={{ scale: 0 }} animate={{ scale: 1 }}
-                          className="absolute -top-4 -right-4 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg"
-                        >
-                          <CheckCircle2 className="w-6 h-6 text-white" />
-                        </motion.div>
-                      )}
-                      {lastAnswerCorrect === false && (
-                        <motion.div 
-                          initial={{ scale: 0 }} animate={{ scale: 1 }}
-                          className="absolute -top-4 -right-4 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center shadow-lg"
-                        >
-                          <X className="w-6 h-6 text-white" />
-                        </motion.div>
+                  {gameQuestionType === 'code' || gameQuestionType === 'entry' ? (
+                    <div className="space-y-8">
+                      <div className="relative">
+                        <input 
+                          autoFocus
+                          type="text"
+                          value={userAnswer}
+                          onChange={(e) => setUserAnswer(e.target.value)}
+                          placeholder="Código de cuenta..."
+                          className={`w-full text-center text-5xl font-black p-8 rounded-[2rem] border-4 transition-all outline-none ${
+                            lastAnswerCorrect === true ? 'border-emerald-500 bg-emerald-50 text-emerald-600' :
+                            lastAnswerCorrect === false ? 'border-red-500 bg-red-50 text-red-600 animate-shake' :
+                            'border-zinc-100 bg-zinc-50 focus:border-emerald-500 focus:bg-white'
+                          }`}
+                        />
+                        {lastAnswerCorrect === true && (
+                          <motion.div 
+                            initial={{ scale: 0 }} animate={{ scale: 1 }}
+                            className="absolute -top-4 -right-4 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg"
+                          >
+                            <CheckCircle2 className="w-6 h-6 text-white" />
+                          </motion.div>
+                        )}
+                        {lastAnswerCorrect === false && (
+                          <motion.div 
+                            initial={{ scale: 0 }} animate={{ scale: 1 }}
+                            className="absolute -top-4 -right-4 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center shadow-lg"
+                          >
+                            <X className="w-6 h-6 text-white" />
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {gameQuestionType === 'entry' && (
+                        <div className="grid grid-cols-2 gap-4">
+                          <button
+                            type="button"
+                            onClick={() => setUserEntryChoice('debit')}
+                            className={`py-6 rounded-2xl border-4 font-black text-xl transition-all ${
+                              userEntryChoice === 'debit'
+                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                                : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'
+                            }`}
+                          >
+                            CARGA (DEBE)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setUserEntryChoice('credit')}
+                            className={`py-6 rounded-2xl border-4 font-black text-xl transition-all ${
+                              userEntryChoice === 'credit'
+                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                                : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'
+                            }`}
+                          >
+                            ABONA (HABER)
+                          </button>
+                        </div>
                       )}
                     </div>
                   ) : (
@@ -2253,7 +2569,10 @@ export default function App() {
                   )}
                   <button 
                     type="submit"
-                    disabled={gameQuestionType === 'balance' && selectedBalances.length === 0}
+                    disabled={
+                      (gameQuestionType === 'balance' && selectedBalances.length === 0) ||
+                      (gameQuestionType === 'entry' && (!userAnswer.trim() || !userEntryChoice))
+                    }
                     className="w-full py-5 bg-zinc-900 text-white rounded-[1.5rem] font-black text-xl shadow-xl hover:bg-black transition-all active:scale-95 disabled:opacity-50"
                   >
                     {gameQuestionType === 'balance' ? 'CONFIRMAR SELECCIÓN' : 'COMPROBAR'}
@@ -2861,7 +3180,7 @@ export default function App() {
                           </div>
                           <button 
                             onClick={applyManualEntry}
-                            className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold text-[17px] shadow-lg shadow-emerald-900/20 hover:bg-emerald-500 transition-all"
+                            className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-900/20 hover:bg-emerald-500 transition-all"
                           >
                             Contabilizar Asiento
                           </button>
@@ -2902,14 +3221,14 @@ export default function App() {
                       </div>
 
                       {/* Pizarra Digital Button at the end of Journal */}
-                      <div className="pt-6 flex justify-center">
+                      <div className="pt-4 flex justify-center">
                         <button 
                           onClick={() => setIsDigitalWhiteboardOpen(true)}
-                          className="flex items-center gap-3 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl transition-all shadow-xl shadow-emerald-900/20 group scale-110"
+                          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all shadow-lg shadow-emerald-900/20 group"
                           title="Activar Pizarra Digital"
                         >
-                          <Monitor className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                          <span className="text-lg font-black uppercase tracking-wider">Pizarra Digital</span>
+                          <Monitor className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                          <span className="text-sm font-bold uppercase tracking-wider">Pizarra Digital</span>
                         </button>
                       </div>
                     </div>
