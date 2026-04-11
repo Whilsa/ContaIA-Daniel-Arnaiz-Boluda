@@ -49,7 +49,7 @@ interface WhiteboardProps {
 
 interface Shape {
   id: string;
-  type: 'pen' | 'eraser' | 't-account' | 'line' | 'text';
+  type: 'pen' | 'eraser' | 't-account' | 'line' | 'text' | 'ledger' | 'journal-entry';
   points?: number[];
   x?: number;
   y?: number;
@@ -58,6 +58,12 @@ interface Shape {
   color: string;
   strokeWidth: number;
   text?: string;
+  // Ledger fields
+  accountNumber?: string;
+  entries?: { debe: string, haber: string }[];
+  finalBalance?: string;
+  // Journal Entry fields
+  journalRows?: { date: string, account: string, concept: string, debe: string, haber: string }[];
 }
 
 export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({ 
@@ -69,7 +75,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
   setCurrentPageIndex,
   formatCurrency
 }) => {
-  const [tool, setTool] = useState<'select' | 'hand' | 'pen' | 'eraser' | 't-account' | 'line' | 'text'>('pen');
+  const [tool, setTool] = useState<'select' | 'hand' | 'pen' | 'eraser' | 't-account' | 'journal-entry' | 'line' | 'text'>('pen');
   const [color, setColor] = useState('#10b981'); // Emerald-500
   const [strokeWidth, setStrokeWidth] = useState(3);
   const [lastPenWidth, setLastPenWidth] = useState(3);
@@ -84,11 +90,32 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const journalRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: window.innerWidth, height: window.innerHeight - 80 });
-
   const [isExporting, setIsExporting] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [textInput, setTextInput] = useState<{ x: number, y: number, relX: number, relY: number } | null>(null);
   const [textValue, setTextValue] = useState('');
+  const [editingLedgerId, setEditingLedgerId] = useState<string | null>(null);
+  const [editingJournalEntryId, setEditingJournalEntryId] = useState<string | null>(null);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  const themeColors = {
+    dark: {
+      bg: '#09090b',
+      toolbar: '#18181b',
+      border: '#27272a',
+      text: '#f4f4f5',
+      grid: '#18181b'
+    },
+    light: {
+      bg: '#ffffff',
+      toolbar: '#f4f4f5',
+      border: '#e4e4e7',
+      text: '#18181b',
+      grid: '#f4f4f5'
+    }
+  };
+
+  const currentTheme = themeColors[theme];
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -126,6 +153,60 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
   const currentLines = currentPage.shapes || [];
   const scale = currentPage.scale || 1;
   const position = currentPage.position || { x: 0, y: 0 };
+
+  const editingLedger = currentLines.find(s => s.id === editingLedgerId);
+  const ledgerScreenPos = editingLedger ? {
+    x: (editingLedger.x || 0) * scale + position.x,
+    y: (editingLedger.y || 0) * scale + position.y
+  } : null;
+
+  const editingJournalEntry = currentLines.find(s => s.id === editingJournalEntryId);
+  const journalEntryScreenPos = editingJournalEntry ? {
+    x: (editingJournalEntry.x || 0) * scale + position.x,
+    y: (editingJournalEntry.y || 0) * scale + position.y
+  } : null;
+
+  const formatAccountingNumber = (val: string) => {
+    if (!val) return '';
+    let s = val.toString().trim();
+    
+    // Extract numbers while preserving surrounding text (e.g. "S.d.=2000" -> "S.d.=", "2000")
+    // This regex finds numbers with dots or commas
+    const numRegex = /(-?\d[\d.,]*)/g;
+    
+    return s.replace(numRegex, (match) => {
+      let cleanNum = match;
+      
+      // Normalize to US decimal for parsing
+      if (cleanNum.includes(',') && cleanNum.includes('.')) {
+        cleanNum = cleanNum.replace(/\./g, '').replace(',', '.');
+      } else if (cleanNum.includes(',')) {
+        cleanNum = cleanNum.replace(',', '.');
+      } else if (cleanNum.includes('.')) {
+        const parts = cleanNum.split('.');
+        if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+          cleanNum = cleanNum.replace(/\./g, '');
+        }
+      }
+      
+      const num = parseFloat(cleanNum);
+      if (isNaN(num)) return match;
+      
+      // Format the number part
+      const isNeg = num < 0;
+      const absN = Math.abs(num);
+      const p = absN.toFixed(2).split('.');
+      p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      
+      let res = (isNeg ? '-' : '') + p[0];
+      if (absN % 1 !== 0) {
+        let dec = p[1];
+        if (dec.endsWith('0')) dec = dec.substring(0, 1);
+        res += ',' + dec;
+      }
+      return res;
+    });
+  };
 
   const updateCurrentPage = (updates: Partial<WhiteboardPage>) => {
     const newPages = [...pages];
@@ -203,7 +284,16 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
   useEffect(() => {
     if (transformerRef.current && stageRef.current) {
       const stage = stageRef.current;
-      const nodes = selectedIds.map(id => stage.findOne('#' + id)).filter(Boolean);
+      const nodes = selectedIds
+        .filter(id => id && id.trim() !== '')
+        .map(id => stage.findOne((node: any) => node.id() === id))
+        .filter((node): node is any => 
+          !!node && 
+          node.nodeType !== 'Stage' && 
+          node.nodeType !== 'Layer' &&
+          node !== transformerRef.current &&
+          !node.isAncestorOf(transformerRef.current)
+        );
       transformerRef.current.nodes(nodes);
     }
   }, [selectedIds, currentLines]);
@@ -226,7 +316,18 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
         setSelectionRect({ x1: relativePos.x, y1: relativePos.y, x2: relativePos.x, y2: relativePos.y });
       } else {
         // Clicked on a shape
-        const shapeId = e.target.id();
+        let shapeId = e.target.id();
+        
+        // If we clicked a child of a shape group, find the group
+        if (!shapeId) {
+          const shapeGroup = e.target.findAncestor('.shape');
+          if (shapeGroup) {
+            shapeId = shapeGroup.id();
+          }
+        }
+        
+        if (!shapeId) return;
+        
         if (e.evt.shiftKey) {
           setSelectedIds(prev => prev.includes(shapeId) ? prev.filter(id => id !== shapeId) : [...prev, shapeId]);
         } else {
@@ -262,12 +363,33 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
           type: 't-account', 
           x: relativePos.x, 
           y: relativePos.y, 
-          width: 0, 
-          height: 0, 
+          width: 240, 
+          height: 120, 
           color, 
-          strokeWidth 
+          strokeWidth: 2,
+          accountNumber: '',
+          entries: [{ debe: '', haber: '' }],
+          finalBalance: ''
         }]
       });
+      setEditingLedgerId(id);
+      setTool('select');
+    } else if (tool === 'journal-entry') {
+      updateCurrentPage({
+        shapes: [...currentLines, { 
+          id, 
+          type: 'journal-entry', 
+          x: relativePos.x, 
+          y: relativePos.y, 
+          width: 600, 
+          height: 100, 
+          color, 
+          strokeWidth: 2,
+          journalRows: [{ date: '', account: '', concept: '', debe: '', haber: '' }]
+        }]
+      });
+      setEditingJournalEntryId(id);
+      setTool('select');
     } else if (tool === 'line') {
       updateCurrentPage({
         shapes: [...currentLines, { 
@@ -330,8 +452,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
     if (tool === 'pen' || tool === 'eraser') {
       lastShape.points = lastShape.points!.concat([relativePos.x, relativePos.y]);
     } else if (tool === 't-account') {
-      lastShape.width = relativePos.x - lastShape.x!;
-      lastShape.height = relativePos.y - lastShape.y!;
+      // Fixed size for functional T-account
     } else if (tool === 'line') {
       lastShape.points = [lastShape.points![0], lastShape.points![1], relativePos.x, relativePos.y];
     }
@@ -359,7 +480,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
           box.y + box.height <= y2
         );
       });
-      setSelectedIds(selected.map((s: any) => s.id()));
+      setSelectedIds(selected.map((s: any) => s.id()).filter(Boolean));
     }
     isDrawing.current = false;
     isSelecting.current = false;
@@ -424,6 +545,15 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
     }
 
     const newShapes = currentLines.map(s => s.id === id ? { ...s, ...updates } : s);
+    updateCurrentPage({ shapes: newShapes });
+  };
+
+  const handleDragMove = (e: any) => {
+    const node = e.target;
+    const id = node.id();
+    
+    // Update state during drag to keep floating editor and other UI in sync
+    const newShapes = currentLines.map(s => s.id === id ? { ...s, x: node.x(), y: node.y() } : s);
     updateCurrentPage({ shapes: newShapes });
   };
 
@@ -659,7 +789,8 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
             <ToolButton active={tool === 'hand'} onClick={() => setTool('hand')} icon={<Hand className="w-4 h-4" />} title="Mano (Desplazar)" />
             <ToolButton active={tool === 'pen'} onClick={() => setTool('pen')} icon={<Pencil className="w-4 h-4" />} title="Lápiz" />
             <ToolButton active={tool === 'eraser'} onClick={() => setTool('eraser')} icon={<Eraser className="w-4 h-4" />} title="Borrador" />
-            <ToolButton active={tool === 't-account'} onClick={() => setTool('t-account')} icon={<Columns2 className="w-4 h-4" />} title="Cuenta T" />
+            <ToolButton active={tool === 't-account'} onClick={() => setTool('t-account')} icon={<Columns2 className="w-4 h-4" />} title="Libro Mayor" />
+            <ToolButton active={tool === 'journal-entry'} onClick={() => setTool('journal-entry')} icon={<BookOpen className="w-4 h-4" />} title="Asiento" />
             <ToolButton active={tool === 'line'} onClick={() => setTool('line')} icon={<Minus className="w-4 h-4" />} title="Línea" />
             <ToolButton active={tool === 'text'} onClick={() => setTool('text')} icon={<Type className="w-4 h-4" />} title="Texto" />
           </div>
@@ -728,6 +859,16 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
             </button>
           </div>
 
+          <div className="flex items-center gap-1 bg-zinc-800 p-1 rounded-xl border border-zinc-700 ml-4">
+            <button 
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+              className={`p-1.5 rounded-lg transition-all ${theme === 'light' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-white'}`}
+              title="Cambiar tema"
+            >
+              <Palette className="w-4 h-4" />
+            </button>
+          </div>
+
           {/* Page Navigation */}
           <div className="flex items-center gap-1 bg-zinc-800 p-1 rounded-xl border border-zinc-700 ml-4">
             <button 
@@ -781,7 +922,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
         className="flex-grow relative overflow-hidden" 
         id="whiteboard-container" 
         ref={containerRef}
-        style={{ backgroundColor: '#09090b' }} // Zinc-950 hex
+        style={{ backgroundColor: currentTheme.bg }} 
       >
         {/* Journal Overlay (Only on first page) - MATCHING EXACTLY THE APP.TSX STYLE */}
         {currentPageIndex === 0 && (
@@ -792,42 +933,42 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
             style={{ 
               transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
               transformOrigin: '0 0',
-              backgroundColor: '#18181b', // Zinc-900 hex
-              borderColor: '#27272a' // Zinc-800 hex
+              backgroundColor: theme === 'dark' ? '#18181b' : '#ffffff',
+              borderColor: theme === 'dark' ? '#27272a' : '#e4e4e7'
             }}
           >
             <div 
               className="p-4 border-b flex items-center gap-3"
               style={{ 
-                backgroundColor: 'rgba(39, 39, 42, 0.5)', // Zinc-800/50 hex
-                borderBottomColor: '#27272a' // Zinc-800 hex
+                backgroundColor: theme === 'dark' ? 'rgba(39, 39, 42, 0.5)' : 'rgba(244, 244, 245, 0.5)',
+                borderBottomColor: theme === 'dark' ? '#27272a' : '#e4e4e7'
               }}
             >
-              <BookOpen className="w-5 h-5" style={{ color: '#10b981' }} />
-              <span className="text-lg font-bold" style={{ color: '#f4f4f5' }}>Libro Diario</span>
+              <BookOpen className="w-5 h-5" style={{ color: theme === 'dark' ? '#10b981' : '#065f46' }} />
+              <span className="text-lg font-bold" style={{ color: theme === 'dark' ? '#f4f4f5' : '#18181b' }}>Libro Diario</span>
             </div>
-            <div className="p-6 space-y-6" style={{ fontSize: '160%', color: '#f4f4f5' }}>
+            <div className="p-6 space-y-6" style={{ fontSize: '160%', color: theme === 'dark' ? '#f4f4f5' : '#18181b' }}>
               <div className="space-y-4 font-mono">
                 {entries.map((asiento, aIdx) => (
-                  <div key={aIdx} className={aIdx > 0 ? "pt-4" : ""} style={{ borderTop: aIdx > 0 ? '1px solid #27272a' : 'none' }}>
+                  <div key={aIdx} className={aIdx > 0 ? "pt-4" : ""} style={{ borderTop: aIdx > 0 ? `1px solid ${theme === 'dark' ? '#27272a' : '#e4e4e7'}` : 'none' }}>
                     <div className="mb-2 px-2 flex flex-col">
                       <span className="text-[0.7em]" style={{ color: '#71717a' }}>Asiento #{aIdx + 1}</span>
-                      <span className="text-[0.7em] font-bold" style={{ color: 'rgba(16, 185, 129, 0.8)' }}>{asiento[0]?.date || 'xx/xx/xx'}</span>
+                      <span className="text-[0.7em] font-bold" style={{ color: theme === 'dark' ? 'rgba(16, 185, 129, 0.8)' : 'rgba(6, 95, 70, 0.9)' }}>{asiento[0]?.date || 'xx/xx/xx'}</span>
                     </div>
                     {asiento.map((row, idx) => (
                       <div key={idx} className="grid grid-cols-12 gap-4 py-1 px-2">
                         <div 
                           className={`col-span-6 ${row.haber > 0 ? 'pl-4' : 'font-bold'}`}
-                          style={{ color: row.haber > 0 ? '#a1a1aa' : '#34d399' }}
+                          style={{ color: row.haber > 0 ? (theme === 'dark' ? '#a1a1aa' : '#71717a') : (theme === 'dark' ? '#34d399' : '#059669') }}
                         >
                           {row.haber > 0 ? 'a ' : ''}
-                          {row.code && <span className="text-[0.8em] opacity-80 mr-4 font-black" style={{ color: '#10b981' }}>{row.code}</span>}
+                          {row.code && <span className="text-[0.8em] opacity-80 mr-4 font-black" style={{ color: theme === 'dark' ? '#10b981' : '#065f46' }}>{row.code}</span>}
                           {row.account}
                         </div>
-                        <div className="col-span-3 text-right" style={{ color: '#d4d4d8' }}>
+                        <div className="col-span-3 text-right" style={{ color: theme === 'dark' ? '#d4d4d8' : '#3f3f46' }}>
                           {row.debe > 0 ? formatCurrency(row.debe) : '-'}
                         </div>
-                        <div className="col-span-3 text-right" style={{ color: '#d4d4d8' }}>
+                        <div className="col-span-3 text-right" style={{ color: theme === 'dark' ? '#d4d4d8' : '#3f3f46' }}>
                           {row.haber > 0 ? formatCurrency(row.haber) : '-'}
                         </div>
                       </div>
@@ -852,10 +993,14 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
             y={position.y}
             draggable={tool === 'hand'}
             onDragMove={(e) => {
-              updateCurrentPage({ position: { x: e.target.x(), y: e.target.y() } });
+              if (e.target === e.currentTarget) {
+                updateCurrentPage({ position: { x: e.target.x(), y: e.target.y() } });
+              }
             }}
             onDragEnd={(e) => {
-              updateCurrentPage({ position: { x: e.target.x(), y: e.target.y() } });
+              if (e.target === e.currentTarget) {
+                updateCurrentPage({ position: { x: e.target.x(), y: e.target.y() } });
+              }
             }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -878,8 +1023,8 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                 name="background-rect"
               />
               
-              {/* Background Grid - Hidden on first page (Journal page) */}
-              {currentPageIndex !== 0 && <Grid width={dimensions.width} height={dimensions.height} />}
+              {/* Background Grid - Removed from all pages as requested */}
+              {/* {currentPageIndex !== 0 && <Grid width={dimensions.width} height={dimensions.height} />} */}
               
               {currentLines.map((shape, i) => {
                 const isSelected = selectedIds.includes(shape.id);
@@ -887,6 +1032,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                   id: shape.id,
                   name: 'shape',
                   draggable: tool === 'select',
+                  onDragMove: handleDragMove,
                   onDragEnd: handleDragEnd,
                   onTransformEnd: handleTransformEnd,
                   onClick: (e: any) => {
@@ -920,24 +1066,170 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                     />
                   );
                 } else if (shape.type === 't-account') {
+                  const entries = shape.entries || [];
+                  const rowHeight = 30;
+                  const width = shape.width || 240;
+                  const baseColor = shape.color;
+                  // Adjust color for light theme if it's too bright (like white)
+                  const color = theme === 'light' && (baseColor === '#ffffff' || baseColor === 'white') ? '#18181b' : baseColor;
+                  const isEditing = editingLedgerId === shape.id;
+                  
                   return (
                     <Group 
                       key={shape.id}
                       {...commonProps}
                       x={shape.x || 0}
                       y={shape.y || 0}
+                      onClick={(e) => {
+                        if (tool === 'select') {
+                          e.cancelBubble = true;
+                          setSelectedIds([shape.id]);
+                          setEditingLedgerId(shape.id);
+                        }
+                      }}
                     >
-                      {/* Horizontal line */}
+                      {/* Account Number - Hide if editing to avoid double text */}
+                      {!isEditing && (
+                        <Text
+                          text={shape.accountNumber || 'Nº Cuenta'}
+                          width={width}
+                          align="center"
+                          y={-30}
+                          fontSize={20}
+                          fill={color}
+                          fontStyle="bold"
+                        />
+                      )}
+                      
+                      {/* T-Shape - Classic structure */}
                       <Line
-                        points={[0, 0, shape.width!, 0]}
-                        stroke={shape.color}
-                        strokeWidth={shape.strokeWidth}
+                        points={[0, 0, width, 0]}
+                        stroke={color}
+                        strokeWidth={3}
                       />
-                      {/* Vertical line */}
                       <Line
-                        points={[shape.width! / 2, 0, shape.width! / 2, shape.height!]}
-                        stroke={shape.color}
-                        strokeWidth={shape.strokeWidth}
+                        points={[width / 2, 0, width / 2, 20 + entries.length * rowHeight]}
+                        stroke={color}
+                        strokeWidth={3}
+                      />
+                      
+                      {/* Entries */}
+                      {entries.map((entry, idx) => (
+                        <React.Fragment key={idx}>
+                          {entry.debe && (
+                            <Text
+                              text={formatAccountingNumber(entry.debe)}
+                              x={10}
+                              y={10 + idx * rowHeight}
+                              fontSize={16}
+                              fill={color}
+                              fontStyle="bold"
+                            />
+                          )}
+                          {entry.haber && (
+                            <Text
+                              text={formatAccountingNumber(entry.haber)}
+                              x={width / 2 + 10}
+                              y={10 + idx * rowHeight}
+                              fontSize={16}
+                              fill={color}
+                              fontStyle="bold"
+                              width={width / 2 - 20}
+                              align="right"
+                            />
+                          )}
+                        </React.Fragment>
+                      ))}
+                      
+                      {/* Final Balance */}
+                      {!isEditing && (
+                        <Text
+                          text={formatAccountingNumber(shape.finalBalance || '')}
+                          width={width}
+                          align="center"
+                          y={30 + entries.length * rowHeight}
+                          fontSize={18}
+                          fill={color}
+                          fontStyle="bold italic"
+                        />
+                      )}
+                    </Group>
+                  );
+                } else if (shape.type === 'journal-entry') {
+                  const rows = shape.journalRows || [];
+                  const rowHeight = 30;
+                  const width = shape.width || 600;
+                  const baseColor = shape.color;
+                  const color = theme === 'light' && (baseColor === '#ffffff' || baseColor === 'white') ? '#18181b' : baseColor;
+                  const isEditing = editingJournalEntryId === shape.id;
+                  const colWidths = [80, 100, 220, 100, 100];
+                  const headers = ['Fecha', 'Cuenta', 'Concepto', 'Debe', 'Haber'];
+
+                  return (
+                    <Group
+                      key={shape.id}
+                      {...commonProps}
+                      x={shape.x || 0}
+                      y={shape.y || 0}
+                      onClick={(e) => {
+                        if (tool === 'select') {
+                          e.cancelBubble = true;
+                          setSelectedIds([shape.id]);
+                          setEditingJournalEntryId(shape.id);
+                        }
+                      }}
+                    >
+                      {/* Headers */}
+                      <Rect width={width} height={rowHeight} fill={theme === 'dark' ? '#27272a' : '#f4f4f5'} cornerRadius={4} />
+                      {headers.map((h, idx) => {
+                        let xOffset = 0;
+                        for (let j = 0; j < idx; j++) xOffset += colWidths[j];
+                        return (
+                          <Text
+                            key={idx}
+                            text={h}
+                            x={xOffset + 5}
+                            y={8}
+                            fontSize={14}
+                            fontStyle="bold"
+                            fill={theme === 'dark' ? '#a1a1aa' : '#71717a'}
+                            width={colWidths[idx] - 10}
+                            align={idx >= 3 ? 'right' : 'left'}
+                          />
+                        );
+                      })}
+
+                      {/* Rows */}
+                      {!isEditing && rows.map((row, rIdx) => (
+                        <Group key={rIdx} y={(rIdx + 1) * rowHeight}>
+                          <Line points={[0, 0, width, 0]} stroke={theme === 'dark' ? '#27272a' : '#e4e4e7'} strokeWidth={1} />
+                          {[row.date, row.account, row.concept, row.debe, row.haber].map((val, cIdx) => {
+                            let xOffset = 0;
+                            for (let j = 0; j < cIdx; j++) xOffset += colWidths[j];
+                            return (
+                              <Text
+                                key={cIdx}
+                                text={cIdx >= 3 ? formatAccountingNumber(val) : val}
+                                x={xOffset + 5}
+                                y={8}
+                                fontSize={14}
+                                fill={color}
+                                width={colWidths[cIdx] - 10}
+                                align={cIdx >= 3 ? 'right' : 'left'}
+                              />
+                            );
+                          })}
+                        </Group>
+                      ))}
+                      
+                      {/* Border */}
+                      <Rect 
+                        width={width} 
+                        height={(rows.length + 1) * rowHeight} 
+                        stroke={color} 
+                        strokeWidth={isSelected ? 2 : 1} 
+                        opacity={isSelected ? 1 : 0.3}
+                        cornerRadius={4}
                       />
                     </Group>
                   );
@@ -1101,6 +1393,269 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
               style={{ color: color }}
               placeholder="Escribe aquí..."
             />
+          </div>
+        )}
+
+        {/* Ledger Editor Overlay */}
+        {editingLedgerId && editingLedger && ledgerScreenPos && (
+          <div 
+            className="absolute z-[1000] p-4 bg-zinc-900 border-2 border-emerald-500 rounded-2xl shadow-2xl"
+            style={{ 
+              left: ledgerScreenPos.x, 
+              top: ledgerScreenPos.y,
+              transform: `scale(${scale})`,
+              transformOrigin: '0 0',
+              width: editingLedger.width || 240
+            }}
+          >
+            <input
+              autoFocus
+              type="text"
+              value={editingLedger.accountNumber || ''}
+              onChange={(e) => {
+                const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, accountNumber: e.target.value } : s);
+                updateCurrentPage({ shapes: newShapes });
+              }}
+              className="w-full bg-transparent text-center text-white border-b border-zinc-700 pb-1 mb-4 outline-none font-bold"
+              placeholder="Nº Cuenta"
+            />
+            
+            <div className="space-y-2 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 pr-1">
+              {editingLedger.entries?.map((entry, idx) => {
+                const isLast = idx === editingLedger.entries!.length - 1;
+                const showDebe = isLast || entry.debe !== '';
+                const showHaber = isLast || entry.haber !== '';
+
+                return (
+                  <div key={idx} className="flex gap-2 min-h-[32px]">
+                    {showDebe ? (
+                      <input
+                        type="text"
+                        value={entry.debe}
+                        onChange={(e) => {
+                          const newEntries = [...(editingLedger.entries || [])];
+                          newEntries[idx] = { ...newEntries[idx], debe: e.target.value };
+                          const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
+                          updateCurrentPage({ shapes: newShapes });
+                        }}
+                        onBlur={(e) => {
+                          const formatted = formatAccountingNumber(e.target.value);
+                          const newEntries = [...(editingLedger.entries || [])];
+                          newEntries[idx] = { ...newEntries[idx], debe: formatted };
+                          const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
+                          updateCurrentPage({ shapes: newShapes });
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const formatted = formatAccountingNumber((e.target as HTMLInputElement).value);
+                            const newEntries = [...(editingLedger.entries || [])];
+                            newEntries[idx] = { ...newEntries[idx], debe: formatted };
+                            newEntries.push({ debe: '', haber: '' });
+                            const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
+                            updateCurrentPage({ shapes: newShapes });
+                          }
+                        }}
+                        className="w-1/2 bg-zinc-800 text-white p-1 rounded outline-none text-sm font-bold"
+                        placeholder="..."
+                      />
+                    ) : <div className="w-1/2" />}
+                    
+                    {showHaber ? (
+                      <input
+                        type="text"
+                        value={entry.haber}
+                        onChange={(e) => {
+                          const newEntries = [...(editingLedger.entries || [])];
+                          newEntries[idx] = { ...newEntries[idx], haber: e.target.value };
+                          const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
+                          updateCurrentPage({ shapes: newShapes });
+                        }}
+                        onBlur={(e) => {
+                          const formatted = formatAccountingNumber(e.target.value);
+                          const newEntries = [...(editingLedger.entries || [])];
+                          newEntries[idx] = { ...newEntries[idx], haber: formatted };
+                          const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
+                          updateCurrentPage({ shapes: newShapes });
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const formatted = formatAccountingNumber((e.target as HTMLInputElement).value);
+                            const newEntries = [...(editingLedger.entries || [])];
+                            newEntries[idx] = { ...newEntries[idx], haber: formatted };
+                            newEntries.push({ debe: '', haber: '' });
+                            const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
+                            updateCurrentPage({ shapes: newShapes });
+                          }
+                        }}
+                        className="w-1/2 bg-zinc-800 text-white p-1 rounded outline-none text-sm font-bold text-right"
+                        placeholder="..."
+                      />
+                    ) : <div className="w-1/2" />}
+                  </div>
+                );
+              })}
+            </div>
+            
+            <input
+              type="text"
+              value={editingLedger.finalBalance || ''}
+              onChange={(e) => {
+                const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, finalBalance: e.target.value } : s);
+                updateCurrentPage({ shapes: newShapes });
+              }}
+              onBlur={(e) => {
+                const formatted = formatAccountingNumber(e.target.value);
+                const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, finalBalance: formatted } : s);
+                updateCurrentPage({ shapes: newShapes });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const formatted = formatAccountingNumber((e.target as HTMLInputElement).value);
+                  const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, finalBalance: formatted } : s);
+                  updateCurrentPage({ shapes: newShapes });
+                  setEditingLedgerId(null);
+                }
+              }}
+              className="w-full bg-transparent text-center text-white border-t border-zinc-700 pt-1 mt-4 outline-none font-bold italic"
+              placeholder="Saldo final"
+            />
+            
+            <button 
+              onClick={() => setEditingLedgerId(null)}
+              className="absolute -top-3 -right-3 w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-emerald-400 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Journal Entry Editor Overlay */}
+        {editingJournalEntryId && editingJournalEntry && journalEntryScreenPos && (
+          <div 
+            className="absolute z-[1000] p-4 bg-zinc-900 border-2 border-emerald-500 rounded-2xl shadow-2xl"
+            style={{ 
+              left: journalEntryScreenPos.x, 
+              top: journalEntryScreenPos.y,
+              transform: `scale(${scale})`,
+              transformOrigin: '0 0',
+              width: 700
+            }}
+          >
+            <div className="grid grid-cols-[80px_100px_220px_100px_100px] gap-2 mb-2 px-1">
+              {['Fecha', 'Cuenta', 'Concepto', 'Debe', 'Haber'].map(h => (
+                <span key={h} className="text-[10px] font-bold text-zinc-500 uppercase">{h}</span>
+              ))}
+            </div>
+
+            <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 pr-1">
+              {editingJournalEntry.journalRows?.map((row, idx) => (
+                <div key={idx} className="grid grid-cols-[80px_100px_220px_100px_100px] gap-2">
+                  <input
+                    type="text"
+                    value={row.date}
+                    onChange={(e) => {
+                      const newRows = [...(editingJournalEntry.journalRows || [])];
+                      newRows[idx] = { ...newRows[idx], date: e.target.value };
+                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
+                      updateCurrentPage({ shapes: newShapes });
+                    }}
+                    className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs"
+                    placeholder="DD/MM"
+                  />
+                  <input
+                    type="text"
+                    value={row.account}
+                    onChange={(e) => {
+                      const newRows = [...(editingJournalEntry.journalRows || [])];
+                      newRows[idx] = { ...newRows[idx], account: e.target.value };
+                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
+                      updateCurrentPage({ shapes: newShapes });
+                    }}
+                    className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs"
+                    placeholder="Código"
+                  />
+                  <input
+                    type="text"
+                    value={row.concept}
+                    onChange={(e) => {
+                      const newRows = [...(editingJournalEntry.journalRows || [])];
+                      newRows[idx] = { ...newRows[idx], concept: e.target.value };
+                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
+                      updateCurrentPage({ shapes: newShapes });
+                    }}
+                    className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs"
+                    placeholder="Concepto..."
+                  />
+                  <input
+                    type="text"
+                    value={row.debe}
+                    onChange={(e) => {
+                      const newRows = [...(editingJournalEntry.journalRows || [])];
+                      newRows[idx] = { ...newRows[idx], debe: e.target.value };
+                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
+                      updateCurrentPage({ shapes: newShapes });
+                    }}
+                    onBlur={(e) => {
+                      const formatted = formatAccountingNumber(e.target.value);
+                      const newRows = [...(editingJournalEntry.journalRows || [])];
+                      newRows[idx] = { ...newRows[idx], debe: formatted };
+                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
+                      updateCurrentPage({ shapes: newShapes });
+                    }}
+                    className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs text-right"
+                    placeholder="0,00"
+                  />
+                  <input
+                    type="text"
+                    value={row.haber}
+                    onChange={(e) => {
+                      const newRows = [...(editingJournalEntry.journalRows || [])];
+                      newRows[idx] = { ...newRows[idx], haber: e.target.value };
+                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
+                      updateCurrentPage({ shapes: newShapes });
+                    }}
+                    onBlur={(e) => {
+                      const formatted = formatAccountingNumber(e.target.value);
+                      const newRows = [...(editingJournalEntry.journalRows || [])];
+                      newRows[idx] = { ...newRows[idx], haber: formatted };
+                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
+                      updateCurrentPage({ shapes: newShapes });
+                    }}
+                    className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs text-right"
+                    placeholder="0,00"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-800">
+              <button
+                onClick={() => {
+                  const newRows = [...(editingJournalEntry.journalRows || [])];
+                  newRows.push({ date: '', account: '', concept: '', debe: '', haber: '' });
+                  const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
+                  updateCurrentPage({ shapes: newShapes });
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-bold transition-all"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                Añadir fila
+              </button>
+              
+              <button
+                onClick={() => setEditingJournalEntryId(null)}
+                className="px-6 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-xs font-bold shadow-lg shadow-emerald-500/20 transition-all"
+              >
+                Finalizar
+              </button>
+            </div>
+            
+            <button 
+              onClick={() => setEditingJournalEntryId(null)}
+              className="absolute -top-3 -right-3 w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-emerald-400 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
 

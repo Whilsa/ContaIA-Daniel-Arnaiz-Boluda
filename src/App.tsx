@@ -78,11 +78,23 @@ interface AccountDraft {
 }
 
 const formatCurrency = (value: number): string => {
-  const hasDecimals = value % 1 !== 0;
-  return new Intl.NumberFormat('es-ES', {
-    minimumFractionDigits: hasDecimals ? 2 : 0,
-    maximumFractionDigits: 2,
-  }).format(value) + '€';
+  const isNegative = value < 0;
+  const absNum = Math.abs(value);
+  const parts = absNum.toFixed(2).split('.');
+  
+  // Add dots for thousands
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  
+  let result = (isNegative ? '-' : '') + parts[0];
+  
+  // Add decimals if they are not .00
+  if (absNum % 1 !== 0) {
+    let decimals = parts[1];
+    if (decimals.endsWith('0')) decimals = decimals.substring(0, 1);
+    result += ',' + decimals;
+  }
+  
+  return result + '€';
 };
 
 // --- Constants ---
@@ -91,361 +103,738 @@ const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: s
     { 
       code: '100', 
       name: 'Capital social', 
-      examples: ['Aportaciones de los socios al constituir una sociedad anónima o limitada y ampliaciones de capital acordadas para incorporar nuevos accionistas'],
       scenarios: [
-        { text: 'Se constituye una sociedad anónima con aportaciones de los socios', action: 'credit' },
-        { text: 'Se realiza una ampliación de capital suscrita por nuevos accionistas', action: 'credit' }
+        { text: 'En la constitución de la sociedad (Ej: creación de una S.A. con talón bancario) de Capital social', action: 'credit' },
+        { text: 'Por las reducciones de capital o extinción de la sociedad de Capital social', action: 'debit' }
       ]
     },
-    { code: '101', name: 'Fondo social', examples: ['Aportación inicial de los miembros al crear una entidad sin ánimo de lucro o asociación'] },
-    { code: '102', name: 'Capital', examples: ['Aportación inicial de dinero realizada por un empresario individual para crear su negocio'] },
-    { code: '103', name: 'Socios por desembolsos no exigidos', examples: ['Parte del capital social suscrito que los accionistas aún no han aportado y que la sociedad todavía no les ha reclamado'] },
-    { code: '112', name: 'Reserva legal' },
+    { 
+      code: '101', 
+      name: 'Fondo social', 
+      scenarios: [
+        { text: 'Por la aportación inicial al crear una entidad sin ánimo de lucro (Ej: tres amigos crean una asociación depositando fondos) de Fondo social', action: 'credit' },
+        { text: 'A la extinción de la entidad de Fondo social', action: 'debit' }
+      ]
+    },
+    { 
+      code: '102', 
+      name: 'Capital', 
+      scenarios: [
+        { text: 'Por el capital inicial (Ej: empresario individual aporta efectivo a su firma) de Capital', action: 'credit' },
+        { text: 'Por el cese o cesión de los negocios de Capital', action: 'debit' }
+      ]
+    },
+    { 
+      code: '103', 
+      name: 'Socios por desembolsos no exigidos', 
+      scenarios: [
+        { text: 'Al constituirse la sociedad por el nominal no desembolsado (Ej: constitución de S.A. desembolsando solo el mínimo legal) de Socios por desembolsos no exigidos', action: 'debit' },
+        { text: 'Cuando la sociedad exige formalmente el desembolso de Socios por desembolsos no exigidos', action: 'credit' }
+      ]
+    },
+    { 
+      code: '112', 
+      name: 'Reserva legal', 
+      scenarios: [
+        { text: 'Al cierre del ejercicio con cargo a la cuenta de resultados (Ej: destino de parte del beneficio tras la regularización) de Reserva legal', action: 'credit' },
+        { text: 'Por la disposición que se haga de ella de Reserva legal', action: 'debit' }
+      ]
+    },
+    { 
+      code: '129', 
+      name: 'Resultado del ejercicio', 
+      scenarios: [
+        { text: 'Para determinar el resultado si los ingresos superan a los gastos (Ej: regularización de ingresos del grupo 7) de Resultado del ejercicio', action: 'credit' },
+        { text: 'Si los gastos superan a los ingresos o al aplicar el beneficio de Resultado del ejercicio', action: 'debit' }
+      ]
+    },
+    { 
+      code: '170', 
+      name: 'Deudas a largo plazo con entidades de crédito', 
+      scenarios: [
+        { text: 'Al formalizar el préstamo (Ej: préstamo bancario a devolver en 5 años) de Deudas a largo plazo con entidades de crédito', action: 'credit' },
+        { text: 'Por el reintegro anticipado o la reclasificación a corto plazo de Deudas a largo plazo con entidades de crédito', action: 'debit' }
+      ]
+    },
+    { 
+      code: '173', 
+      name: 'Proveedores de inmovilizado a largo plazo', 
+      scenarios: [
+        { text: 'Por la recepción conforme de los bienes (Ej: compra de máquina pagando una parte a 18 meses) de Proveedores de inmovilizado a largo plazo', action: 'credit' },
+        { text: 'Al cancelar o pagar la deuda anticipadamente de Proveedores de inmovilizado a largo plazo', action: 'debit' }
+      ]
+    },
+    { 
+      code: '175', 
+      name: 'Efectos a pagar a largo plazo', 
+      scenarios: [
+        { text: 'Al aceptar los efectos (Ej: letras aceptadas a 24 meses por compra de inmuebles) de Efectos a pagar a largo plazo', action: 'credit' },
+        { text: 'Por el pago anticipado o reclasificación de Efectos a pagar a largo plazo', action: 'debit' }
+      ]
+    },
+    { 
+      code: '180', 
+      name: 'Fianzas recibidas a largo plazo', 
+      scenarios: [
+        { text: 'Al recibir la garantía (Ej: cobro de fianza por alquiler de edificio a 6 años) de Fianzas recibidas a largo plazo', action: 'credit' },
+        { text: 'Al devolver la fianza o por su reclasificación a corto plazo de Fianzas recibidas a largo plazo', action: 'debit' }
+      ]
+    }
+  ],
+  2: [
     { 
       code: '203', 
       name: 'Propiedad industrial', 
-      examples: ['Adquisición de una patente (por ejemplo, para fabricar carne vegetal)'],
       scenarios: [
-        { text: 'La empresa adquiere una patente para un nuevo proceso de fabricación', action: 'debit' }
+        { text: 'Por la adquisición (Ej: compra de patente para fabricar carne vegetal) de Propiedad industrial', action: 'debit' },
+        { text: 'Por enajenación o baja del activo de Propiedad industrial', action: 'credit' }
       ]
     },
-    { code: '205', name: 'Derechos de traspaso', examples: ['Pago realizado al anterior arrendatario de un local para subrogarse en su contrato y convertirse en el nuevo inquilino'] },
+    { 
+      code: '205', 
+      name: 'Derechos de traspaso', 
+      scenarios: [
+        { text: 'Al pagar al arrendatario anterior (Ej: pago por subrogación en contrato de oficinas) de Derechos de traspaso', action: 'debit' },
+        { text: 'Por baja o venta del derecho de Derechos de traspaso', action: 'credit' }
+      ]
+    },
     { 
       code: '206', 
       name: 'Aplicaciones informáticas', 
-      examples: ['Compra de software, programas informáticos o gastos de desarrollo de una página web'],
       scenarios: [
-        { text: 'Se compra una licencia de software de gestión para la oficina', action: 'debit' }
+        { text: 'Por la compra a terceros (Ej: adquisición de software de gestión) de Aplicaciones informáticas', action: 'debit' },
+        { text: 'Por su baja o venta de Aplicaciones informáticas', action: 'credit' }
       ]
     },
-    { code: '210', name: 'Terrenos y bienes naturales', examples: ['Valor del suelo o solares urbanos donde se asientan las oficinas, naves o edificios de la empresa'] },
-    { code: '211', name: 'Construcciones', examples: ['Edificaciones como locales de oficinas, naves industriales u hoteles propiedad de la firma'] },
-    { code: '212', name: 'Instalaciones técnicas', examples: ['Equipos especializados como aparatos quirúrgicos, equipos de generación de energía o maquinaria avanzada de proceso productivo'] },
+    { 
+      code: '210', 
+      name: 'Terrenos y bienes naturales', 
+      scenarios: [
+        { text: 'Al adquirir el suelo (Ej: compra de un hotel separando el valor del solar) de Terrenos y bienes naturales', action: 'debit' },
+        { text: 'Al vender el terreno (Ej: venta del local social) de Terrenos y bienes naturales', action: 'credit' }
+      ]
+    },
+    { 
+      code: '211', 
+      name: 'Construcciones', 
+      scenarios: [
+        { text: 'Por la compra del edificio (Ej: adquisición de naves u oficinas) de Construcciones', action: 'debit' },
+        { text: 'Por su venta (Ej: enajenación de locales sin beneficio ni pérdida) de Construcciones', action: 'credit' }
+      ]
+    },
+    { 
+      code: '212', 
+      name: 'Instalaciones técnicas', 
+      scenarios: [
+        { text: 'Por la compra (Ej: hospital adquiere equipo quirúrgico especial) de Instalaciones técnicas', action: 'debit' },
+        { text: 'Por devolución al proveedor o enajenación de Instalaciones técnicas', action: 'credit' }
+      ]
+    },
     { 
       code: '213', 
       name: 'Maquinaria', 
-      examples: ['Máquinas de uso industrial general o equipos industriales para la fabricación'],
       scenarios: [
-        { text: 'Se adquiere una nueva máquina para la cadena de montaje', action: 'debit' }
+        { text: 'Por la adquisición (Ej: compra de máquina de uso industrial) de Maquinaria', action: 'debit' },
+        { text: 'Por venta (Ej: venta de equipo industrial obsoleto) de Maquinaria', action: 'credit' }
       ]
     },
-    { code: '215', name: 'Otras instalaciones', examples: ['Instalaciones deportivas para empleados (pistas de fútbol/baloncesto) u otros elementos no clasificados anteriormente'] },
+    { 
+      code: '214', 
+      name: 'Utillaje', 
+      scenarios: [
+        { text: 'Al comprar las herramientas (Ej: compra de herramientas para el almacén pagadas con tarjeta) de Utillaje', action: 'debit' },
+        { text: 'Por regularización anual o rotura de Utillaje', action: 'credit' }
+      ]
+    },
+    { 
+      code: '215', 
+      name: 'Otras instalaciones', 
+      scenarios: [
+        { text: 'Por la compra (Ej: adquisición de pistas de fútbol/baloncesto para empleados) de Otras instalaciones', action: 'debit' },
+        { text: 'Por baja o venta de Otras instalaciones', action: 'credit' }
+      ]
+    },
     { 
       code: '216', 
       name: 'Mobiliario', 
-      examples: ['Sillas, mesas de oficina y estanterías'],
       scenarios: [
-        { text: 'Se compran mesas y sillas para la nueva sala de reuniones', action: 'debit' }
+        { text: 'Por la adquisición (Ej: compra a crédito de muebles de oficina) de Mobiliario', action: 'debit' },
+        { text: 'Por su baja del activo de Mobiliario', action: 'credit' }
       ]
     },
     { 
       code: '217', 
       name: 'Equipos para procesos de información', 
-      examples: ['Ordenadores, servidores y conjuntos electrónicos'],
       scenarios: [
-        { text: 'Se adquieren tres ordenadores portátiles para el departamento comercial', action: 'debit' }
+        { text: 'Por la compra (Ej: empresa de fruta adquiere ordenadores para el almacén) de Equipos para procesos de información', action: 'debit' },
+        { text: 'Por venta o fin de vida útil de Equipos para procesos de información', action: 'credit' }
       ]
     },
     { 
       code: '218', 
       name: 'Elementos de transporte', 
-      examples: ['Vehículos como furgonetas o camiones para el transporte de personas o mercancías'],
       scenarios: [
-        { text: 'La empresa compra una furgoneta para el reparto de mercancías', action: 'debit' }
+        { text: 'Por la adquisición (Ej: compra al contado de una furgoneta de reparto) de Elementos de transporte', action: 'debit' },
+        { text: 'Por baja definitiva (Ej: furgoneta carbonizada en incendio declarada siniestro total) de Elementos de transporte', action: 'credit' }
       ]
     },
-    { code: '240', name: 'Participaciones a largo plazo en partes vinculadas', examples: ['Compra de acciones de una empresa del mismo grupo sin intención de venderlas pronto'] },
-    { code: '251', name: 'Valores representativos de deuda a largo plazo', examples: ['Inversión en bonos del Tesoro o títulos de renta fija con vencimiento a cinco años'] },
     { 
-      code: '430', 
-      name: 'Clientes', 
-      examples: ['Derechos de cobro en factura por la venta habitual de productos o servicios (ej. asesoría o viajes combinados)'],
+      code: '219', 
+      name: 'Otro inmovilizado material', 
       scenarios: [
-        { text: 'Se realiza una venta de mercaderías a crédito', action: 'debit' },
-        { text: 'Un cliente nos paga mediante transferencia bancaria una factura pendiente', action: 'credit' }
+        { text: 'Por la compra (Ej: adquisición de papeleras y contenedores para administración) de Otro inmovilizado material', action: 'debit' },
+        { text: 'Por baja del activo de Otro inmovilizado material', action: 'credit' }
       ]
     },
-    { code: '431', name: 'Clientes, efectos comerciales a cobrar', examples: ['Derechos de cobro sobre clientes que han aceptado una letra de cambio o pagaré'] },
     { 
-      code: '472', 
-      name: 'Hacienda Pública, IVA soportado', 
-      examples: ['Impuesto pagado al comprar bienes o servicios (maquinaria, mercaderías, luz)'],
+      code: '240', 
+      name: 'Participaciones a largo plazo en partes vinculadas', 
       scenarios: [
-        { text: 'Se paga el IVA en la compra de suministros de oficina', action: 'debit' }
+        { text: 'A la compra (Ej: empresa adquiere acciones de una firma de su mismo grupo) de Participaciones a largo plazo en partes vinculadas', action: 'debit' },
+        { text: 'Por enajenación o deterioro de Participaciones a largo plazo en partes vinculadas', action: 'credit' }
       ]
     },
-    { code: '540', name: 'Inversiones financieras a corto plazo en instrumentos de patrimonio', examples: ['Compra de acciones en bolsa con intención especulativa (venta rápida)'] },
-    { code: '541', name: 'Valores representativos de deuda a corto plazo', examples: ['Bonos del Tesoro o de empresas con vencimiento a 12 meses o menos'] },
-    { code: '542', name: 'Créditos a corto plazo', examples: ['Dinero prestado a un tercero a devolver en seis meses'] },
-    { code: '548', name: 'Imposiciones a corto plazo', examples: ['Depósitos bancarios "a plazo" de tres o seis meses'] },
-    { code: '558', name: 'Socios por desembolsos exigidos', examples: ['Capital que la empresa ya ha reclamado formalmente a los accionistas para que lo aporten'] },
-    { code: '565', name: 'Fianzas constituidas a corto plazo', examples: ['Garantía en efectivo pagada al firmar un contrato que será devuelta en 12 meses'] },
-    { code: '570', name: 'Caja', examples: ['Dinero en efectivo (billetes y monedas) disponible en la caja fuerte'] },
     { 
-      code: '572', 
-      name: 'Bancos', 
-      examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'],
+      code: '241', 
+      name: 'Valores representativos de deuda a largo plazo con partes vinculadas', 
       scenarios: [
-        { text: 'Se recibe una transferencia de un cliente', action: 'debit' },
-        { text: 'Se paga mediante transferencia la factura de un proveedor', action: 'credit' },
-        { text: 'Se retira dinero del banco para ingresar en la caja de la empresa', action: 'credit' }
+        { text: 'A la suscripción (Ej: compra de títulos de renta fija con vencimiento a 5 años) de Valores representativos de deuda a largo plazo con partes vinculadas', action: 'debit' },
+        { text: 'Por venta o amortización de Valores representativos de deuda a largo plazo con partes vinculadas', action: 'credit' }
       ]
     },
-    { code: '573', name: 'Bancos, moneda extranjera', examples: ['Saldo en cuentas bancarias denominadas en divisas como dólares'] },
     { 
-      code: '170', 
-      name: 'Deudas a largo plazo con entidades de crédito', 
-      examples: ['Préstamos bancarios con vencimiento superior a un año y deudas que, tras una reclasificación, permanecen a largo plazo'],
+      code: '250', 
+      name: 'Participaciones a largo plazo', 
       scenarios: [
-        { text: 'El banco nos concede un préstamo a devolver en 3 años', action: 'credit' }
+        { text: 'A la compra (Ej: empresa adquiere acciones de una firma de su mismo grupo) de Participaciones a largo plazo', action: 'debit' },
+        { text: 'Por enajenación o deterioro de Participaciones a largo plazo', action: 'credit' }
       ]
     },
-    { code: '173', name: 'Proveedores de inmovilizado a largo plazo', examples: ['Deuda con el vendedor de una máquina o furgoneta a pagar en un plazo de 18 meses o más'] },
-    { code: '175', name: 'Efectos a pagar a largo plazo', examples: ['Letras de cambio aceptadas por la compra de un edificio con vencimiento a dos años'] },
-    { code: '180', name: 'Fianzas recibidas a largo plazo', examples: ['Dinero recibido de un inquilino como garantía de cumplimiento de un contrato de alquiler a seis años'] },
     { 
-      code: '400', 
-      name: 'Proveedores', 
-      examples: ['Deudas en factura por compra de electrodomésticos, material de oficina o suministros de limpieza para el tráfico comercial'],
+      code: '251', 
+      name: 'Valores representativos de deuda a largo plazo', 
       scenarios: [
-        { text: 'Se compran mercaderías a crédito', action: 'credit' },
-        { text: 'Se paga por banco la deuda que teníamos con un suministrador', action: 'debit' }
+        { text: 'A la suscripción (Ej: compra de títulos de renta fija con vencimiento a 5 años) de Valores representativos de deuda a largo plazo', action: 'debit' },
+        { text: 'Por venta o amortización de Valores representativos de deuda a largo plazo', action: 'credit' }
       ]
     },
-    { code: '401', name: 'Proveedores, efectos comerciales a pagar', examples: ['Deuda comercial formalizada mediante la aceptación de una letra de cambio o pagaré'] },
     { 
-      code: '477', 
-      name: 'Hacienda Pública, IVA repercutido', 
-      examples: ['Impuesto cobrado a los clientes al venderles productos o prestarles servicios'],
+      code: '252', 
+      name: 'Créditos a largo plazo', 
       scenarios: [
-        { text: 'Se repercute el IVA en una venta de servicios', action: 'credit' }
+        { text: 'A la formalización (Ej: préstamo concedido a un amigo a devolver en 30 meses) de Créditos a largo plazo', action: 'debit' },
+        { text: 'Por el cobro o reclasificación de Créditos a largo plazo', action: 'credit' }
       ]
     },
-    { code: '5200', name: 'Préstamos a corto plazo con entidades de crédito', examples: ['Deuda bancaria que vence en el año actual o parte de un préstamo a largo plazo reclasificado'] },
-    { code: '523', name: 'Proveedores de inmovilizado a corto plazo', examples: ['Deuda con el vendedor de un ordenador o mobiliario a pagar en menos de un año'] },
-    { code: '525', name: 'Efectos a pagar a corto plazo' },
-    { code: '560', name: 'Fianzas recibidas a corto plazo' }
-  ],
-  2: [
     { 
-      code: '100', 
-      name: 'Capital social', 
-      examples: ['Aportaciones de los socios al constituir una sociedad anónima o limitada y ampliaciones de capital acordadas para incorporar nuevos accionistas'],
+      code: '258', 
+      name: 'Imposiciones a largo plazo', 
       scenarios: [
-        { text: 'Se constituye una sociedad anónima con aportaciones de los socios', action: 'credit' }
+        { text: 'Al recuperar los fondos de Imposiciones a largo plazo', action: 'credit' }
       ]
-    },
-    { code: '103', name: 'Socios por desembolsos no exigidos', examples: ['Parte del capital social suscrito que los accionistas aún no han aportado y que la sociedad todavía no les ha reclamado'] },
-    { code: '112', name: 'Reserva legal' },
-    { 
-      code: '170', 
-      name: 'Deudas a largo plazo con entidades de crédito', 
-      examples: ['Préstamos bancarios con vencimiento superior a un año y deudas que, tras una reclasificación, permanecen a largo plazo'],
-      scenarios: [
-        { text: 'Se solicita un préstamo al banco a devolver en 5 años', action: 'credit' }
-      ]
-    },
-    { code: '173', name: 'Proveedores de inmovilizado a largo plazo', examples: ['Deuda con el vendedor de una máquina o furgoneta a pagar en un plazo de 18 meses o más'] },
-    { code: '175', name: 'Efectos a pagar a largo plazo', examples: ['Letras de cambio aceptadas por la compra de un edificio con vencimiento a dos años'] },
-    { code: '180', name: 'Fianzas recibidas a largo plazo', examples: ['Dinero recibido de un inquilino como garantía de cumplimiento de un contrato de alquiler a seis años'] },
-    { code: '203', name: 'Propiedad industrial', examples: ['Adquisición de una patente (por ejemplo, para fabricar carne vegetal)'] },
-    { code: '205', name: 'Derechos de traspaso', examples: ['Pago realizado al anterior arrendatario de un local para subrogarse en su contrato y convertirse en el nuevo inquilino'] },
-    { code: '206', name: 'Aplicaciones informáticas', examples: ['Compra de software, programas informáticos o gastos de desarrollo de una página web'] },
-    { code: '210', name: 'Terrenos y bienes naturales', examples: ['Valor del suelo o solares urbanos donde se asientan las oficinas, naves o edificios de la empresa'] },
-    { 
-      code: '211', 
-      name: 'Construcciones', 
-      examples: ['Edificaciones como locales de oficinas, naves industriales u hoteles propiedad de la firma'],
-      scenarios: [
-        { text: 'Se adquiere un local para las nuevas oficinas centrales', action: 'debit' }
-      ]
-    },
-    { code: '212', name: 'Instalaciones técnicas', examples: ['Equipos especializados como aparatos quirúrgicos, equipos de generación de energía o maquinaria avanzada de proceso productivo'] },
-    { 
-      code: '216', 
-      name: 'Mobiliario', 
-      examples: ['Sillas, mesas de oficina y estanterías'],
-      scenarios: [
-        { text: 'Se compra mobiliario para la zona de recepción', action: 'debit' }
-      ]
-    },
-    { code: '217', name: 'Equipos para procesos de información', examples: ['Ordenadores, servidores y conjuntos electrónicos'] },
-    { 
-      code: '218', 
-      name: 'Elementos de transporte', 
-      examples: ['Vehículos como furgonetas o camiones para el transporte de personas o mercancías'],
-      scenarios: [
-        { text: 'Se adquiere un camión para la distribución logística', action: 'debit' }
-      ]
-    },
-    { code: '251', name: 'Valores representativos de deuda a largo plazo', examples: ['Inversión en bonos del Tesoro o títulos de renta fija con vencimiento a cinco años'] },
-    { code: '472', name: 'Hacienda Pública, IVA soportado', examples: ['Impuesto pagado al comprar bienes o servicios (maquinaria, mercaderías, luz)'] },
-    { code: '477', name: 'Hacienda Pública, IVA repercutido', examples: ['Impuesto cobrado a los clientes al venderles productos o prestarles servicios'] },
-    { code: '5200', name: 'Préstamos a corto plazo con entidades de crédito', examples: ['Deuda bancaria que vence en el año actual o parte de un préstamo a largo plazo reclasificado'] },
-    { code: '523', name: 'Proveedores de inmovilizado a corto plazo', examples: ['Deuda con el vendedor de un ordenador o mobiliario a pagar en menos de un año'] },
-    { code: '540', name: 'Inversiones financieras a corto plazo en instrumentos de patrimonio', examples: ['Compra de acciones en bolsa con intención especulativa (venta rápida)'] },
-    { code: '541', name: 'Valores representativos de deuda a corto plazo', examples: ['Bonos del Tesoro o de empresas con vencimiento a 12 meses o menos'] },
-    { code: '542', name: 'Créditos a corto plazo', examples: ['Dinero prestado a un tercero a devolver en seis meses'] },
-    { code: '558', name: 'Socios por desembolsos exigidos', examples: ['Capital que la empresa ya ha reclamado formalmente a los accionistas para que lo aporten'] },
-    { code: '565', name: 'Fianzas constituidas a corto plazo', examples: ['Garantía en efectivo pagada al firmar un contrato que será devuelta en 12 meses'] },
-    { 
-      code: '572', 
-      name: 'Bancos', 
-      examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'],
-      scenarios: [
-        { text: 'Se paga por banco la cuota del préstamo recibido', action: 'credit' }
-      ]
-    },
-    { code: '573', name: 'Bancos, moneda extranjera', examples: ['Saldo en cuentas bancarias denominadas en divisas como dólares'] },
-    { code: '214', name: 'Utillaje', examples: ['Herramientas y utensilios para el almacén o la fábrica'] },
-    { code: '219', name: 'Otro inmovilizado material', examples: ['Papeleras, contenedores y envases que no se consumen inmediatamente'] },
-    { code: '250', name: 'Inversiones financieras a largo plazo en instrumentos de patrimonio' },
-    { code: '252', name: 'Créditos a largo plazo', examples: ['Dinero prestado a un tercero (amigo o empresa no vinculada) a devolver en más de un año'] },
-    { code: '258', name: 'Imposiciones a largo plazo', examples: ['Depósitos bancarios "a plazo" con compromiso de no retirar el dinero en 18 meses'] },
-    { code: '260', name: 'Garantías financieras a largo plazo (Avales)', examples: ['Avales en efectivo recibidos por aceptar flexibilidad en las obligaciones de un contrato'] }
+    }
   ],
   3: [
     { 
-      code: '600', 
-      name: 'Compra de mercaderías', 
-      examples: ['Adquisición de productos para reventa (fruta, ordenadores, electrodomésticos) como actividad principal de la empresa, incluyendo el transporte de las compras a cargo del comprador'],
+      code: '300', 
+      name: 'Mercaderías', 
       scenarios: [
-        { text: 'Se compran mercaderías a un proveedor habitual', action: 'debit' }
+        { text: 'Al cierre del ejercicio por el valor de las existencias finales (Ej: recuento físico de fruta en almacén el 31/12)', action: 'debit' },
+        { text: 'Al cierre del ejercicio por el valor de las existencias iniciales de Mercaderías', action: 'credit' }
       ]
     },
-    { code: '601', name: 'Compra de materias primas', examples: ['Compra de madera para fabricar muebles'] },
-    { code: '602', name: 'Compras de otros aprovisionamientos', examples: ['Compra de materiales fungibles (papel, tinta, artículos de limpieza, gasolina o envases no retornables)'] },
-    { code: '606', name: 'Descuentos sobre compras por pronto pago' },
-    { code: '608', name: 'Devoluciones de compras' },
-    { code: '609', name: '"Rappels" por compras', examples: ['Descuentos fuera de factura por haber alcanzado un gran volumen de pedidos'] },
-    { code: '610', name: 'Variación de existencias' },
-    { code: '620', name: 'Gastos en I+D' },
+    { 
+      code: '310', 
+      name: 'Materias primas', 
+      scenarios: [
+        { text: 'Al cierre del ejercicio por el valor de las existencias finales (Ej: recuento de harina en una panadería)', action: 'debit' },
+        { text: 'Al cierre del ejercicio por el valor de las existencias iniciales de Materias primas', action: 'credit' }
+      ]
+    },
+    { 
+      code: '320', 
+      name: 'Otros aprovisionamientos', 
+      scenarios: [
+        { text: 'Al cierre del ejercicio por el valor de las existencias finales (Ej: recuento de envases o repuestos)', action: 'debit' },
+        { text: 'Al cierre del ejercicio por el valor de las existencias iniciales de Otros aprovisionamientos', action: 'credit' }
+      ]
+    },
+    { 
+      code: '600', 
+      name: 'Compra de mercaderías', 
+      scenarios: [
+        { text: 'Al recibir el pedido (Ej: compra de naranjas a un agricultor)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Compra de mercaderías contra Resultado del ejercicio', action: 'credit' }
+      ]
+    },
+    { 
+      code: '601', 
+      name: 'Compra de materias primas', 
+      scenarios: [
+        { text: 'Al recibir el pedido (Ej: compra de madera para fabricar muebles)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Compra de materias primas', action: 'credit' }
+      ]
+    },
+    { 
+      code: '602', 
+      name: 'Compras de otros aprovisionamientos', 
+      scenarios: [
+        { text: 'Al recibir el pedido (Ej: compra de cajas de cartón para embalaje)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Compras de otros aprovisionamientos', action: 'credit' }
+      ]
+    },
+    { 
+      code: '606', 
+      name: 'Descuentos sobre compras por pronto pago', 
+      scenarios: [
+        { text: 'Al pagar antes del plazo pactado (Ej: descuento del 2 % por pagar al contado)', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Descuentos sobre compras por pronto pago', action: 'debit' }
+      ]
+    },
+    { 
+      code: '608', 
+      name: 'Devoluciones de compras y operaciones similares', 
+      scenarios: [
+        { text: 'Al devolver mercancía defectuosa (Ej: devolución de fruta en mal estado)', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Devoluciones de compras', action: 'debit' }
+      ]
+    },
+    { 
+      code: '609', 
+      name: '«Rappels» por compras', 
+      scenarios: [
+        { text: 'Descuento que te aplica el vendedor por alcanzar un volumen de pedido alto', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Rappels por compras', action: 'debit' }
+      ]
+    },
+    { 
+      code: '610', 
+      name: 'Variación de existencias de mercaderías', 
+      scenarios: [
+        { text: 'Al cierre del ejercicio por las existencias iniciales de Variación de existencias de mercaderías', action: 'debit' },
+        { text: 'Al cierre del ejercicio por las existencias finales de Variación de existencias de mercaderías', action: 'credit' }
+      ]
+    },
+    { 
+      code: '620', 
+      name: 'Gastos en investigación y desarrollo del ejercicio', 
+      scenarios: [
+        { text: 'Por los gastos realizados (Ej: pago a laboratorio por estudio de nuevos sabores)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Gastos en I+D', action: 'credit' }
+      ]
+    },
     { 
       code: '621', 
       name: 'Arrendamientos y cánones', 
-      examples: ['Alquiler del local', 'Alquiler de una furgoneta'],
       scenarios: [
-        { text: 'Se recibe la factura del alquiler mensual del local', action: 'debit' }
+        { text: 'Al recibir la factura del alquiler (Ej: pago mensual del local de la tienda)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Arrendamientos', action: 'credit' }
       ]
     },
-    { code: '622', name: 'Reparaciones y conservación', examples: ['Reparación de una máquina', 'Pintado de la oficina'] },
-    { code: '623', name: 'Servicios de profesionales independientes', examples: ['Honorarios de economistas, abogados, auditores, notarios, gestorías y contratas de limpieza'] },
-    { code: '624', name: 'Transportes (en ventas)', examples: ['Gasto por enviar las ventas a los clientes mediante un transportista externo'] },
-    { code: '625', name: 'Primas de seguros', examples: ['Seguro del local contra incendios', 'Seguro de responsabilidad civil'] },
-    { code: '626', name: 'Servicios bancarios', examples: ['Comisiones de mantenimiento de cuenta o por descubierto'] },
+    { 
+      code: '622', 
+      name: 'Reparaciones y conservación', 
+      scenarios: [
+        { text: 'Por el mantenimiento (Ej: factura del técnico que arregla el aire acondicionado)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Reparaciones', action: 'credit' }
+      ]
+    },
+    { 
+      code: '623', 
+      name: 'Servicios de profesionales independientes', 
+      scenarios: [
+        { text: 'Por los honorarios (Ej: factura del abogado o del gestor contable)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Servicios profesionales', action: 'credit' }
+      ]
+    },
+    { 
+      code: '624', 
+      name: 'Transportes', 
+      scenarios: [
+        { text: 'Por los portes (Ej: pago a la agencia de transportes por enviar pedidos)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Transportes', action: 'credit' }
+      ]
+    },
+    { 
+      code: '625', 
+      name: 'Primas de seguros', 
+      scenarios: [
+        { text: 'Al pagar la póliza (Ej: seguro anual contra incendios del almacén)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Seguros', action: 'credit' }
+      ]
+    },
+    { 
+      code: '626', 
+      name: 'Servicios bancarios y similares', 
+      scenarios: [
+        { text: 'Por las comisiones (Ej: cargo del banco por mantenimiento de cuenta)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Servicios bancarios', action: 'credit' }
+      ]
+    },
     { 
       code: '628', 
       name: 'Suministros', 
-      examples: ['Consumo de agua, gas y electricidad'],
       scenarios: [
-        { text: 'Se recibe el recibo de la luz del mes pasado', action: 'debit' }
+        { text: 'Por el consumo (Ej: factura de la luz, agua o gas)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Suministros', action: 'credit' }
       ]
     },
-    { code: '629', name: 'Otros servicios (teléfono, viajes)', examples: ['Gastos de teléfono, viajes del personal o el transporte de empleados a la fábrica'] },
-    { code: '650', name: 'Pérdidas de créditos comerciales incobrables', examples: ['Deudas de clientes declarados en concurso de acreedores o insolventes que se dan por perdidas'] },
-    { code: '662', name: 'Intereses de deudas' },
-    { code: '678', name: 'Gastos excepcionales (multas, incendios)', examples: ['Recoge multas fiscales, pérdidas por incendios (furgoneta carbonizada), inundaciones o sanciones'] },
+    { 
+      code: '629', 
+      name: 'Otros servicios', 
+      scenarios: [
+        { text: 'Por gastos diversos (Ej: compra de material de oficina o gastos de viaje)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Otros servicios', action: 'credit' }
+      ]
+    },
+    { 
+      code: '650', 
+      name: 'Pérdidas de créditos comerciales incobrables', 
+      scenarios: [
+        { text: 'Al declarar un cliente como fallido (Ej: cliente en concurso de acreedores que no pagará)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Pérdidas por incobrables', action: 'credit' }
+      ]
+    },
+    { 
+      code: '662', 
+      name: 'Intereses de deudas', 
+      scenarios: [
+        { text: 'Al devengarse los intereses (Ej: cargo bancario por intereses del préstamo)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Intereses de deudas', action: 'credit' }
+      ]
+    },
+    { 
+      code: '666', 
+      name: 'Pérdidas en participaciones y valores representativos de deuda', 
+      scenarios: [
+        { text: 'Al vender con pérdida (Ej: venta de acciones por debajo de su precio de compra)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Pérdidas financieras', action: 'credit' }
+      ]
+    },
+    { 
+      code: '678', 
+      name: 'Gastos excepcionales', 
+      scenarios: [
+        { text: 'Por sucesos imprevistos (Ej: pago de una multa de tráfico de la furgoneta)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Gastos excepcionales', action: 'credit' }
+      ]
+    },
     { 
       code: '700', 
       name: 'Venta de mercaderías', 
-      examples: ['Ingresos por la venta habitual de los productos de la empresa (actividad principal)'],
       scenarios: [
-        { text: 'Se venden productos a un cliente habitual', action: 'credit' }
+        { text: 'Al realizar la venta (Ej: venta de 500 kg de manzanas a un supermercado)', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Venta de mercaderías contra Resultado del ejercicio', action: 'debit' }
       ]
     },
-    { code: '701', name: 'Venta de productos terminados' },
-    { code: '704', name: 'Venta de envases y embalajes' },
+    { 
+      code: '701', 
+      name: 'Venta de productos terminados', 
+      scenarios: [
+        { text: 'Al realizar la venta (Ej: panadería vende sus barras de pan a tiendas)', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Venta de productos terminados', action: 'debit' }
+      ]
+    },
+    { 
+      code: '704', 
+      name: 'Venta de envases y embalajes', 
+      scenarios: [
+        { text: 'Al vender los envases (Ej: venta de palets usados a otra empresa)', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Venta de envases', action: 'debit' }
+      ]
+    },
     { 
       code: '705', 
       name: 'Prestación de servicios', 
-      examples: ['Facturación por alojamiento en hoteles, restauración, servicios postventa o asesoramiento laboral (cuando es la actividad principal de la empresa)'],
       scenarios: [
-        { text: 'Se factura a un cliente por un servicio de asesoría prestado', action: 'credit' }
+        { text: 'Al facturar el servicio (Ej: cobro por asesorar a otra empresa en logística)', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Prestación de servicios', action: 'debit' }
       ]
     },
-    { code: '706', name: 'Descuentos sobre ventas por pronto pago' },
-    { code: '708', name: 'Devoluciones de ventas' },
-    { code: '709', name: '"Rappels" sobre ventas' },
-    { code: '752', name: 'Ingresos por arrendamientos', examples: ['Cobro del alquiler de una oficina o sala de conferencias propiedad de la firma (cuando es una actividad secundaria o accidental)'] },
-    { code: '754', name: 'Ingresos por comisiones' },
-    { code: '755', name: 'Ingresos por servicios al personal' },
-    { code: '760', name: 'Ingresos de participaciones en instrumentos de patrimonio (dividendos)', examples: ['Cobro de dividendos de las acciones de las que la empresa es titular'] },
-    { code: '766', name: 'Beneficios en participaciones y valores representativos de deuda' },
-    { code: '769', name: 'Otros ingresos financieros (intereses bancarios)', examples: ['Intereses a favor generados por el dinero en el banco'] },
-    { code: '129', name: 'Resultado del ejercicio' },
-    { code: '300', name: 'Mercaderías (existencias en almacén)', examples: ['Valor de los productos en almacén para reventa como muebles de cocina, tinta de impresora o frutas'] },
-    { code: '4009', name: 'Proveedores, facturas pendientes de recibir', examples: ['Compra de mercaderías cuando la mercancía ya ha llegado pero la factura aún no se ha recibido'] },
-    { code: '404', name: 'Proveedores, empresas asociadas' },
-    { code: '406', name: 'Envases a devolver a proveedores', examples: ['Recipientes retornables que el suministrador carga en factura con facultad de devolución'] },
-    { code: '407', name: 'Anticipos a proveedores', examples: ['Dinero entregado "a cuenta" para asegurar una futura compra de productos'] },
-    { code: '410', name: 'Acreedores por prestación de servicios', examples: ['Deuda por reparaciones en la oficina, honorarios de abogados/gestores, servicios de teléfono o limpieza'] },
-    { code: '434', name: 'Clientes, empresas asociadas' },
-    { code: '438', name: 'Anticipos de clientes', examples: ['Dinero recibido de un comprador antes de entregarle los productos o servicios'] },
-    { code: '440', name: 'Deudores', examples: ['Derechos de cobro por actividades secundarias como mediación (comisiones) o alquiler accidental de salas'] },
-    { code: '473', name: 'Hacienda Pública, retenciones y pagos a cuenta', examples: ['Pagos anticipados de impuestos retenidos por el banco al abonarnos intereses o dividendos'] }
+    { 
+      code: '706', 
+      name: 'Descuentos sobre ventas por pronto pago', 
+      scenarios: [
+        { text: 'Al conceder el descuento (Ej: rebaja al cliente por pagarnos al contado)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Descuentos sobre ventas por pronto pago', action: 'credit' }
+      ]
+    },
+    { 
+      code: '708', 
+      name: 'Devoluciones de ventas y operaciones similares', 
+      scenarios: [
+        { text: 'Al recibir mercancía devuelta (Ej: cliente nos devuelve fruta por no ser el calibre pactado)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Devoluciones de ventas', action: 'credit' }
+      ]
+    },
+    { 
+      code: '709', 
+      name: '«Rappels» sobre ventas', 
+      scenarios: [
+        { text: 'Al conceder el abono por volumen (Ej: descuento al cliente por comprarnos más de 50 toneladas)', action: 'debit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Rappels sobre ventas', action: 'credit' }
+      ]
+    },
+    { 
+      code: '752', 
+      name: 'Ingresos por arrendamientos', 
+      scenarios: [
+        { text: 'Al facturar el alquiler (Ej: cobro mensual por alquilar una oficina que nos sobra)', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Ingresos por arrendamientos', action: 'debit' }
+      ]
+    },
+    { 
+      code: '754', 
+      name: 'Ingresos por comisiones', 
+      scenarios: [
+        { text: 'Al devengar la comisión (Ej: cobro por mediar en una venta entre terceros)', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Ingresos por comisiones', action: 'debit' }
+      ]
+    },
+    { 
+      code: '755', 
+      name: 'Ingresos por servicios al personal', 
+      scenarios: [
+        { text: 'Por servicios prestados (Ej: cobro a empleados por el uso del comedor de empresa)', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Ingresos por servicios al personal', action: 'debit' }
+      ]
+    },
+    { 
+      code: '760', 
+      name: 'Ingresos de participaciones en instrumentos de patrimonio', 
+      scenarios: [
+        { text: 'Al cobrar dividendos (Ej: cobro de beneficios de las acciones que poseemos)', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Ingresos de participaciones', action: 'debit' }
+      ]
+    },
+    { 
+      code: '766', 
+      name: 'Beneficios en participaciones y valores representativos de deuda', 
+      scenarios: [
+        { text: 'Al vender con beneficio (Ej: venta de acciones por encima de su precio de compra)', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Beneficios financieros', action: 'debit' }
+      ]
+    },
+    { 
+      code: '769', 
+      name: 'Otros ingresos financieros', 
+      scenarios: [
+        { text: 'Por intereses a nuestro favor (Ej: intereses abonados por el banco en nuestra cuenta)', action: 'credit' },
+        { text: 'Al cierre del ejercicio para saldar la cuenta de Otros ingresos financieros', action: 'debit' }
+      ]
+    }
   ],
-  5: [
-    { code: '100', name: 'Capital social', examples: ['Aportaciones de los socios al constituir una sociedad anónima o limitada y ampliaciones de capital acordadas para incorporar nuevos accionistas'] },
-    { code: '112', name: 'Reserva legal' },
-    { code: '129', name: 'Resultado del ejercicio' },
-    { code: '170', name: 'Deudas a largo plazo con entidades de crédito', examples: ['Préstamos bancarios con vencimiento superior a un año y deudas que, tras una reclasificación, permanecen a largo plazo'] },
-    { code: '216', name: 'Mobiliario', examples: ['Sillas, mesas de oficina y estanterías'] },
-    { code: '217', name: 'Equipos para procesos de información', examples: ['Ordenadores, servidores y conjuntos electrónicos'] },
-    { code: '218', name: 'Elementos de transporte', examples: ['Vehículos como furgonetas o camiones para el transporte de personas o mercancías'] },
-    { code: '300', name: 'Mercaderías (existencias en almacén)', examples: ['Valor de los productos en almacén para reventa como muebles de cocina, tinta de impresora o frutas'] },
+  4: [
     { 
       code: '400', 
       name: 'Proveedores', 
-      examples: ['Deudas en factura por compra de electrodomésticos, material de oficina o suministros de limpieza para el tráfico comercial'],
       scenarios: [
-        { text: 'Se compran suministros de oficina a crédito', action: 'credit' }
+        { text: 'Al recibir la factura de compra (Ej: compra de fruta a pagar en 30 días)', action: 'credit' },
+        { text: 'Al pagar la deuda (Ej: transferencia bancaria al proveedor) de Proveedores', action: 'debit' }
       ]
     },
-    { code: '407', name: 'Anticipos a proveedores', examples: ['Dinero entregado "a cuenta" para asegurar una futura compra de productos'] },
+    { 
+      code: '4009', 
+      name: 'Proveedores, facturas pendientes de recibir o formalizar', 
+      scenarios: [
+        { text: 'Al recibir la mercancía sin factura (Ej: llega el camión de fruta pero no el documento de cargo)', action: 'credit' },
+        { text: 'Al recibir la factura definitiva de Proveedores, facturas pendientes de recibir o formalizar', action: 'debit' }
+      ]
+    },
+    { 
+      code: '401', 
+      name: 'Proveedores, efectos comerciales a pagar', 
+      scenarios: [
+        { text: 'Al aceptar la letra o pagaré (Ej: aceptamos pagaré a 60 días por compra de mercancía)', action: 'credit' },
+        { text: 'Al pagar el efecto al vencimiento de Proveedores, efectos comerciales a pagar', action: 'debit' }
+      ]
+    },
+    { 
+      code: '406', 
+      name: 'Envases y embalajes a devolver a proveedores', 
+      scenarios: [
+        { text: 'Al recibir envases con facultad de devolución (Ej: recibimos cajas de plástico retornables con la fruta)', action: 'debit' },
+        { text: 'Al devolver los envases o decidir quedárselos de Envases y embalajes a devolver a proveedores', action: 'credit' }
+      ]
+    },
+    { 
+      code: '407', 
+      name: 'Anticipos a proveedores', 
+      scenarios: [
+        { text: 'Al entregar dinero a cuenta (Ej: pago de 1.000 € antes de recibir el pedido de fruta)', action: 'debit' },
+        { text: 'Al recibir la mercancía y aplicar el anticipo de Anticipos a proveedores', action: 'credit' }
+      ]
+    },
+    { 
+      code: '410', 
+      name: 'Acreedores por prestaciones de servicios', 
+      scenarios: [
+        { text: 'Al recibir la factura de un servicio (Ej: deuda con la empresa de limpieza o seguridad)', action: 'credit' },
+        { text: 'Al pagar la factura de Acreedores por prestaciones de servicios', action: 'debit' }
+      ]
+    },
     { 
       code: '430', 
       name: 'Clientes', 
-      examples: ['Derechos de cobro en factura por la venta habitual de productos o servicios (ej. asesoría o viajes combinados)'],
       scenarios: [
-        { text: 'Se vende mercadería a un cliente con pago aplazado', action: 'debit' }
+        { text: 'Al emitir la factura de venta (Ej: venta de fruta a cobrar en 15 días)', action: 'debit' },
+        { text: 'Al cobrar la factura (Ej: ingreso en cuenta del pago del cliente) de Clientes', action: 'credit' }
       ]
     },
-    { code: '431', name: 'Clientes, efectos comerciales a cobrar', examples: ['Derechos de cobro sobre clientes que han aceptado una letra de cambio o pagaré'] },
-    { code: '472', name: 'Hacienda Pública, IVA soportado', examples: ['Impuesto pagado al comprar bienes o servicios (maquinaria, mercaderías, luz)'] },
-    { code: '477', name: 'Hacienda Pública, IVA repercutido', examples: ['Impuesto cobrado a los clientes al venderles productos o prestarles servicios'] },
-    { code: '5200', name: 'Préstamos a corto plazo con entidades de crédito', examples: ['Deuda bancaria que vence en el año actual o parte de un préstamo a largo plazo reclasificado'] },
-    { code: '523', name: 'Proveedores de inmovilizado a corto plazo', examples: ['Deuda con el vendedor de un ordenador o mobiliario a pagar en menos de un año'] },
+    { 
+      code: '431', 
+      name: 'Clientes, efectos comerciales a cobrar', 
+      scenarios: [
+        { text: 'Al recibir el efecto aceptado (Ej: el cliente nos entrega un pagaré por su compra)', action: 'debit' },
+        { text: 'Al cobrar el efecto al vencimiento de Clientes, efectos comerciales a cobrar', action: 'credit' }
+      ]
+    },
+    { 
+      code: '434', 
+      name: 'Clientes, empresas asociadas', 
+      scenarios: [
+        { text: 'Al vender a una empresa del mismo grupo (Ej: venta de fruta a una filial de la sociedad) de Clientes, empresas asociadas', action: 'debit' },
+        { text: 'Al cobrar la deuda de Clientes, empresas asociadas', action: 'credit' }
+      ]
+    },
+    { 
+      code: '438', 
+      name: 'Anticipos de clientes', 
+      scenarios: [
+        { text: 'Al recibir dinero a cuenta (Ej: el cliente nos paga 500 € antes de que le enviemos la fruta) de Anticipos de clientes', action: 'credit' },
+        { text: 'Al realizar la venta y aplicar el anticipo de Anticipos de clientes', action: 'debit' }
+      ]
+    },
+    { 
+      code: '440', 
+      name: 'Deudores', 
+      scenarios: [
+        { text: 'Por ingresos que no son ventas (Ej: deuda de un tercero por habernos comprado mobiliario usado)', action: 'debit' },
+        { text: 'Al cobrar la deuda de Deudores', action: 'credit' }
+      ]
+    },
+    { 
+      code: '472', 
+      name: 'Hacienda Pública, IVA soportado', 
+      scenarios: [
+        { text: 'Al comprar bienes o servicios (Ej: IVA del 21 % en la factura de compra de maquinaria)', action: 'debit' },
+        { text: 'Al realizar la liquidación trimestral del IVA de Hacienda Pública, IVA soportado', action: 'credit' }
+      ]
+    },
+    { 
+      code: '473', 
+      name: 'Hacienda Pública, retenciones y pagos a cuenta', 
+      scenarios: [
+        { text: 'Al recibir un ingreso con retención (Ej: el banco nos retiene IRPF sobre los intereses)', action: 'debit' },
+        { text: 'Al liquidar el Impuesto sobre Sociedades de Hacienda Pública, retenciones y pagos a cuenta', action: 'credit' }
+      ]
+    },
+    { 
+      code: '477', 
+      name: 'Hacienda Pública, IVA repercutido', 
+      scenarios: [
+        { text: 'Al realizar una venta (Ej: IVA del 4 % en la factura de venta de fruta)', action: 'credit' },
+        { text: 'Al realizar la liquidación trimestral del IVA de Hacienda Pública, IVA repercutido', action: 'debit' }
+      ]
+    }
+  ],
+  5: [
+    { 
+      code: '5200', 
+      name: 'Préstamos a corto plazo con entidades de crédito', 
+      scenarios: [
+        { text: 'Al recibir el préstamo (Ej: crédito bancario a devolver en 6 meses)', action: 'credit' },
+        { text: 'Al pagar las cuotas o el total de la deuda de Préstamos a corto plazo con entidades de crédito', action: 'debit' }
+      ]
+    },
+    { 
+      code: '523', 
+      name: 'Proveedores de inmovilizado a corto plazo', 
+      scenarios: [
+        { text: 'Al comprar el activo (Ej: compra de un ordenador a pagar en 90 días)', action: 'credit' },
+        { text: 'Al pagar la deuda de Proveedores de inmovilizado a corto plazo', action: 'debit' }
+      ]
+    },
+    { 
+      code: '540', 
+      name: 'Inversiones financieras a corto plazo en instrumentos de patrimonio', 
+      scenarios: [
+        { text: 'Al comprar acciones para especular (Ej: compra de acciones de bolsa para vender en 3 meses)', action: 'debit' },
+        { text: 'Al vender las acciones de Inversiones financieras a corto plazo en instrumentos de patrimonio', action: 'credit' }
+      ]
+    },
+    { 
+      code: '541', 
+      name: 'Valores representativos de deuda a corto plazo', 
+      scenarios: [
+        { text: 'Al suscribir los títulos (Ej: compra de letras del tesoro a 6 meses)', action: 'debit' },
+        { text: 'Al recuperar la inversión de Valores representativos de deuda a corto plazo', action: 'credit' }
+      ]
+    },
+    { 
+      code: '542', 
+      name: 'Créditos a corto plazo', 
+      scenarios: [
+        { text: 'Al conceder el préstamo (Ej: dinero prestado a otra empresa a devolver en 8 meses)', action: 'debit' },
+        { text: 'Al cobrar el préstamo de Créditos a corto plazo', action: 'credit' }
+      ]
+    },
+    { 
+      code: '548', 
+      name: 'Imposiciones a corto plazo', 
+      scenarios: [
+        { text: 'Al abrir el depósito (Ej: imposición a plazo fijo de 4 meses)', action: 'debit' },
+        { text: 'Al recuperar los fondos de Imposiciones a corto plazo', action: 'credit' }
+      ]
+    },
+    { 
+      code: '558', 
+      name: 'Socios por desembolsos exigidos', 
+      scenarios: [
+        { text: 'Cuando la sociedad pide el dinero (Ej: se exige el pago del 25 % restante de las acciones)', action: 'debit' },
+        { text: 'Cuando los socios realizan el ingreso de Socios por desembolsos exigidos', action: 'credit' }
+      ]
+    },
+    { 
+      code: '560', 
+      name: 'Fianzas recibidas a corto plazo', 
+      scenarios: [
+        { text: 'Al recibir la garantía (Ej: cobro de fianza por alquiler de equipo para un evento de 1 mes)', action: 'credit' },
+        { text: 'Al devolver la fianza de Fianzas recibidas a corto plazo', action: 'debit' }
+      ]
+    },
+    { 
+      code: '565', 
+      name: 'Fianzas constituidas a corto plazo', 
+      scenarios: [
+        { text: 'Al entregar la garantía (Ej: pago de fianza por alquilar una furgoneta una semana)', action: 'debit' },
+        { text: 'Al recuperar la fianza de Fianzas constituidas a corto plazo', action: 'credit' }
+      ]
+    },
+    { 
+      code: '570', 
+      name: 'Caja', 
+      scenarios: [
+        { text: 'Por las entradas de efectivo (Ej: cobro en metálico de una venta menor)', action: 'debit' },
+        { text: 'Por los pagos en metálico (Ej: pago de correos o pequeños suministros) de Caja', action: 'credit' }
+      ]
+    },
     { 
       code: '572', 
       name: 'Bancos', 
-      examples: ['Saldo disponible en cuentas corrientes o de ahorro en euros'],
       scenarios: [
-        { text: 'Se paga por transferencia el seguro anual de la oficina', action: 'credit' }
+        { text: 'Por los ingresos en cuenta (Ej: transferencia recibida de un cliente)', action: 'debit' },
+        { text: 'Por los pagos por banco (Ej: pago de nóminas o recibos domiciliados) de Bancos', action: 'credit' }
       ]
     },
     { 
-      code: '600', 
-      name: 'Compra de mercaderías', 
-      examples: ['Adquisición de productos para reventa (fruta, ordenadores, electrodomésticos) como actividad principal de la empresa, incluyendo el transporte de las compras a cargo del comprador'],
+      code: '573', 
+      name: 'Bancos, moneda extranjera', 
       scenarios: [
-        { text: 'Se adquieren existencias para el almacén', action: 'debit' }
+        { text: 'Por ingresos en divisas (Ej: cobro en dólares de una venta a EE.UU.)', action: 'debit' },
+        { text: 'Por pagos en divisas de Bancos, moneda extranjera', action: 'credit' }
       ]
-    },
-    { code: '609', name: '"Rappels" por compras', examples: ['Descuentos fuera de factura por haber alcanzado un gran volumen de pedidos'] },
-    { code: '610', name: 'Variación de existencias' },
-    { code: '624', name: 'Transportes (en ventas)', examples: ['Gasto por enviar las ventas a los clientes mediante un transportista externo'] },
-    { code: '628', name: 'Suministros', examples: ['Consumo de agua, gas y electricidad'] },
-    { 
-      code: '700', 
-      name: 'Venta de mercaderías', 
-      examples: ['Ingresos por la venta habitual de los productos de la empresa (actividad principal)'],
-      scenarios: [
-        { text: 'Se realiza una venta de productos del almacén', action: 'credit' }
-      ]
-    },
-    { code: '706', name: 'Descuentos sobre ventas por pronto pago' },
-    { code: '4700', name: 'Hacienda Pública, deudora por IVA (a devolver)' },
-    { code: '4750', name: 'Hacienda Pública, acreedora por IVA (a pagar)' }
+    }
   ]
 };
 
@@ -454,86 +843,93 @@ const ACCOUNT_MAPPING: Record<string, string> = {
   '101': 'Fondo social',
   '102': 'Capital',
   '103': 'Socios por desembolsos no exigidos',
-  '104': 'Socios por aportaciones no dinerarias pendientes',
-  '108': 'Acciones o participaciones propias en situaciones especiales',
-  '109': 'Acciones o participaciones propias para reducción de capital',
-  '110': 'Prima de emisión o asunción',
-  '111': 'Otros instrumentos de patrimonio neto',
   '112': 'Reserva legal',
-  '113': 'Reservas voluntarias',
-  '114': 'Reservas especiales',
-  '118': 'Aportaciones de socios o propietarios',
-  '120': 'Remanente',
-  '121': 'Resultados negativos de ejercicios anteriores',
   '129': 'Resultado del ejercicio',
-  '130': 'Subvenciones oficiales de capital',
-  '140': 'Provisión para retribuciones a largo plazo al personal',
-  '150': 'Acciones o participaciones a L/P consideradas pasivos financieros',
-  '160': 'Deudas a largo plazo con entidades de crédito vinculadas',
   '170': 'Deudas a largo plazo con entidades de crédito',
-  '171': 'Deudas a largo plazo',
+  '173': 'Proveedores de inmovilizado a largo plazo',
+  '175': 'Efectos a pagar a largo plazo',
   '180': 'Fianzas recibidas a largo plazo',
-  '190': 'Acciones o participaciones emitidas',
-  '194': 'Capital emitido pendiente de inscripción',
-  '200': 'Investigación',
-  '201': 'Desarrollo',
-  '202': 'Concesiones administrativas',
   '203': 'Propiedad industrial',
+  '205': 'Derechos de traspaso',
   '206': 'Aplicaciones informáticas',
   '210': 'Terrenos y bienes naturales',
   '211': 'Construcciones',
+  '212': 'Instalaciones técnicas',
   '213': 'Maquinaria',
   '214': 'Utillaje',
+  '215': 'Otras instalaciones',
   '216': 'Mobiliario',
   '217': 'Equipos para procesos de información',
   '218': 'Elementos de transporte',
   '219': 'Otro inmovilizado material',
-  '220': 'Inversiones en terrenos y bienes naturales',
-  '230': 'Adaptación de terrenos y bienes naturales',
-  '250': 'Inversiones financieras a largo plazo en instrumentos de patrimonio',
-  '260': 'Fianzas constituidas a largo plazo',
-  '280': 'Amortización acumulada del inmovilizado intangible',
-  '281': 'Amortización acumulada del inmovilizado material',
+  '240': 'Participaciones a largo plazo en partes vinculadas',
+  '241': 'Valores representativos de deuda a largo plazo con partes vinculadas',
+  '250': 'Participaciones a largo plazo',
+  '251': 'Valores representativos de deuda a largo plazo',
+  '252': 'Créditos a largo plazo',
+  '258': 'Imposiciones a largo plazo',
   '300': 'Mercaderías',
   '310': 'Materias primas',
-  '320': 'Elementos y conjuntos incorporables',
-  '350': 'Productos terminados',
+  '320': 'Otros aprovisionamientos',
   '400': 'Proveedores',
+  '4009': 'Proveedores, facturas pendientes de recibir o formalizar',
   '401': 'Proveedores, efectos comerciales a pagar',
   '406': 'Envases y embalajes a devolver a proveedores',
   '407': 'Anticipos a proveedores',
   '410': 'Acreedores por prestaciones de servicios',
   '430': 'Clientes',
   '431': 'Clientes, efectos comerciales a cobrar',
-  '437': 'Envases y embalajes a devolver por clientes',
+  '434': 'Clientes, empresas asociadas',
   '438': 'Anticipos de clientes',
   '440': 'Deudores',
-  '460': 'Anticipos de remuneraciones',
-  '465': 'Remuneraciones pendientes de pago',
-  '470': 'Hacienda Pública, deudor por diversos conceptos',
   '472': 'Hacienda Pública, IVA soportado',
   '473': 'Hacienda Pública, retenciones y pagos a cuenta',
-  '474': 'Activos por impuesto diferido',
-  '475': 'Hacienda Pública, acreedor por diversos conceptos',
-  '476': 'Organismos de la Seguridad Social, acreedores',
   '477': 'Hacienda Pública, IVA repercutido',
-  '480': 'Gastos anticipados',
-  '485': 'Ingresos anticipados',
-  '520': 'Deudas a corto plazo con entidades de crédito',
-  '521': 'Deudas a corto plazo',
+  '5200': 'Préstamos a corto plazo con entidades de crédito',
+  '523': 'Proveedores de inmovilizado a corto plazo',
   '540': 'Inversiones financieras a corto plazo en instrumentos de patrimonio',
-  '550': 'Titular de la explotación',
-  '551': 'Cuenta corriente con socios y administradores',
-  '555': 'Partidas pendientes de aplicación',
-  '557': 'Dividendo activo a cuenta',
-  '570': 'Caja, euros',
-  '572': 'Bancos e instituciones de crédito c/c vista, euros',
-  '600': 'Compras de mercaderías',
+  '541': 'Valores representativos de deuda a corto plazo',
+  '542': 'Créditos a corto plazo',
+  '548': 'Imposiciones a corto plazo',
+  '558': 'Socios por desembolsos exigidos',
+  '560': 'Fianzas recibidas a corto plazo',
+  '565': 'Fianzas constituidas a corto plazo',
+  '570': 'Caja',
+  '572': 'Bancos',
+  '573': 'Bancos, moneda extranjera',
+  '600': 'Compra de mercaderías',
+  '601': 'Compra de materias primas',
+  '602': 'Compras de otros aprovisionamientos',
+  '606': 'Descuentos sobre compras por pronto pago',
+  '608': 'Devoluciones de compras y operaciones similares',
+  '609': '«Rappels» por compras',
+  '610': 'Variación de existencias de mercaderías',
+  '620': 'Gastos en investigación y desarrollo del ejercicio',
   '621': 'Arrendamientos y cánones',
+  '622': 'Reparaciones y conservación',
+  '623': 'Servicios de profesionales independientes',
+  '624': 'Transportes',
+  '625': 'Primas de seguros',
+  '626': 'Servicios bancarios y similares',
   '628': 'Suministros',
-  '640': 'Sueldos y salarios',
-  '700': 'Ventas de mercaderías',
-  '705': 'Prestaciones de servicios',
+  '629': 'Otros servicios',
+  '650': 'Pérdidas de créditos comerciales incobrables',
+  '662': 'Intereses de deudas',
+  '666': 'Pérdidas en participaciones y valores representativos de deuda',
+  '678': 'Gastos excepcionales',
+  '700': 'Venta de mercaderías',
+  '701': 'Venta de productos terminados',
+  '704': 'Venta de envases y embalajes',
+  '705': 'Prestación de servicios',
+  '706': 'Descuentos sobre ventas por pronto pago',
+  '708': 'Devoluciones de ventas y operaciones similares',
+  '709': '«Rappels» sobre ventas',
+  '752': 'Ingresos por arrendamientos',
+  '754': 'Ingresos por comisiones',
+  '755': 'Ingresos por servicios al personal',
+  '760': 'Ingresos de participaciones en instrumentos de patrimonio',
+  '766': 'Beneficios en participaciones y valores representativos de deuda',
+  '769': 'Otros ingresos financieros'
 };
 
 const INITIAL_BALANCE: BalanceState = {
@@ -545,93 +941,39 @@ const INITIAL_BALANCE: BalanceState = {
     current: [{ name: 'Bancos', amount: 10000, code: '572' }]
   },
   liabilitiesAndEquity: {
-    equity: [{ name: 'Capital Social', amount: 10000, code: '100' }],
-    nonCurrent: [{ name: 'Deudas a largo plazo con entidades de crédito', amount: 200000, code: '170' }],
-    current: [{ name: 'Préstamos a corto plazo de entidades de crédito', amount: 25000, code: '5200' }]
+    equity: [{ name: 'Capital Social', amount: 200000, code: '100' }],
+    nonCurrent: [{ name: 'Deudas a largo plazo con entidades de crédito', amount: 10000, code: '170' }],
+    current: [{ name: 'Préstamos a corto plazo con entidades de crédito', amount: 25000, code: '5200' }]
   }
 };
 
 const categorizeAccount = (code: string): { section: 'assets' | 'liabilitiesAndEquity', subSection: 'nonCurrent' | 'current' | 'equity' } | null => {
   if (!code) return null;
-  const prefix1 = code.substring(0, 1);
+  const firstDigit = code[0];
   const prefix2 = code.substring(0, 2);
   const prefix3 = code.substring(0, 3);
   const prefix4 = code.substring(0, 4);
 
-  // --- Grupo 1: Financiación Básica ---
-  if (prefix2 === '10' || prefix2 === '11' || prefix2 === '12' || prefix2 === '13') return { section: 'liabilitiesAndEquity', subSection: 'equity' };
-  if (prefix2 === '14' || prefix2 === '15' || prefix2 === '16' || prefix2 === '17' || prefix2 === '18') return { section: 'liabilitiesAndEquity', subSection: 'nonCurrent' };
-  if (prefix2 === '19') return { section: 'liabilitiesAndEquity', subSection: 'current' };
+  // Group 1
+  if (['100', '101', '102', '103', '112', '129'].includes(code)) return { section: 'liabilitiesAndEquity', subSection: 'equity' };
+  if (['170', '173', '175', '180'].includes(code)) return { section: 'liabilitiesAndEquity', subSection: 'nonCurrent' };
 
-  // --- Grupo 2: Activo No Corriente ---
-  if (prefix1 === '2') {
-    if (prefix3 === '280' || prefix3 === '281' || prefix3 === '282' || prefix2 === '29') return { section: 'assets', subSection: 'nonCurrent' };
-    return { section: 'assets', subSection: 'nonCurrent' };
-  }
+  // Group 2
+  if (firstDigit === '2') return { section: 'assets', subSection: 'nonCurrent' };
 
-  // --- Grupo 3: Existencias ---
-  if (prefix1 === '3') return { section: 'assets', subSection: 'current' };
+  // Group 3
+  if (firstDigit === '3') return { section: 'assets', subSection: 'current' };
 
-  // --- Grupo 4: Acreedores y Deudores ---
-  if (prefix2 === '40') {
-    if (prefix3 === '407') return { section: 'assets', subSection: 'current' }; // Anticipos a proveedores
-    return { section: 'liabilitiesAndEquity', subSection: 'current' };
-  }
-  if (prefix2 === '41') return { section: 'liabilitiesAndEquity', subSection: 'current' };
-  if (prefix2 === '43') {
-    if (prefix3 === '438') return { section: 'liabilitiesAndEquity', subSection: 'current' }; // Anticipos de clientes
-    return { section: 'assets', subSection: 'current' };
-  }
-  if (prefix2 === '44') return { section: 'assets', subSection: 'current' };
-  if (prefix2 === '46') {
-    if (prefix3 === '460') return { section: 'assets', subSection: 'current' };
-    return { section: 'liabilitiesAndEquity', subSection: 'current' };
-  }
-  if (prefix2 === '47') {
-    if (prefix3 === '470' || prefix3 === '471' || prefix3 === '472' || prefix3 === '473') return { section: 'assets', subSection: 'current' };
-    if (prefix3 === '474') return { section: 'assets', subSection: 'nonCurrent' };
-    if (prefix3 === '475' || prefix3 === '476' || prefix3 === '477') return { section: 'liabilitiesAndEquity', subSection: 'current' };
-    if (prefix3 === '479') return { section: 'liabilitiesAndEquity', subSection: 'nonCurrent' };
-  }
-  if (prefix2 === '48') {
-    if (prefix3 === '480') return { section: 'assets', subSection: 'current' };
-    if (prefix3 === '485') return { section: 'liabilitiesAndEquity', subSection: 'current' };
-  }
-  if (prefix2 === '49') {
-    if (prefix3 === '490' || prefix3 === '493') return { section: 'assets', subSection: 'current' };
-    return { section: 'liabilitiesAndEquity', subSection: 'current' };
-  }
+  // Group 4
+  if (['400', '4009', '401', '406', '410', '438', '477'].includes(code)) return { section: 'liabilitiesAndEquity', subSection: 'current' };
+  if (['430', '431', '434', '440', '472', '473', '407'].includes(code)) return { section: 'assets', subSection: 'current' };
 
-  // --- Grupo 5: Cuentas Financieras ---
-  if (prefix2 === '50' || prefix2 === '51' || prefix2 === '52') return { section: 'liabilitiesAndEquity', subSection: 'current' };
-  if (prefix2 === '53' || prefix2 === '54') {
-    if (prefix3 === '539' || prefix3 === '549') return { section: 'assets', subSection: 'current' };
-    return { section: 'assets', subSection: 'current' };
-  }
-  if (prefix3 === '550') return { section: 'liabilitiesAndEquity', subSection: 'equity' };
-  if (prefix3 === '551' || prefix3 === '552') return { section: 'assets', subSection: 'current' }; // Simplified, can be both
-  if (prefix3 === '555' || prefix3 === '556') return { section: 'liabilitiesAndEquity', subSection: 'current' };
-  if (prefix3 === '557') return { section: 'liabilitiesAndEquity', subSection: 'equity' };
-  if (prefix4 === '5580') return { section: 'assets', subSection: 'current' };
-  if (prefix4 === '5585') return { section: 'liabilitiesAndEquity', subSection: 'nonCurrent' };
-  if (prefix2 === '55') {
-    if (prefix4 === '5590' || prefix4 === '5593') return { section: 'assets', subSection: 'current' };
-    if (prefix4 === '5595' || prefix4 === '5598') return { section: 'liabilitiesAndEquity', subSection: 'current' };
-  }
-  if (prefix2 === '56') {
-    if (prefix3 === '565' || prefix3 === '566' || prefix3 === '567') return { section: 'assets', subSection: 'current' };
-    return { section: 'liabilitiesAndEquity', subSection: 'current' };
-  }
-  if (prefix2 === '57' || prefix2 === '58') {
-    if (prefix3 === '585' || prefix3 === '586' || prefix3 === '587' || prefix3 === '588' || prefix3 === '589') return { section: 'liabilitiesAndEquity', subSection: 'current' };
-    return { section: 'assets', subSection: 'current' };
-  }
-  if (prefix1 === '5') return { section: 'assets', subSection: 'current' };
+  // Group 5
+  if (['5200', '523', '560'].includes(code)) return { section: 'liabilitiesAndEquity', subSection: 'current' };
+  if (['540', '541', '542', '548', '558', '565', '570', '572', '573'].includes(code)) return { section: 'assets', subSection: 'current' };
 
-  // Gastos e Ingresos: Grupo 6 y 7 -> Resultado del ejercicio (129) en Patrimonio Neto
-  if (prefix1 === '6' || prefix1 === '7') {
-    return { section: 'liabilitiesAndEquity', subSection: 'equity' };
-  }
+  // Group 6 & 7 (PnL)
+  if (firstDigit === '6' || firstDigit === '7') return { section: 'liabilitiesAndEquity', subSection: 'equity' };
 
   return null;
 };
@@ -1065,8 +1407,9 @@ export default function App() {
   const [gameLives, setGameLives] = useState(5);
   const [gameSelectedModules, setGameSelectedModules] = useState<number[]>([]);
   const [gameStatus, setGameStatus] = useState<'selection' | 'playing' | 'gameover'>('selection');
-  const [gameQuestionType, setGameQuestionType] = useState<'code' | 'balance' | 'entry'>('code');
+  const [gameQuestionType, setGameQuestionType] = useState<'code' | 'balance' | 'entry' | 'section'>('code');
   const [userEntryChoice, setUserEntryChoice] = useState<'debit' | 'credit' | null>(null);
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [currentScenario, setCurrentScenario] = useState<{ text: string, action: 'debit' | 'credit' } | null>(null);
   const [gameDifficulty, setGameDifficulty] = useState<'facil' | 'normal' | 'extremo'>('normal');
   const [gameTimer, setGameTimer] = useState(20);
@@ -1877,63 +2220,54 @@ export default function App() {
     </div>
   );
 
+  const getAccountBalanceSection = (code: string): string => {
+    if (code === '129' || code.startsWith('6') || code.startsWith('7')) return 'Resultado del ejercicio';
+    
+    const category = categorizeAccount(code);
+    if (!category) return 'Activo corriente';
+
+    if (category.section === 'assets') {
+      return category.subSection === 'nonCurrent' ? 'Activo no corriente' : 'Activo corriente';
+    } else {
+      if (category.subSection === 'equity') return 'Patrimonio neto';
+      return category.subSection === 'nonCurrent' ? 'Pasivo no corriente' : 'Pasivo corriente';
+    }
+  };
+
   const getCorrectBalances = (code: string): string[] => {
     const firstDigit = code[0];
-    const firstTwo = code.substring(0, 2);
-    const firstThree = code.substring(0, 3);
-    
-    // Default: Nulo is always possible
     const results = ['Saldo nulo'];
 
-    if (code === '129') {
+    // Special cases (can be both)
+    if (['129', '610'].includes(code)) {
       results.push('Saldo deudor', 'Saldo acreedor');
       return results;
     }
 
-    if (['606', '608', '609'].includes(code)) {
-      results.push('Saldo acreedor');
-      return results;
-    }
-
-    if (['706', '708', '709'].includes(code)) {
-      results.push('Saldo deudor');
-      return results;
-    }
-
-    if (['610', '611', '612'].includes(code)) {
-      results.push('Saldo deudor', 'Saldo acreedor');
-      return results;
-    }
-
-    // Assets & Expenses
+    // Deudor balance (Assets and Expenses)
+    // Note: accounts with "Signo: Negativo" in Pasivo/Equity are Deudor
+    // accounts with "Signo: Positivo" in Activo are Deudor
     const isDeudor = 
       firstDigit === '2' || 
       firstDigit === '3' || 
-      firstDigit === '6' ||
-      firstTwo === '43' && code !== '438' ||
-      firstTwo === '44' ||
-      firstThree === '470' ||
-      firstThree === '472' ||
-      firstThree === '473' ||
-      code === '407' ||
-      code === '406' ||
-      firstTwo === '54' ||
-      firstTwo === '55' ||
-      firstTwo === '56' && code !== '560' ||
-      firstTwo === '57' ||
-      code === '103';
+      (firstDigit === '6' && !['606', '608', '609', '610'].includes(code)) ||
+      ['706', '708', '709'].includes(code) ||
+      ['430', '431', '434', '440', '472', '473'].includes(code) ||
+      ['406', '407'].includes(code) || // Negative in Pasivo
+      ['540', '541', '542', '548', '558', '565', '570', '572', '573'].includes(code) ||
+      ['103'].includes(code); // Negative in Equity
 
-    // Liabilities, Equity & Income
+    // Acreedor balance (Liabilities, Equity and Income)
+    // Note: accounts with "Signo: Negativo" in Activo are Acreedor
+    // accounts with "Signo: Positivo" in Pasivo are Acreedor
     const isAcreedor = 
-      firstDigit === '1' && code !== '103' && code !== '129' ||
-      firstDigit === '7' ||
-      firstTwo === '40' && code !== '407' && code !== '406' ||
-      firstTwo === '41' ||
-      code === '438' ||
-      firstThree === '475' ||
-      firstThree === '477' ||
-      firstTwo === '52' ||
-      code === '560';
+      (firstDigit === '1' && !['103', '129'].includes(code)) ||
+      (firstDigit === '7' && !['706', '708', '709'].includes(code)) ||
+      ['606', '608', '609'].includes(code) ||
+      ['400', '4009', '401', '410'].includes(code) ||
+      ['438', '477'].includes(code) || // Negative in Activo
+      ['5200', '523'].includes(code) ||
+      ['560'].includes(code); // Negative in Activo
 
     if (isDeudor) results.push('Saldo deudor');
     if (isAcreedor) results.push('Saldo acreedor');
@@ -2005,7 +2339,35 @@ export default function App() {
       setAskedQuestionCodes([]);
     }
     
-    const randomAccount = availableAccounts[Math.floor(Math.random() * availableAccounts.length)];
+    // Decide question type first to ensure distribution
+    let type: 'code' | 'balance' | 'entry' | 'section' = 'code';
+    const rand = Math.random();
+    
+    let randomAccount;
+    
+    // 50% chance for 'entry' questions
+    if (rand > 0.5) {
+      const accountsWithScenarios = availableAccounts.filter(a => a.scenarios && a.scenarios.length > 0);
+      if (accountsWithScenarios.length > 0) {
+        type = 'entry';
+        randomAccount = accountsWithScenarios[Math.floor(Math.random() * accountsWithScenarios.length)];
+      } else {
+        // Fallback if no accounts with scenarios are left in the pool
+        const subRand = Math.random();
+        if (subRand < 0.33) type = 'code';
+        else if (subRand < 0.66) type = 'balance';
+        else type = 'section';
+        randomAccount = availableAccounts[Math.floor(Math.random() * availableAccounts.length)];
+      }
+    } else {
+      // Distribution for other types (approx 16.6% each)
+      const subRand = Math.random();
+      if (subRand < 0.33) type = 'code';
+      else if (subRand < 0.66) type = 'balance';
+      else type = 'section';
+      randomAccount = availableAccounts[Math.floor(Math.random() * availableAccounts.length)];
+    }
+
     setCurrentQuestion(randomAccount);
     setAskedQuestionCodes(prev => {
       if (availableAccounts.length === accounts.length && prev.length > 0) {
@@ -2014,8 +2376,10 @@ export default function App() {
       return [...prev, randomAccount.code];
     });
     
+    setGameQuestionType(type);
     setUserAnswer('');
     setSelectedBalances([]);
+    setSelectedSection(null);
     setUserEntryChoice(null);
     setCurrentScenario(null);
     setLastAnswerCorrect(null);
@@ -2027,26 +2391,18 @@ export default function App() {
     };
     setGameTimer(difficultyTimes[gameDifficulty]);
     
-    // Decide question type
-    let type: 'code' | 'balance' | 'entry' = 'code';
-    const rand = Math.random();
-    // Entry questions are now the most frequent (70% chance if scenarios available)
-    if (rand > 0.3 && randomAccount.scenarios && randomAccount.scenarios.length > 0) {
-      type = 'entry';
-    } else if (rand > 0.15) {
-      type = 'balance';
-    }
-    
-    setGameQuestionType(type);
-
     // Pick question text
     if (type === 'entry' && randomAccount.scenarios) {
       const scenario = randomAccount.scenarios[Math.floor(Math.random() * randomAccount.scenarios.length)];
       setCurrentScenario(scenario);
-      setCurrentQuestionText(scenario.text);
-    } else if (type === 'code' && randomAccount.examples && randomAccount.examples.length > 0) {
-      const example = randomAccount.examples[Math.floor(Math.random() * randomAccount.examples.length)];
-      setCurrentQuestionText(example);
+      setCurrentQuestionText(`CASO: ${scenario.text}`);
+    } else if (type === 'code') {
+      if (randomAccount.examples && randomAccount.examples.length > 0) {
+        const example = randomAccount.examples[Math.floor(Math.random() * randomAccount.examples.length)];
+        setCurrentQuestionText(`EJEMPLO: ${example}`);
+      } else {
+        setCurrentQuestionText(`CUENTA: ${randomAccount.name}`);
+      }
     } else {
       setCurrentQuestionText(randomAccount.name);
     }
@@ -2121,6 +2477,17 @@ export default function App() {
         else if (!isCodeCorrect) msg = "Código de cuenta incorrecto";
         else msg = "La cuenta debe " + (currentScenario?.action === 'debit' ? "cargarse (Debe)" : "abonarse (Haber)");
         handleWrongAnswer(msg);
+      }
+    } else if (gameQuestionType === 'section') {
+      const correct = getAccountBalanceSection(currentQuestion.code);
+      if (selectedSection === correct) {
+        setGameScore(prev => prev + 12);
+        setLastAnswerCorrect(true);
+        setTimeout(() => {
+          generateQuestion();
+        }, 1000);
+      } else {
+        handleWrongAnswer(`Incorrecto. La sección correcta es: ${correct}`);
       }
     } else {
       const correct = getCorrectBalances(currentQuestion.code);
@@ -2237,17 +2604,17 @@ export default function App() {
                     <input 
                       type="checkbox" 
                       className="hidden"
-                      checked={gameSelectedModules.length === 4}
+                      checked={gameSelectedModules.length === 5}
                       onChange={() => {
-                        if (gameSelectedModules.length === 4) setGameSelectedModules([]);
-                        else setGameSelectedModules([1, 2, 3, 5]);
+                        if (gameSelectedModules.length === 5) setGameSelectedModules([]);
+                        else setGameSelectedModules([1, 2, 3, 4, 5]);
                       }}
                     />
                   </label>
 
                   <div className="h-px bg-zinc-100 my-2" />
 
-                  {[1, 2, 3, 5].map(m => (
+                  {[1, 2, 3, 4, 5].map(m => (
                     <label 
                       key={m} 
                       className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${
@@ -2396,7 +2763,7 @@ export default function App() {
                               )}
                             </div>
                             <span className="text-xs font-bold text-zinc-600">
-                              {entry.modules.length === 4 ? 'Contabilidad Financiera I' : `Módulos: ${entry.modules.join(', ')}`}
+                              {entry.modules.length === 5 ? 'Contabilidad Financiera I' : `Módulos: ${entry.modules.join(', ')}`}
                             </span>
                           </div>
                           <span className="text-xl font-black text-emerald-600 shrink-0">{entry.score}</span>
@@ -2466,11 +2833,12 @@ export default function App() {
                   <span className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em]">
                     {gameQuestionType === 'code' ? '¿Cuál es el número de cuenta?' : 
                      gameQuestionType === 'entry' ? 'Indica el número de cuenta y si se carga o abona' :
+                     gameQuestionType === 'section' ? '¿Dónde figura esta cuenta en el balance?' :
                      '¿Qué saldos puede tener esta cuenta?'}
                   </span>
                   <div className="flex flex-col items-center gap-2">
                     <h3 className="text-4xl font-black text-zinc-900 leading-tight">
-                      {gameQuestionType === 'balance' ? `${currentQuestion.code} - ${currentQuestion.name}` : currentQuestionText}
+                      {gameQuestionType === 'balance' || gameQuestionType === 'section' ? `${currentQuestion.code} - ${currentQuestion.name}` : currentQuestionText}
                     </h3>
                   </div>
                 </div>
@@ -2536,6 +2904,35 @@ export default function App() {
                         </div>
                       )}
                     </div>
+                  ) : gameQuestionType === 'section' ? (
+                    <div className="grid grid-cols-1 gap-3">
+                      {[
+                        'Activo no corriente',
+                        'Activo corriente',
+                        'Patrimonio neto',
+                        'Pasivo no corriente',
+                        'Pasivo corriente',
+                        'Resultado del ejercicio'
+                      ].map(section => (
+                        <button
+                          key={section}
+                          type="button"
+                          onClick={() => setSelectedSection(section)}
+                          className={`p-5 rounded-2xl border-4 font-bold text-xl transition-all flex items-center justify-between ${
+                            selectedSection === section
+                              ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                              : 'border-zinc-100 bg-zinc-50 text-zinc-500 hover:border-zinc-200'
+                          }`}
+                        >
+                          {section}
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                            selectedSection === section ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-300'
+                          }`}>
+                            {selectedSection === section && <div className="w-2 h-2 bg-white rounded-full" />}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-3">
                       {['Saldo deudor', 'Saldo acreedor', 'Saldo nulo'].map(balance => (
@@ -2571,11 +2968,12 @@ export default function App() {
                     type="submit"
                     disabled={
                       (gameQuestionType === 'balance' && selectedBalances.length === 0) ||
+                      (gameQuestionType === 'section' && !selectedSection) ||
                       (gameQuestionType === 'entry' && (!userAnswer.trim() || !userEntryChoice))
                     }
                     className="w-full py-5 bg-zinc-900 text-white rounded-[1.5rem] font-black text-xl shadow-xl hover:bg-black transition-all active:scale-95 disabled:opacity-50"
                   >
-                    {gameQuestionType === 'balance' ? 'CONFIRMAR SELECCIÓN' : 'COMPROBAR'}
+                    {gameQuestionType === 'balance' || gameQuestionType === 'section' ? 'CONFIRMAR SELECCIÓN' : 'COMPROBAR'}
                   </button>
                 </form>
               </div>
@@ -3175,8 +3573,8 @@ export default function App() {
                         
                         <div className="flex items-center gap-6">
                           <div className="flex gap-4 text-[15px] font-mono">
-                            <div className="text-zinc-400">Total Debe: <span className="text-emerald-500">{formatCurrency(draft.reduce((acc, r) => acc + (parseFloat(r.debe) || 0), 0))}</span></div>
-                            <div className="text-zinc-400">Total Haber: <span className="text-emerald-500">{formatCurrency(draft.reduce((acc, r) => acc + (parseFloat(r.haber) || 0), 0))}</span></div>
+                            <div className="text-zinc-400">Total: <span className="text-emerald-500">{formatCurrency(draft.reduce((acc, r) => acc + (parseFloat(r.debe) || 0), 0))}</span></div>
+                            <div className="text-zinc-400">Total: <span className="text-emerald-500">{formatCurrency(draft.reduce((acc, r) => acc + (parseFloat(r.haber) || 0), 0))}</span></div>
                           </div>
                           <button 
                             onClick={applyManualEntry}
