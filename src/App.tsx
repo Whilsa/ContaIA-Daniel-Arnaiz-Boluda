@@ -1426,6 +1426,13 @@ export default function App() {
   const [editingHistoryIndex, setEditingHistoryIndex] = useState<number | null>(null);
   const [editingHistoryName, setEditingHistoryName] = useState('');
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean | null>(null);
+  const [missedQuestions, setMissedQuestions] = useState<{
+    question: string;
+    code: string;
+    correctAnswer: string;
+    userAnswer: string;
+    type: string;
+  }[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -2221,7 +2228,7 @@ export default function App() {
   );
 
   const getAccountBalanceSection = (code: string): string => {
-    if (code === '129' || code.startsWith('6') || code.startsWith('7')) return 'Resultado del ejercicio';
+    if (code.startsWith('6') || code.startsWith('7')) return 'Patrimonio neto';
     
     const category = categorizeAccount(code);
     if (!category) return 'Activo corriente';
@@ -2444,6 +2451,7 @@ export default function App() {
     setGameLives(5);
     setGameStatus('playing');
     setAskedQuestionCodes([]);
+    setMissedQuestions([]);
     generateQuestion([]);
   };
 
@@ -2459,6 +2467,13 @@ export default function App() {
           generateQuestion();
         }, 1000);
       } else {
+        setMissedQuestions(prev => [...prev, {
+          question: currentQuestionText || currentQuestion.name,
+          code: currentQuestion.code,
+          correctAnswer: currentQuestion.code,
+          userAnswer: userAnswer.trim(),
+          type: 'Código de cuenta'
+        }]);
         handleWrongAnswer();
       }
     } else if (gameQuestionType === 'entry') {
@@ -2476,6 +2491,14 @@ export default function App() {
         if (!isCodeCorrect && !isActionCorrect) msg = "Código y acción incorrectos";
         else if (!isCodeCorrect) msg = "Código de cuenta incorrecto";
         else msg = "La cuenta debe " + (currentScenario?.action === 'debit' ? "cargarse (Debe)" : "abonarse (Haber)");
+        
+        setMissedQuestions(prev => [...prev, {
+          question: currentQuestionText,
+          code: currentQuestion.code,
+          correctAnswer: `${currentQuestion.code} (${currentScenario?.action === 'debit' ? 'Debe' : 'Haber'})`,
+          userAnswer: `${userAnswer.trim()} (${userEntryChoice === 'debit' ? 'Debe' : userEntryChoice === 'credit' ? 'Haber' : '?'})`,
+          type: 'Asiento contable'
+        }]);
         handleWrongAnswer(msg);
       }
     } else if (gameQuestionType === 'section') {
@@ -2487,6 +2510,13 @@ export default function App() {
           generateQuestion();
         }, 1000);
       } else {
+        setMissedQuestions(prev => [...prev, {
+          question: `${currentQuestion.code} - ${currentQuestion.name}`,
+          code: currentQuestion.code,
+          correctAnswer: correct,
+          userAnswer: selectedSection || 'Sin respuesta',
+          type: 'Sección del balance'
+        }]);
         handleWrongAnswer(`Incorrecto. La sección correcta es: ${correct}`);
       }
     } else {
@@ -2502,7 +2532,14 @@ export default function App() {
           generateQuestion();
         }, 1000);
       } else {
-        handleWrongAnswer();
+        setMissedQuestions(prev => [...prev, {
+          question: `${currentQuestion.code} - ${currentQuestion.name}`,
+          code: currentQuestion.code,
+          correctAnswer: correct.join(', '),
+          userAnswer: selectedBalances.length > 0 ? selectedBalances.join(', ') : 'Sin respuesta',
+          type: 'Saldos posibles'
+        }]);
+        handleWrongAnswer(`Incorrecto. Los saldos correctos son: ${correct.join(', ')}`);
       }
     }
   };
@@ -2911,8 +2948,7 @@ export default function App() {
                         'Activo corriente',
                         'Patrimonio neto',
                         'Pasivo no corriente',
-                        'Pasivo corriente',
-                        'Resultado del ejercicio'
+                        'Pasivo corriente'
                       ].map(section => (
                         <button
                           key={section}
@@ -2984,7 +3020,7 @@ export default function App() {
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="max-w-md mx-auto"
+              className={`${isScoreSaved && missedQuestions.length > 0 ? 'max-w-xl' : 'max-w-md'} mx-auto w-full transition-all duration-500`}
             >
               <div className="bg-white p-12 rounded-[3rem] shadow-2xl border border-zinc-100 text-center space-y-8">
                 <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto">
@@ -3020,11 +3056,42 @@ export default function App() {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center gap-2 text-emerald-700 font-bold">
                       <CheckCircle2 className="w-5 h-5" />
                       ¡Puntuación guardada!
                     </div>
+
+                    {missedQuestions.length > 0 && (
+                      <div className="space-y-4 text-left">
+                        <div className="flex items-center gap-2 px-2">
+                          <AlertCircle className="w-4 h-4 text-red-500" />
+                          <h4 className="text-sm font-bold text-zinc-900 uppercase tracking-widest">Repaso de errores</h4>
+                        </div>
+                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-zinc-200">
+                          {missedQuestions.map((q, i) => (
+                            <div key={i} className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 space-y-2">
+                              <div className="flex justify-between items-start gap-2">
+                                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">{q.type}</span>
+                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">#{q.code}</span>
+                              </div>
+                              <p className="text-sm font-bold text-zinc-800 leading-tight">{q.question}</p>
+                              <div className="grid grid-cols-2 gap-2 pt-1">
+                                <div>
+                                  <span className="text-[9px] font-bold text-red-400 uppercase tracking-widest block">Tu respuesta</span>
+                                  <span className="text-xs font-medium text-red-600 line-clamp-2">{q.userAnswer}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest block">Correcta</span>
+                                  <span className="text-xs font-bold text-emerald-700 line-clamp-2">{q.correctAnswer}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <button 
                       onClick={() => setGameStatus('selection')}
                       className="w-full py-5 bg-emerald-600 text-white rounded-[1.5rem] font-black text-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95"
