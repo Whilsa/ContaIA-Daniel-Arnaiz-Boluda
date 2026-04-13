@@ -965,7 +965,7 @@ const categorizeAccount = (code: string): { section: 'assets' | 'liabilitiesAndE
   if (firstDigit === '3') return { section: 'assets', subSection: 'current' };
 
   // Group 4
-  if (['400', '4009', '401', '406', '410', '438', '477'].includes(code)) return { section: 'liabilitiesAndEquity', subSection: 'current' };
+  if (['400', '4009', '401', '404', '406', '410', '438', '477'].includes(code)) return { section: 'liabilitiesAndEquity', subSection: 'current' };
   if (['430', '431', '434', '440', '472', '473', '407'].includes(code)) return { section: 'assets', subSection: 'current' };
 
   // Group 5
