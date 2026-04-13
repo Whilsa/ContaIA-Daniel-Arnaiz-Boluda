@@ -874,12 +874,17 @@ const ACCOUNT_MAPPING: Record<string, string> = {
   '400': 'Proveedores',
   '4009': 'Proveedores, facturas pendientes de recibir o formalizar',
   '401': 'Proveedores, efectos comerciales a pagar',
+  '403': 'Proveedores, empresas del grupo',
+  '404': 'Proveedores, empresas asociadas',
+  '405': 'Proveedores, otras partes vinculadas',
   '406': 'Envases y embalajes a devolver a proveedores',
   '407': 'Anticipos a proveedores',
   '410': 'Acreedores por prestaciones de servicios',
   '430': 'Clientes',
   '431': 'Clientes, efectos comerciales a cobrar',
+  '433': 'Clientes, empresas del grupo',
   '434': 'Clientes, empresas asociadas',
+  '435': 'Clientes, otras partes vinculadas',
   '438': 'Anticipos de clientes',
   '440': 'Deudores',
   '472': 'Hacienda Pública, IVA soportado',
@@ -951,28 +956,45 @@ const categorizeAccount = (code: string): { section: 'assets' | 'liabilitiesAndE
   if (!code) return null;
   const firstDigit = code[0];
   const prefix2 = code.substring(0, 2);
-  const prefix3 = code.substring(0, 3);
-  const prefix4 = code.substring(0, 4);
 
-  // Group 1
-  if (['100', '101', '102', '103', '112', '129'].includes(code)) return { section: 'liabilitiesAndEquity', subSection: 'equity' };
-  if (['170', '173', '175', '180'].includes(code)) return { section: 'liabilitiesAndEquity', subSection: 'nonCurrent' };
+  // Group 1: Financiación básica
+  if (firstDigit === '1') {
+    if (['10', '11', '12', '13', '19'].includes(prefix2)) return { section: 'liabilitiesAndEquity', subSection: 'equity' };
+    return { section: 'liabilitiesAndEquity', subSection: 'nonCurrent' };
+  }
 
-  // Group 2
+  // Group 2: Inmovilizado
   if (firstDigit === '2') return { section: 'assets', subSection: 'nonCurrent' };
 
-  // Group 3
+  // Group 3: Existencias
   if (firstDigit === '3') return { section: 'assets', subSection: 'current' };
 
-  // Group 4
-  if (['400', '4009', '401', '404', '406', '410', '438', '477'].includes(code)) return { section: 'liabilitiesAndEquity', subSection: 'current' };
-  if (['430', '431', '434', '440', '472', '473', '407'].includes(code)) return { section: 'assets', subSection: 'current' };
+  // Group 4: Acreedores y deudores
+  if (firstDigit === '4') {
+    if (code === '474') return { section: 'assets', subSection: 'nonCurrent' };
+    if (code === '479') return { section: 'liabilitiesAndEquity', subSection: 'nonCurrent' };
+    if (code === '407') return { section: 'assets', subSection: 'current' };
+    if (code === '438') return { section: 'liabilitiesAndEquity', subSection: 'current' };
+    
+    // Liabilities: 40, 41, 46, 475, 476, 477, 485
+    if (['40', '41', '46', '475', '476', '477', '485'].includes(prefix2)) {
+      return { section: 'liabilitiesAndEquity', subSection: 'current' };
+    }
+    // Assets: 43, 44, 470, 471, 472, 473, 480
+    return { section: 'assets', subSection: 'current' };
+  }
 
-  // Group 5
-  if (['5200', '523', '560'].includes(code)) return { section: 'liabilitiesAndEquity', subSection: 'current' };
-  if (['540', '541', '542', '548', '558', '565', '570', '572', '573'].includes(code)) return { section: 'assets', subSection: 'current' };
+  // Group 5: Cuentas financieras
+  if (firstDigit === '5') {
+    // Liabilities: 50, 51, 52, 55, 560, 561
+    if (['50', '51', '52', '55'].includes(prefix2) || code.startsWith('560') || code.startsWith('561')) {
+      return { section: 'liabilitiesAndEquity', subSection: 'current' };
+    }
+    // Assets: 53, 54, 57, 58, 565, 566
+    return { section: 'assets', subSection: 'current' };
+  }
 
-  // Group 6 & 7 (PnL)
+  // Group 6 & 7: PnL
   if (firstDigit === '6' || firstDigit === '7') return { section: 'liabilitiesAndEquity', subSection: 'equity' };
 
   return null;
@@ -1228,9 +1250,7 @@ const BalanceRow = ({ item }: { item: BalanceItem, key?: React.Key }) => {
     if (code.startsWith('39')) return true;
     
     // Grupo 4
-    if (code.startsWith('406')) return true;
-    if (code.startsWith('437')) return true;
-    if (code.startsWith('490') || code.startsWith('493')) return true;
+    if (code.startsWith('49')) return true;
     
     // Grupo 5
     if (code.startsWith('539') || code.startsWith('549')) return true;
