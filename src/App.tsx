@@ -306,7 +306,7 @@ const MODULE_ACCOUNTS: Record<number, { code: string, name: string, examples?: s
       code: '250', 
       name: 'Participaciones a largo plazo', 
       scenarios: [
-        { text: 'A la compra (Ej: empresa adquiere acciones de una firma de su mismo grupo) de Participaciones a largo plazo', action: 'debit' },
+        { text: 'A la compra (Ej: empresa adquiere acciones de una firma) de Participaciones a largo plazo', action: 'debit' },
         { text: 'Por enajenación o deterioro de Participaciones a largo plazo', action: 'credit' }
       ]
     },
@@ -956,45 +956,68 @@ const categorizeAccount = (code: string): { section: 'assets' | 'liabilitiesAndE
   if (!code) return null;
   const firstDigit = code[0];
   const prefix2 = code.substring(0, 2);
+  const prefix3 = code.substring(0, 3);
 
   // Group 1: Financiación básica
   if (firstDigit === '1') {
-    if (['10', '11', '12', '13', '19'].includes(prefix2)) return { section: 'liabilitiesAndEquity', subSection: 'equity' };
+    // Patrimonio Neto: 100, 101, 102, 103, 112, 129 + subgrupos 10, 11, 12, 13, 19
+    if (['100', '101', '102', '103', '112', '129'].includes(code) || ['10', '11', '12', '13', '19'].includes(prefix2)) {
+      return { section: 'liabilitiesAndEquity', subSection: 'equity' };
+    }
+    // Pasivo No Corriente: 170, 173, 175, 180, 189 + resto grupo 1
+    if (['170', '173', '175', '180', '189'].includes(code) || ['17', '18'].includes(prefix2)) {
+      return { section: 'liabilitiesAndEquity', subSection: 'nonCurrent' };
+    }
+    // Default for Group 1 (RD 1514/2007)
     return { section: 'liabilitiesAndEquity', subSection: 'nonCurrent' };
   }
 
-  // Group 2: Inmovilizado
+  // Group 2: Inmovilizado (Activo No Corriente)
   if (firstDigit === '2') return { section: 'assets', subSection: 'nonCurrent' };
 
-  // Group 3: Existencias
+  // Group 3: Existencias (Activo Corriente)
   if (firstDigit === '3') return { section: 'assets', subSection: 'current' };
 
   // Group 4: Acreedores y deudores
   if (firstDigit === '4') {
     if (code === '474') return { section: 'assets', subSection: 'nonCurrent' };
     if (code === '479') return { section: 'liabilitiesAndEquity', subSection: 'nonCurrent' };
-    if (code === '407') return { section: 'assets', subSection: 'current' };
-    if (code === '438') return { section: 'liabilitiesAndEquity', subSection: 'current' };
     
-    // Liabilities: 40, 41, 46, 475, 476, 477, 485
-    if (['40', '41', '46'].includes(prefix2) || ['475', '476', '477', '485'].includes(code.substring(0, 3))) {
+    // Activo Corriente: 407, 430, 431, 433, 434, 435, 440, 472, 473
+    if (['407', '430', '431', '433', '434', '435', '440', '472', '473'].includes(code)) {
+      return { section: 'assets', subSection: 'current' };
+    }
+    // Pasivo Corriente: 400, 4004, 4009, 401, 403, 404, 405, 406, 410, 411, 438, 477
+    if (['400', '4004', '4009', '401', '403', '404', '405', '406', '410', '411', '438', '477'].includes(code)) {
       return { section: 'liabilitiesAndEquity', subSection: 'current' };
     }
-    // Assets: 43, 44, 470, 471, 472, 473, 480
+
+    // Default Group 4 (RD 1514/2007)
+    if (['40', '41', '46', '475', '476', '477', '485'].includes(prefix2)) {
+      return { section: 'liabilitiesAndEquity', subSection: 'current' };
+    }
     return { section: 'assets', subSection: 'current' };
   }
 
   // Group 5: Cuentas financieras
   if (firstDigit === '5') {
-    // Liabilities: 50, 51, 52, 55, 560, 561
+    // Activo Corriente: 530, 531, 540, 541, 542, 548, 558, 565, 570, 572, 573
+    if (['530', '531', '540', '541', '542', '548', '558', '565', '570', '572', '573'].includes(code)) {
+      return { section: 'assets', subSection: 'current' };
+    }
+    // Pasivo Corriente: 5200, 523, 525, 560, 569
+    if (['5200', '523', '525', '560', '569'].includes(code)) {
+      return { section: 'liabilitiesAndEquity', subSection: 'current' };
+    }
+
+    // Default Group 5 (RD 1514/2007)
     if (['50', '51', '52', '55'].includes(prefix2) || code.startsWith('560') || code.startsWith('561')) {
       return { section: 'liabilitiesAndEquity', subSection: 'current' };
     }
-    // Assets: 53, 54, 57, 58, 565, 566
     return { section: 'assets', subSection: 'current' };
   }
 
-  // Group 6 & 7: PnL
+  // Group 6 & 7: PnL (Regularize in 129 - Equity)
   if (firstDigit === '6' || firstDigit === '7') return { section: 'liabilitiesAndEquity', subSection: 'equity' };
 
   return null;
@@ -1250,6 +1273,9 @@ const BalanceRow = ({ item }: { item: BalanceItem, key?: React.Key }) => {
     if (code.startsWith('39')) return true;
     
     // Grupo 4
+    if (code.startsWith('406')) return true;
+    if (code.startsWith('472')) return true;
+    if (code.startsWith('477')) return true;
     if (code.startsWith('49')) return true;
     
     // Grupo 5
@@ -1264,7 +1290,8 @@ const BalanceRow = ({ item }: { item: BalanceItem, key?: React.Key }) => {
     return false;
   };
 
-  const showError = isNegative && !isContraAccount(item.code || '');
+  const isContra = isContraAccount(item.code || '');
+  const showError = (isNegative && !isContra) || (item.code === '406' && item.amount > 0);
   const [showExplanation, setShowExplanation] = useState(false);
   
   return (
@@ -1317,7 +1344,10 @@ const BalanceRow = ({ item }: { item: BalanceItem, key?: React.Key }) => {
                 className="px-3 py-2 bg-white border border-red-200 rounded-md shadow-sm"
               >
                 <p className="text-[10px] text-zinc-600 leading-relaxed">
-                  Contablemente, una cuenta no puede reflejar una cantidad negativa de un bien físico o un derecho. Si esto ocurre, suele deberse a un error en el registro de las existencias iniciales o a una operación (como una venta o pago) de algo que no consta previamente en el patrimonio de la empresa.
+                  {item.code === '406' 
+                    ? "La cuenta 406 (Envases y embalajes a devolver a proveedores) tiene naturaleza deudora y figura minorando el pasivo. Por tanto, no puede tener saldo acreedor (positivo en el pasivo)."
+                    : "Contablemente, una cuenta no puede reflejar una cantidad negativa de un bien físico o un derecho. Si esto ocurre, suele deberse a un error en el registro de las existencias iniciales o a una operación (como una venta o pago) de algo que no consta previamente en el patrimonio de la empresa."
+                  }
                 </p>
               </motion.div>
             )}
@@ -2266,35 +2296,28 @@ export default function App() {
     const results = ['Saldo nulo'];
 
     // Special cases (can be both)
-    if (['129', '610', '477'].includes(code)) {
+    if (['129', '610', '611', '612', '710', '711', '712', '713', '472', '477'].includes(code)) {
       results.push('Saldo deudor', 'Saldo acreedor');
       return results;
     }
 
     // Deudor balance (Assets and Expenses)
-    // Note: accounts with "Signo: Negativo" in Pasivo/Equity are Deudor
-    // accounts with "Signo: Positivo" in Activo are Deudor
     const isDeudor = 
       firstDigit === '2' || 
       firstDigit === '3' || 
-      (firstDigit === '6' && !['606', '608', '609', '610'].includes(code)) ||
+      (firstDigit === '6' && !['606', '608', '609', '610', '611', '612'].includes(code)) ||
       ['706', '708', '709'].includes(code) ||
-      ['430', '431', '434', '440', '472', '473'].includes(code) ||
-      ['406', '407'].includes(code) || // Negative in Pasivo
-      ['540', '541', '542', '548', '558', '565', '570', '572', '573'].includes(code) ||
+      ['430', '431', '433', '434', '435', '440', '472', '473'].includes(code) ||
+      ['407', '530', '531', '540', '541', '542', '548', '558', '565', '570', '572', '573', '406'].includes(code) ||
       ['103'].includes(code); // Negative in Equity
 
     // Acreedor balance (Liabilities, Equity and Income)
-    // Note: accounts with "Signo: Negativo" in Activo are Acreedor
-    // accounts with "Signo: Positivo" in Pasivo are Acreedor
     const isAcreedor = 
       (firstDigit === '1' && !['103', '129'].includes(code)) ||
-      (firstDigit === '7' && !['706', '708', '709'].includes(code)) ||
+      (firstDigit === '7' && !['706', '708', '709', '710', '711', '712', '713'].includes(code)) ||
       ['606', '608', '609'].includes(code) ||
-      ['400', '4009', '401', '410'].includes(code) ||
-      ['438'].includes(code) || // Negative in Activo
-      ['5200', '523'].includes(code) ||
-      ['560'].includes(code); // Negative in Activo
+      ['400', '4004', '4009', '401', '403', '404', '405', '410', '411', '438'].includes(code) ||
+      ['5200', '523', '525', '560', '569'].includes(code);
 
     if (isDeudor) results.push('Saldo deudor');
     if (isAcreedor) results.push('Saldo acreedor');

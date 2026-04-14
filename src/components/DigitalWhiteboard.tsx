@@ -19,7 +19,9 @@ import {
   BookOpen,
   Columns2,
   Copy,
-  Square
+  Square,
+  Undo2,
+  Redo2
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
@@ -97,6 +99,63 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
   const [editingLedgerId, setEditingLedgerId] = useState<string | null>(null);
   const [editingJournalEntryId, setEditingJournalEntryId] = useState<string | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  
+  // Undo/Redo History
+  const [history, setHistory] = useState<WhiteboardPage[][]>([]);
+  const [historyStep, setHistoryStep] = useState(-1);
+  const isHistoryAction = useRef(false);
+
+  // Initialize history
+  useEffect(() => {
+    if (history.length === 0 && pages.length > 0) {
+      setHistory([JSON.parse(JSON.stringify(pages))]);
+      setHistoryStep(0);
+    }
+  }, [pages]);
+
+  const saveToHistory = useCallback((newPages: WhiteboardPage[]) => {
+    if (isHistoryAction.current) {
+      isHistoryAction.current = false;
+      return;
+    }
+    
+    const newHistory = history.slice(0, historyStep + 1);
+    const stateToSave = JSON.parse(JSON.stringify(newPages));
+    
+    // Only save if different from last state
+    if (newHistory.length > 0 && JSON.stringify(newHistory[newHistory.length - 1]) === JSON.stringify(stateToSave)) {
+      return;
+    }
+
+    newHistory.push(stateToSave);
+    if (newHistory.length > 50) newHistory.shift();
+    
+    setHistory(newHistory);
+    setHistoryStep(newHistory.length - 1);
+    setPages(newPages);
+  }, [history, historyStep, setPages]);
+
+  const undo = () => {
+    if (historyStep > 0) {
+      const prevStep = historyStep - 1;
+      const prevPages = JSON.parse(JSON.stringify(history[prevStep]));
+      isHistoryAction.current = true;
+      setHistoryStep(prevStep);
+      setPages(prevPages);
+      setSelectedIds([]);
+    }
+  };
+
+  const redo = () => {
+    if (historyStep < history.length - 1) {
+      const nextStep = historyStep + 1;
+      const nextPages = JSON.parse(JSON.stringify(history[nextStep]));
+      isHistoryAction.current = true;
+      setHistoryStep(nextStep);
+      setPages(nextPages);
+      setSelectedIds([]);
+    }
+  };
 
   const themeColors = {
     dark: {
@@ -208,15 +267,20 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
     });
   };
 
-  const updateCurrentPage = (updates: Partial<WhiteboardPage>) => {
+  const updateCurrentPage = (updates: Partial<WhiteboardPage>, skipHistory = false) => {
     const newPages = [...pages];
     newPages[currentPageIndex] = { ...currentPage, ...updates };
-    setPages(newPages);
+    if (skipHistory) {
+      setPages(newPages);
+    } else {
+      saveToHistory(newPages);
+    }
   };
 
   const addPage = () => {
-    setPages([...pages, { shapes: [], scale: 1, position: { x: 0, y: 0 } }]);
-    setCurrentPageIndex(pages.length);
+    const newPages = [...pages, { shapes: [], scale: 1, position: { x: 0, y: 0 } }];
+    saveToHistory(newPages);
+    setCurrentPageIndex(newPages.length - 1);
   };
 
   const nextPage = () => {
@@ -243,6 +307,15 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        undo();
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) {
+        e.preventDefault();
+        redo();
+      }
+      
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selectedIds.length > 0 && !textInput) {
           const newShapes = currentLines.filter(s => !selectedIds.includes(s.id));
@@ -355,7 +428,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
           color: tool === 'eraser' ? '#09090b' : color, 
           strokeWidth 
         }]
-      });
+      }, true);
     } else if (tool === 't-account') {
       updateCurrentPage({
         shapes: [...currentLines, { 
@@ -399,7 +472,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
           color, 
           strokeWidth 
         }]
-      });
+      }, true);
     }
   };
 
@@ -459,10 +532,13 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
 
     const newLines = [...currentLines];
     newLines[newLines.length - 1] = lastShape;
-    updateCurrentPage({ shapes: newLines });
+    updateCurrentPage({ shapes: newLines }, true);
   };
 
   const handleMouseUp = () => {
+    if (isDrawing.current) {
+      saveToHistory(pages);
+    }
     if (isSelecting.current && selectionRect) {
       const x1 = Math.min(selectionRect.x1, selectionRect.x2);
       const y1 = Math.min(selectionRect.y1, selectionRect.y2);
@@ -502,18 +578,18 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
       updates.strokeWidth = Math.max(5, shape.strokeWidth * node.scaleX());
       node.scaleX(1);
       node.scaleY(1);
-    } else if (shape.type === 't-account') {
+    } else if (shape.type === 't-account' || shape.type === 'journal-entry') {
       updates.x = node.x();
       updates.y = node.y();
       updates.width = Math.max(10, node.width() * node.scaleX());
       updates.height = Math.max(10, node.height() * node.scaleY());
       node.scaleX(1);
       node.scaleY(1);
-    } else if (shape.type === 'pen' || shape.type === 'eraser' || shape.type === 'line') {
+    } else if ((shape.type === 'pen' || shape.type === 'eraser' || shape.type === 'line') && shape.points) {
       const transform = node.getTransform();
       const newPoints = [];
-      for (let i = 0; i < shape.points!.length; i += 2) {
-        const point = transform.point({ x: shape.points![i], y: shape.points![i+1] });
+      for (let i = 0; i < shape.points.length; i += 2) {
+        const point = transform.point({ x: shape.points[i], y: shape.points[i+1] });
         newPoints.push(point.x, point.y);
       }
       updates.points = newPoints;
@@ -554,7 +630,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
     
     // Update state during drag to keep floating editor and other UI in sync
     const newShapes = currentLines.map(s => s.id === id ? { ...s, x: node.x(), y: node.y() } : s);
-    updateCurrentPage({ shapes: newShapes });
+    updateCurrentPage({ shapes: newShapes }, true);
   };
 
   const handleTextSubmit = () => {
@@ -589,7 +665,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
     } else {
       // Page 2+: Delete the page
       const newPages = pages.filter((_, i) => i !== currentPageIndex);
-      setPages(newPages);
+      saveToHistory(newPages);
       // Adjust current page index if we deleted the last page
       if (currentPageIndex >= newPages.length) {
         setCurrentPageIndex(Math.max(0, newPages.length - 1));
@@ -893,6 +969,24 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 bg-zinc-800 p-1 rounded-xl border border-zinc-700">
+            <button 
+              onClick={undo}
+              disabled={historyStep <= 0}
+              className="p-1.5 text-zinc-400 hover:text-white disabled:opacity-20 transition-colors"
+              title="Deshacer (Ctrl+Z)"
+            >
+              <Undo2 className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={redo}
+              disabled={historyStep >= history.length - 1}
+              className="p-1.5 text-zinc-400 hover:text-white disabled:opacity-20 transition-colors"
+              title="Rehacer (Ctrl+Y)"
+            >
+              <Redo2 className="w-5 h-5" />
+            </button>
+          </div>
           <button 
             onClick={clearCanvas}
             className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-red-900/30 text-zinc-400 hover:text-red-400 rounded-xl transition-all border border-zinc-700"
@@ -1080,10 +1174,21 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                       {...commonProps}
                       x={shape.x || 0}
                       y={shape.y || 0}
+                      width={width}
+                      height={shape.height || 120}
                       onClick={(e) => {
                         if (tool === 'select') {
                           e.cancelBubble = true;
-                          setSelectedIds([shape.id]);
+                          if (e.evt.shiftKey) {
+                            setSelectedIds(prev => prev.includes(shape.id) ? prev.filter(id => id !== shape.id) : [...prev, shape.id]);
+                          } else {
+                            setSelectedIds([shape.id]);
+                          }
+                        }
+                      }}
+                      onDblClick={(e) => {
+                        if (tool === 'select') {
+                          e.cancelBubble = true;
                           setEditingLedgerId(shape.id);
                         }
                       }}
@@ -1171,10 +1276,21 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                       {...commonProps}
                       x={shape.x || 0}
                       y={shape.y || 0}
+                      width={width}
+                      height={shape.height || (rows.length + 1) * rowHeight}
                       onClick={(e) => {
                         if (tool === 'select') {
                           e.cancelBubble = true;
-                          setSelectedIds([shape.id]);
+                          if (e.evt.shiftKey) {
+                            setSelectedIds(prev => prev.includes(shape.id) ? prev.filter(id => id !== shape.id) : [...prev, shape.id]);
+                          } else {
+                            setSelectedIds([shape.id]);
+                          }
+                        }
+                      }}
+                      onDblClick={(e) => {
+                        if (tool === 'select') {
+                          e.cancelBubble = true;
                           setEditingJournalEntryId(shape.id);
                         }
                       }}
@@ -1414,6 +1530,10 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
               value={editingLedger.accountNumber || ''}
               onChange={(e) => {
                 const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, accountNumber: e.target.value } : s);
+                updateCurrentPage({ shapes: newShapes }, true);
+              }}
+              onBlur={(e) => {
+                const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, accountNumber: e.target.value } : s);
                 updateCurrentPage({ shapes: newShapes });
               }}
               className="w-full bg-transparent text-center text-white border-b border-zinc-700 pb-1 mb-4 outline-none font-bold"
@@ -1436,7 +1556,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                           const newEntries = [...(editingLedger.entries || [])];
                           newEntries[idx] = { ...newEntries[idx], debe: e.target.value };
                           const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
-                          updateCurrentPage({ shapes: newShapes });
+                          updateCurrentPage({ shapes: newShapes }, true);
                         }}
                         onBlur={(e) => {
                           const formatted = formatAccountingNumber(e.target.value);
@@ -1468,7 +1588,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                           const newEntries = [...(editingLedger.entries || [])];
                           newEntries[idx] = { ...newEntries[idx], haber: e.target.value };
                           const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
-                          updateCurrentPage({ shapes: newShapes });
+                          updateCurrentPage({ shapes: newShapes }, true);
                         }}
                         onBlur={(e) => {
                           const formatted = formatAccountingNumber(e.target.value);
@@ -1501,7 +1621,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
               value={editingLedger.finalBalance || ''}
               onChange={(e) => {
                 const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, finalBalance: e.target.value } : s);
-                updateCurrentPage({ shapes: newShapes });
+                updateCurrentPage({ shapes: newShapes }, true);
               }}
               onBlur={(e) => {
                 const formatted = formatAccountingNumber(e.target.value);
@@ -1557,7 +1677,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                       const newRows = [...(editingJournalEntry.journalRows || [])];
                       newRows[idx] = { ...newRows[idx], date: e.target.value };
                       const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                      updateCurrentPage({ shapes: newShapes });
+                      updateCurrentPage({ shapes: newShapes }, true);
                     }}
                     className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs"
                     placeholder="DD/MM"
@@ -1569,7 +1689,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                       const newRows = [...(editingJournalEntry.journalRows || [])];
                       newRows[idx] = { ...newRows[idx], account: e.target.value };
                       const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                      updateCurrentPage({ shapes: newShapes });
+                      updateCurrentPage({ shapes: newShapes }, true);
                     }}
                     className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs"
                     placeholder="Código"
@@ -1581,7 +1701,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                       const newRows = [...(editingJournalEntry.journalRows || [])];
                       newRows[idx] = { ...newRows[idx], concept: e.target.value };
                       const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                      updateCurrentPage({ shapes: newShapes });
+                      updateCurrentPage({ shapes: newShapes }, true);
                     }}
                     className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs"
                     placeholder="Concepto..."
@@ -1593,7 +1713,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                       const newRows = [...(editingJournalEntry.journalRows || [])];
                       newRows[idx] = { ...newRows[idx], debe: e.target.value };
                       const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                      updateCurrentPage({ shapes: newShapes });
+                      updateCurrentPage({ shapes: newShapes }, true);
                     }}
                     onBlur={(e) => {
                       const formatted = formatAccountingNumber(e.target.value);
@@ -1612,7 +1732,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                       const newRows = [...(editingJournalEntry.journalRows || [])];
                       newRows[idx] = { ...newRows[idx], haber: e.target.value };
                       const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                      updateCurrentPage({ shapes: newShapes });
+                      updateCurrentPage({ shapes: newShapes }, true);
                     }}
                     onBlur={(e) => {
                       const formatted = formatAccountingNumber(e.target.value);
