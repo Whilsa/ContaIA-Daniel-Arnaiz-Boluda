@@ -977,7 +977,7 @@ const categorizeAccount = (code: string): { section: 'assets' | 'liabilitiesAndE
     if (code === '438') return { section: 'liabilitiesAndEquity', subSection: 'current' };
     
     // Liabilities: 40, 41, 46, 475, 476, 477, 485
-    if (['40', '41', '46', '475', '476', '477', '485'].includes(prefix2)) {
+    if (['40', '41', '46'].includes(prefix2) || ['475', '476', '477', '485'].includes(code.substring(0, 3))) {
       return { section: 'liabilitiesAndEquity', subSection: 'current' };
     }
     // Assets: 43, 44, 470, 471, 472, 473, 480
@@ -2266,7 +2266,7 @@ export default function App() {
     const results = ['Saldo nulo'];
 
     // Special cases (can be both)
-    if (['129', '610'].includes(code)) {
+    if (['129', '610', '477'].includes(code)) {
       results.push('Saldo deudor', 'Saldo acreedor');
       return results;
     }
@@ -2292,7 +2292,7 @@ export default function App() {
       (firstDigit === '7' && !['706', '708', '709'].includes(code)) ||
       ['606', '608', '609'].includes(code) ||
       ['400', '4009', '401', '410'].includes(code) ||
-      ['438', '477'].includes(code) || // Negative in Activo
+      ['438'].includes(code) || // Negative in Activo
       ['5200', '523'].includes(code) ||
       ['560'].includes(code); // Negative in Activo
 
