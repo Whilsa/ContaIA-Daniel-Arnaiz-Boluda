@@ -57,6 +57,8 @@ interface Shape {
   y?: number;
   width?: number;
   height?: number;
+  scaleX?: number;
+  scaleY?: number;
   color: string;
   strokeWidth: number;
   text?: string;
@@ -99,6 +101,10 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
   const [editingLedgerId, setEditingLedgerId] = useState<string | null>(null);
   const [editingJournalEntryId, setEditingJournalEntryId] = useState<string | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  
+  const [editorPos, setEditorPos] = useState<{x: number, y: number} | null>(null);
+  const isDraggingEditor = useRef(false);
+  const dragStartOffset = useRef({ x: 0, y: 0 });
   
   // Undo/Redo History
   const [history, setHistory] = useState<WhiteboardPage[][]>([]);
@@ -213,17 +219,66 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
   const scale = currentPage.scale || 1;
   const position = currentPage.position || { x: 0, y: 0 };
 
-  const editingLedger = currentLines.find(s => s.id === editingLedgerId);
+  const editingLedger = pages.flatMap(p => p.shapes).find(s => s.id === editingLedgerId);
   const ledgerScreenPos = editingLedger ? {
     x: (editingLedger.x || 0) * scale + position.x,
     y: (editingLedger.y || 0) * scale + position.y
   } : null;
 
-  const editingJournalEntry = currentLines.find(s => s.id === editingJournalEntryId);
+  const editingJournalEntry = pages.flatMap(p => p.shapes).find(s => s.id === editingJournalEntryId);
   const journalEntryScreenPos = editingJournalEntry ? {
     x: (editingJournalEntry.x || 0) * scale + position.x,
     y: (editingJournalEntry.y || 0) * scale + position.y
   } : null;
+
+  // Initialize editor position when opening
+  useEffect(() => {
+    if (editingLedgerId || editingJournalEntryId) {
+      if (!editorPos) {
+        const initialPos = editingLedgerId ? ledgerScreenPos : journalEntryScreenPos;
+        if (initialPos) {
+          setEditorPos(initialPos);
+        }
+      }
+    } else {
+      setEditorPos(null);
+    }
+  }, [editingLedgerId, editingJournalEntryId]);
+
+  const handleEditorDragStart = (e: React.MouseEvent) => {
+    if (!editorPos) return;
+    isDraggingEditor.current = true;
+    dragStartOffset.current = {
+      x: e.clientX - editorPos.x,
+      y: e.clientY - editorPos.y
+    };
+    e.stopPropagation();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDraggingEditor.current && editorPos) {
+        setEditorPos({
+          x: e.clientX - dragStartOffset.current.x,
+          y: e.clientY - dragStartOffset.current.y
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      isDraggingEditor.current = false;
+    };
+
+    if (editingLedgerId || editingJournalEntryId) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [editingLedgerId, editingJournalEntryId, editorPos]);
 
   const formatAccountingNumber = (val: string) => {
     if (!val) return '';
@@ -270,6 +325,18 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
   const updateCurrentPage = (updates: Partial<WhiteboardPage>, skipHistory = false) => {
     const newPages = [...pages];
     newPages[currentPageIndex] = { ...currentPage, ...updates };
+    if (skipHistory) {
+      setPages(newPages);
+    } else {
+      saveToHistory(newPages);
+    }
+  };
+
+  const updateShapeAcrossPages = (id: string, updates: Partial<Shape>, skipHistory = false) => {
+    const newPages = pages.map(page => ({
+      ...page,
+      shapes: page.shapes.map(s => s.id === id ? { ...s, ...updates } : s)
+    }));
     if (skipHistory) {
       setPages(newPages);
     } else {
@@ -581,10 +648,8 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
     } else if (shape.type === 't-account' || shape.type === 'journal-entry') {
       updates.x = node.x();
       updates.y = node.y();
-      updates.width = Math.max(10, node.width() * node.scaleX());
-      updates.height = Math.max(10, node.height() * node.scaleY());
-      node.scaleX(1);
-      node.scaleY(1);
+      updates.scaleX = node.scaleX();
+      updates.scaleY = node.scaleY();
     } else if ((shape.type === 'pen' || shape.type === 'eraser' || shape.type === 'line') && shape.points) {
       const transform = node.getTransform();
       const newPoints = [];
@@ -1176,6 +1241,8 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                       y={shape.y || 0}
                       width={width}
                       height={shape.height || 120}
+                      scaleX={shape.scaleX || 1}
+                      scaleY={shape.scaleY || 1}
                       onClick={(e) => {
                         if (tool === 'select') {
                           e.cancelBubble = true;
@@ -1278,6 +1345,8 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                       y={shape.y || 0}
                       width={width}
                       height={shape.height || (rows.length + 1) * rowHeight}
+                      scaleX={shape.scaleX || 1}
+                      scaleY={shape.scaleY || 1}
                       onClick={(e) => {
                         if (tool === 'select') {
                           e.cancelBubble = true;
@@ -1513,30 +1582,36 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
         )}
 
         {/* Ledger Editor Overlay */}
-        {editingLedgerId && editingLedger && ledgerScreenPos && (
+        {editingLedgerId && editingLedger && (editorPos || ledgerScreenPos) && (
           <div 
             className="absolute z-[1000] p-4 bg-zinc-900 border-2 border-emerald-500 rounded-2xl shadow-2xl"
             style={{ 
-              left: ledgerScreenPos.x, 
-              top: ledgerScreenPos.y,
+              left: editorPos?.x || ledgerScreenPos?.x, 
+              top: editorPos?.y || ledgerScreenPos?.y,
               transform: `scale(${scale})`,
               transformOrigin: '0 0',
               width: editingLedger.width || 240
             }}
           >
+            {/* Drag Handle */}
+            <div 
+              onMouseDown={handleEditorDragStart}
+              className="absolute top-0 left-0 right-0 h-6 cursor-move flex items-center justify-center"
+            >
+              <div className="w-8 h-1 bg-zinc-800 rounded-full" />
+            </div>
+
             <input
               autoFocus
               type="text"
               value={editingLedger.accountNumber || ''}
               onChange={(e) => {
-                const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, accountNumber: e.target.value } : s);
-                updateCurrentPage({ shapes: newShapes }, true);
+                updateShapeAcrossPages(editingLedgerId, { accountNumber: e.target.value }, true);
               }}
               onBlur={(e) => {
-                const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, accountNumber: e.target.value } : s);
-                updateCurrentPage({ shapes: newShapes });
+                updateShapeAcrossPages(editingLedgerId, { accountNumber: e.target.value });
               }}
-              className="w-full bg-transparent text-center text-white border-b border-zinc-700 pb-1 mb-4 outline-none font-bold"
+              className="w-full bg-transparent text-center text-white border-b border-zinc-700 pb-1 mb-4 outline-none font-bold mt-2"
               placeholder="Nº Cuenta"
             />
             
@@ -1555,15 +1630,13 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                         onChange={(e) => {
                           const newEntries = [...(editingLedger.entries || [])];
                           newEntries[idx] = { ...newEntries[idx], debe: e.target.value };
-                          const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
-                          updateCurrentPage({ shapes: newShapes }, true);
+                          updateShapeAcrossPages(editingLedgerId, { entries: newEntries }, true);
                         }}
                         onBlur={(e) => {
                           const formatted = formatAccountingNumber(e.target.value);
                           const newEntries = [...(editingLedger.entries || [])];
                           newEntries[idx] = { ...newEntries[idx], debe: formatted };
-                          const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
-                          updateCurrentPage({ shapes: newShapes });
+                          updateShapeAcrossPages(editingLedgerId, { entries: newEntries });
                         }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
@@ -1571,8 +1644,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                             const newEntries = [...(editingLedger.entries || [])];
                             newEntries[idx] = { ...newEntries[idx], debe: formatted };
                             newEntries.push({ debe: '', haber: '' });
-                            const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
-                            updateCurrentPage({ shapes: newShapes });
+                            updateShapeAcrossPages(editingLedgerId, { entries: newEntries });
                           }
                         }}
                         className="w-1/2 bg-zinc-800 text-white p-1 rounded outline-none text-sm font-bold"
@@ -1587,15 +1659,13 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                         onChange={(e) => {
                           const newEntries = [...(editingLedger.entries || [])];
                           newEntries[idx] = { ...newEntries[idx], haber: e.target.value };
-                          const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
-                          updateCurrentPage({ shapes: newShapes }, true);
+                          updateShapeAcrossPages(editingLedgerId, { entries: newEntries }, true);
                         }}
                         onBlur={(e) => {
                           const formatted = formatAccountingNumber(e.target.value);
                           const newEntries = [...(editingLedger.entries || [])];
                           newEntries[idx] = { ...newEntries[idx], haber: formatted };
-                          const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
-                          updateCurrentPage({ shapes: newShapes });
+                          updateShapeAcrossPages(editingLedgerId, { entries: newEntries });
                         }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
@@ -1603,8 +1673,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                             const newEntries = [...(editingLedger.entries || [])];
                             newEntries[idx] = { ...newEntries[idx], haber: formatted };
                             newEntries.push({ debe: '', haber: '' });
-                            const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, entries: newEntries } : s);
-                            updateCurrentPage({ shapes: newShapes });
+                            updateShapeAcrossPages(editingLedgerId, { entries: newEntries });
                           }
                         }}
                         className="w-1/2 bg-zinc-800 text-white p-1 rounded outline-none text-sm font-bold text-right"
@@ -1620,19 +1689,16 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
               type="text"
               value={editingLedger.finalBalance || ''}
               onChange={(e) => {
-                const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, finalBalance: e.target.value } : s);
-                updateCurrentPage({ shapes: newShapes }, true);
+                updateShapeAcrossPages(editingLedgerId, { finalBalance: e.target.value }, true);
               }}
               onBlur={(e) => {
                 const formatted = formatAccountingNumber(e.target.value);
-                const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, finalBalance: formatted } : s);
-                updateCurrentPage({ shapes: newShapes });
+                updateShapeAcrossPages(editingLedgerId, { finalBalance: formatted });
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   const formatted = formatAccountingNumber((e.target as HTMLInputElement).value);
-                  const newShapes = currentLines.map(s => s.id === editingLedgerId ? { ...s, finalBalance: formatted } : s);
-                  updateCurrentPage({ shapes: newShapes });
+                  updateShapeAcrossPages(editingLedgerId, { finalBalance: formatted });
                   setEditingLedgerId(null);
                 }
               }}
@@ -1650,18 +1716,26 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
         )}
 
         {/* Journal Entry Editor Overlay */}
-        {editingJournalEntryId && editingJournalEntry && journalEntryScreenPos && (
+        {editingJournalEntryId && editingJournalEntry && (editorPos || journalEntryScreenPos) && (
           <div 
             className="absolute z-[1000] p-4 bg-zinc-900 border-2 border-emerald-500 rounded-2xl shadow-2xl"
             style={{ 
-              left: journalEntryScreenPos.x, 
-              top: journalEntryScreenPos.y,
+              left: editorPos?.x || journalEntryScreenPos?.x, 
+              top: editorPos?.y || journalEntryScreenPos?.y,
               transform: `scale(${scale})`,
               transformOrigin: '0 0',
               width: 700
             }}
           >
-            <div className="grid grid-cols-[80px_100px_220px_100px_100px] gap-2 mb-2 px-1">
+            {/* Drag Handle */}
+            <div 
+              onMouseDown={handleEditorDragStart}
+              className="absolute top-0 left-0 right-0 h-6 cursor-move flex items-center justify-center"
+            >
+              <div className="w-8 h-1 bg-zinc-800 rounded-full" />
+            </div>
+
+            <div className="grid grid-cols-[80px_100px_220px_100px_100px] gap-2 mb-2 px-1 mt-2">
               {['Fecha', 'Cuenta', 'Concepto', 'Debe', 'Haber'].map(h => (
                 <span key={h} className="text-[10px] font-bold text-zinc-500 uppercase">{h}</span>
               ))}
@@ -1676,8 +1750,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                     onChange={(e) => {
                       const newRows = [...(editingJournalEntry.journalRows || [])];
                       newRows[idx] = { ...newRows[idx], date: e.target.value };
-                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                      updateCurrentPage({ shapes: newShapes }, true);
+                      updateShapeAcrossPages(editingJournalEntryId, { journalRows: newRows }, true);
                     }}
                     className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs"
                     placeholder="DD/MM"
@@ -1688,8 +1761,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                     onChange={(e) => {
                       const newRows = [...(editingJournalEntry.journalRows || [])];
                       newRows[idx] = { ...newRows[idx], account: e.target.value };
-                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                      updateCurrentPage({ shapes: newShapes }, true);
+                      updateShapeAcrossPages(editingJournalEntryId, { journalRows: newRows }, true);
                     }}
                     className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs"
                     placeholder="Código"
@@ -1700,8 +1772,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                     onChange={(e) => {
                       const newRows = [...(editingJournalEntry.journalRows || [])];
                       newRows[idx] = { ...newRows[idx], concept: e.target.value };
-                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                      updateCurrentPage({ shapes: newShapes }, true);
+                      updateShapeAcrossPages(editingJournalEntryId, { journalRows: newRows }, true);
                     }}
                     className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs"
                     placeholder="Concepto..."
@@ -1712,15 +1783,13 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                     onChange={(e) => {
                       const newRows = [...(editingJournalEntry.journalRows || [])];
                       newRows[idx] = { ...newRows[idx], debe: e.target.value };
-                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                      updateCurrentPage({ shapes: newShapes }, true);
+                      updateShapeAcrossPages(editingJournalEntryId, { journalRows: newRows }, true);
                     }}
                     onBlur={(e) => {
                       const formatted = formatAccountingNumber(e.target.value);
                       const newRows = [...(editingJournalEntry.journalRows || [])];
                       newRows[idx] = { ...newRows[idx], debe: formatted };
-                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                      updateCurrentPage({ shapes: newShapes });
+                      updateShapeAcrossPages(editingJournalEntryId, { journalRows: newRows });
                     }}
                     className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs text-right"
                     placeholder="0,00"
@@ -1731,15 +1800,13 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                     onChange={(e) => {
                       const newRows = [...(editingJournalEntry.journalRows || [])];
                       newRows[idx] = { ...newRows[idx], haber: e.target.value };
-                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                      updateCurrentPage({ shapes: newShapes }, true);
+                      updateShapeAcrossPages(editingJournalEntryId, { journalRows: newRows }, true);
                     }}
                     onBlur={(e) => {
                       const formatted = formatAccountingNumber(e.target.value);
                       const newRows = [...(editingJournalEntry.journalRows || [])];
                       newRows[idx] = { ...newRows[idx], haber: formatted };
-                      const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                      updateCurrentPage({ shapes: newShapes });
+                      updateShapeAcrossPages(editingJournalEntryId, { journalRows: newRows });
                     }}
                     className="bg-zinc-800 text-white p-1.5 rounded outline-none text-xs text-right"
                     placeholder="0,00"
@@ -1753,8 +1820,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                 onClick={() => {
                   const newRows = [...(editingJournalEntry.journalRows || [])];
                   newRows.push({ date: '', account: '', concept: '', debe: '', haber: '' });
-                  const newShapes = currentLines.map(s => s.id === editingJournalEntryId ? { ...s, journalRows: newRows } : s);
-                  updateCurrentPage({ shapes: newShapes });
+                  updateShapeAcrossPages(editingJournalEntryId, { journalRows: newRows });
                 }}
                 className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-bold transition-all"
               >
