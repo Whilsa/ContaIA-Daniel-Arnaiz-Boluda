@@ -993,7 +993,7 @@ const categorizeAccount = (code: string): { section: 'assets' | 'liabilitiesAndE
     }
 
     // Default Group 4 (RD 1514/2007)
-    if (['40', '41', '46', '475', '476', '477', '485'].includes(prefix2)) {
+    if (['40', '41', '46'].includes(prefix2) || ['475', '476', '477', '485'].includes(prefix3)) {
       return { section: 'liabilitiesAndEquity', subSection: 'current' };
     }
     return { section: 'assets', subSection: 'current' };
