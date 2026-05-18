@@ -18,8 +18,6 @@ import {
   X,
   Maximize2,
   Minimize2,
-  Save,
-  FolderOpen,
   Type,
   Minus,
   Columns,
@@ -32,6 +30,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DigitalWhiteboard } from './components/DigitalWhiteboard';
+import ChatAssistant from './components/ChatAssistant';
 
 // --- Types ---
 interface Message {
@@ -1427,11 +1426,13 @@ export default function App() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCustomizing, setIsCustomizing] = useState(false);
-  const [isPizarraMode, setIsPizarraMode] = useState(false);
+  const [isPizarraMode, setIsPizarraMode] = useState(true);
+  const [showChatAssistant, setShowChatAssistant] = useState(false);
   const [isDigitalWhiteboardOpen, setIsDigitalWhiteboardOpen] = useState(false);
   const [whiteboardPages, setWhiteboardPages] = useState<any[]>([{ shapes: [], scale: 1, position: { x: 0, y: 0 } }]);
   const [whiteboardCurrentPageIndex, setWhiteboardCurrentPageIndex] = useState(0);
   const [pizarraColumns, setPizarraColumns] = useState<1 | 2>(2);
+  const [showPizarraBalance, setShowPizarraBalance] = useState(true);
   const [pizarraSplit, setPizarraSplit] = useState(50); // Percentage for balance column
   const [balanceFontScale, setBalanceFontScale] = useState(100);
   const [journalFontScale, setJournalFontScale] = useState(100);
@@ -1538,10 +1539,6 @@ export default function App() {
       timestamp: new Date().toISOString()
     };
     localStorage.setItem('contaia_session', JSON.stringify(sessionData));
-    if (!silent) {
-      setShowToast({ message: 'Progreso guardado correctamente', type: 'success' });
-      setTimeout(() => setShowToast(null), 3000);
-    }
   };
 
   const loadSession = (silent = false) => {
@@ -1563,7 +1560,6 @@ export default function App() {
         if (data.pizarraColumns) setPizarraColumns(data.pizarraColumns);
         if (data.pizarraSplit) setPizarraSplit(data.pizarraSplit);
         if (data.whiteboardPages) {
-          // Migration: if pages are arrays (old format), convert to objects (new format)
           const migratedPages = data.whiteboardPages.map((page: any) => {
             if (Array.isArray(page)) {
               return { shapes: page, scale: 1, position: { x: 0, y: 0 } };
@@ -1573,20 +1569,9 @@ export default function App() {
           setWhiteboardPages(migratedPages);
         }
         if (data.whiteboardCurrentPageIndex !== undefined) setWhiteboardCurrentPageIndex(data.whiteboardCurrentPageIndex);
-        if (!silent) {
-          setShowToast({ message: 'Progreso cargado correctamente', type: 'success' });
-          setTimeout(() => setShowToast(null), 3000);
-        }
       } catch (e) {
         console.error("Error loading session", e);
-        if (!silent) {
-          setShowToast({ message: 'Error al cargar el progreso', type: 'error' });
-          setTimeout(() => setShowToast(null), 3000);
-        }
       }
-    } else if (!silent) {
-      setShowToast({ message: 'No hay progreso guardado', type: 'error' });
-      setTimeout(() => setShowToast(null), 3000);
     }
   };
 
@@ -1598,7 +1583,7 @@ export default function App() {
       {
         id: '1',
         role: 'bot',
-        text: '¡Hola! Soy tu tutor de contabilidad. He preparado un balance inicial más completo para hoy: contamos con Terrenos (75.000€), Construcciones (150.000€) y 10.000€ en el Banco. Esto se financia con Capital Social (10.000€) y deudas con entidades de crédito a largo (200.000€) y corto plazo (25.000€). ¿En qué operación te gustaría trabajar hoy?',
+        text: '¡Hola! Soy tu Profesor de Contabilidad. He preparado un balance inicial para hoy. ¿En qué operación te gustaría trabajar?',
         timestamp: new Date(),
         balance: INITIAL_BALANCE
       }
@@ -1606,9 +1591,10 @@ export default function App() {
     setCurrentBalance(INITIAL_BALANCE);
     setTargetBalance(INITIAL_BALANCE);
     setCurrentJournal([]);
-    // Font scales and layout are now preserved
+    setWhiteboardPages([{ shapes: [], scale: 1, position: { x: 0, y: 0 } }]);
+    setWhiteboardCurrentPageIndex(0);
     setShowResetConfirm(false);
-    setShowToast({ message: 'Sesión reiniciada', type: 'success' });
+    setShowToast({ message: 'Sesión reiniciada correctamente', type: 'success' });
     setTimeout(() => setShowToast(null), 3000);
   };
 
@@ -1619,10 +1605,6 @@ export default function App() {
 
   // Auto-save on changes
   useEffect(() => {
-    // Skip initial save if messages is just the default one and nothing else changed
-    if (messages.length === 1 && currentJournal.length === 0 && JSON.stringify(currentBalance) === JSON.stringify(INITIAL_BALANCE)) {
-      return;
-    }
     const timer = setTimeout(() => {
       saveSession(true);
     }, 1000);
@@ -3283,22 +3265,38 @@ export default function App() {
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-1 sm:gap-2">
-            <button 
-              onClick={() => saveSession()}
-              className="flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs sm:text-sm font-bold transition-colors border border-emerald-100"
-              title="Guardar progreso"
-            >
-              <Save className="w-4 h-4" />
-              <span className="hidden md:inline">Guardar</span>
-            </button>
-            <button 
-              onClick={() => loadSession(false)}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs sm:text-sm font-bold transition-colors border border-blue-100"
-              title="Cargar progreso"
-            >
-              <FolderOpen className="w-4 h-4" />
-              <span className="hidden md:inline">Cargar</span>
-            </button>
+            {isPizarraMode && (
+              <button 
+                onClick={() => {
+                  const newState = !showPizarraBalance;
+                  setShowPizarraBalance(newState);
+                  if (!newState) {
+                    setPizarraColumns(1);
+                  } else {
+                    setPizarraColumns(2);
+                  }
+                }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors border ${
+                  showPizarraBalance 
+                    ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100' 
+                    : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200'
+                }`}
+                title={showPizarraBalance ? "Ocultar Balance" : "Mostrar Balance"}
+              >
+                <Layout className="w-4 h-4" />
+                <span className="hidden md:inline">Balance</span>
+              </button>
+            )}
+            {isPizarraMode && !showChatAssistant && (
+              <button 
+                onClick={() => setShowChatAssistant(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-lg shadow-emerald-200"
+                title="Profesor IA de Contabilidad"
+              >
+                <HelpCircle className="w-4 h-4" />
+                <span className="hidden md:inline">Profesor IA</span>
+              </button>
+            )}
             <button 
               onClick={() => setShowResetConfirm(true)}
               className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-xs sm:text-sm font-bold transition-colors border border-red-100"
@@ -3319,34 +3317,6 @@ export default function App() {
             <span className="hidden md:inline">Personalizar</span>
           </button>
           
-          <button 
-            onClick={() => setIsPizarraMode(!isPizarraMode)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-              isPizarraMode 
-                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' 
-                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
-            <span className="hidden md:inline">Pizarra</span>
-          </button>
-
-          {isPizarraMode && (
-            <button 
-              onClick={() => setPizarraColumns(prev => prev === 1 ? 2 : 1)}
-              className="flex items-center gap-2 px-3 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-xs sm:text-sm font-bold transition-colors border border-zinc-200"
-              title={pizarraColumns === 1 ? "Cambiar a 2 columnas" : "Cambiar a 1 columna"}
-            >
-              {pizarraColumns === 1 ? <Columns className="w-4 h-4" /> : <Layout className="w-4 h-4" />}
-              <span className="hidden md:inline">{pizarraColumns === 1 ? '2 Columnas' : '1 Columna'}</span>
-            </button>
-          )}
-
-          <div className="h-6 w-px bg-zinc-200 hidden sm:block" />
-
-          <div className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider hidden lg:block ${Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-            {Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'Cuadrado' : 'Descuadrado'}
-          </div>
         </div>
       </header>
 
@@ -3415,116 +3385,118 @@ export default function App() {
             }
           `}
         </style>
-        {isPizarraMode ? (
-          <div 
-            ref={pizarraContainerRef}
-            className={`w-full flex flex-col ${pizarraColumns === 2 ? 'lg:flex-row' : ''} gap-0 pb-12 items-start relative`}
-          >
+        {/* Pizarra Mode View (Default & Only View) */}
+        <div 
+          ref={pizarraContainerRef}
+          className={`w-full flex flex-col ${pizarraColumns === 2 ? 'lg:flex-row' : ''} gap-0 pb-12 items-start relative`}
+        >
             {/* Balance Column */}
-            <div 
-              className="flex-shrink-0"
-              style={{ width: pizarraColumns === 2 ? `${pizarraSplit}%` : '100%' }}
-            >
-              <div className={pizarraColumns === 2 ? "mr-4" : ""}>
-                <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
-                  <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
-                        <Calculator className="w-4 h-4 text-emerald-600" /> Balance actualizado
-                      </span>
-                      <div className="flex items-center bg-zinc-100 rounded-lg px-1 py-0.5">
-                        <button 
-                          onClick={() => setBalanceFontScale(prev => Math.max(70, prev - 10))}
-                          className="p-1 hover:bg-zinc-200 text-zinc-600 rounded transition-colors"
-                          title="Disminuir letra"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="text-[10px] font-bold text-zinc-500 min-w-[2.5rem] text-center">{balanceFontScale}%</span>
-                        <button 
-                          onClick={() => setBalanceFontScale(prev => Math.min(200, prev + 10))}
-                          className="p-1 hover:bg-zinc-200 text-zinc-600 rounded transition-colors"
-                          title="Aumentar letra"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
+            {showPizarraBalance && (
+              <div 
+                className="flex-shrink-0"
+                style={{ width: pizarraColumns === 2 ? `${pizarraSplit}%` : '100%' }}
+              >
+                <div className={pizarraColumns === 2 ? "mr-4" : ""}>
+                  <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
+                    <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
+                          <Calculator className="w-4 h-4 text-emerald-600" /> Balance actualizado
+                        </span>
+                        <div className="flex items-center bg-zinc-100 rounded-lg px-1 py-0.5">
+                          <button 
+                            onClick={() => setBalanceFontScale(prev => Math.max(70, prev - 10))}
+                            className="p-1 hover:bg-zinc-200 text-zinc-600 rounded transition-colors"
+                            title="Disminuir letra"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="text-[10px] font-bold text-zinc-500 min-w-[2.5rem] text-center">{balanceFontScale}%</span>
+                          <button 
+                            onClick={() => setBalanceFontScale(prev => Math.min(200, prev + 10))}
+                            className="p-1 hover:bg-zinc-200 text-zinc-600 rounded transition-colors"
+                            title="Aumentar letra"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        {Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'Cuadrado' : 'Descuadrado'}
                       </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                      {Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'Cuadrado' : 'Descuadrado'}
-                    </div>
-                  </div>
-                  <div className="p-6 pizarra-balance-container">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {/* Assets side */}
-                      <div className="space-y-4">
-                        <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Activo</h3>
+                    <div className="p-6 pizarra-balance-container">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Assets side */}
                         <div className="space-y-4">
-                          <div className="space-y-1">
-                            <h4 id="section-assets-noncurrent-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">No Corriente</h4>
-                            <div className="space-y-0.5">
-                              {[...currentBalance.assets.nonCurrent].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                                <BalanceRow key={item.name} item={item} />
-                              ))}
+                          <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Activo</h3>
+                          <div className="space-y-4">
+                            <div className="space-y-1">
+                              <h4 id="section-assets-noncurrent-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">No Corriente</h4>
+                              <div className="space-y-0.5">
+                                {[...currentBalance.assets.nonCurrent].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
+                                  <BalanceRow key={item.name} item={item} />
+                                ))}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <h4 id="section-assets-current-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Corriente</h4>
+                              <div className="space-y-0.5">
+                                {[...currentBalance.assets.current].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
+                                  <BalanceRow key={item.name} item={item} />
+                                ))}
+                              </div>
                             </div>
                           </div>
-                          <div className="space-y-1">
-                            <h4 id="section-assets-current-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Corriente</h4>
-                            <div className="space-y-0.5">
-                              {[...currentBalance.assets.current].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                                <BalanceRow key={item.name} item={item} />
-                              ))}
-                            </div>
+                          <div className="pt-2 border-t border-zinc-200 flex justify-between items-center">
+                            <span className="text-[11px] font-bold text-zinc-500 uppercase">Total Activo</span>
+                            <span className="text-lg font-black text-emerald-600"><AnimatedNumber value={totalAssets} /></span>
                           </div>
                         </div>
-                        <div className="pt-2 border-t border-zinc-200 flex justify-between items-center">
-                          <span className="text-[11px] font-bold text-zinc-500 uppercase">Total Activo</span>
-                          <span className="text-lg font-black text-emerald-600"><AnimatedNumber value={totalAssets} /></span>
-                        </div>
-                      </div>
 
-                      {/* Liabilities & Equity side */}
-                      <div className="space-y-4">
-                        <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Patrimonio Neto + Pasivo</h3>
+                        {/* Liabilities & Equity side */}
                         <div className="space-y-4">
-                          <div className="space-y-1">
-                            <h4 id="section-equity-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Patrimonio Neto</h4>
-                            <div className="space-y-0.5">
-                              {[...currentBalance.liabilitiesAndEquity.equity].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                                <BalanceRow key={item.name} item={item} />
-                              ))}
+                          <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Patrimonio Neto + Pasivo</h3>
+                          <div className="space-y-4">
+                            <div className="space-y-1">
+                              <h4 id="section-equity-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Patrimonio Neto</h4>
+                              <div className="space-y-0.5">
+                                {[...currentBalance.liabilitiesAndEquity.equity].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
+                                  <BalanceRow key={item.name} item={item} />
+                                ))}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <h4 id="section-liabilities-noncurrent-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Pasivo No Corriente</h4>
+                              <div className="space-y-0.5">
+                                {[...currentBalance.liabilitiesAndEquity.nonCurrent].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
+                                  <BalanceRow key={item.name} item={item} />
+                                ))}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <h4 id="section-liabilities-current-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Pasivo Corriente</h4>
+                              <div className="space-y-0.5">
+                                {[...currentBalance.liabilitiesAndEquity.current].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
+                                  <BalanceRow key={item.name} item={item} />
+                                ))}
+                              </div>
                             </div>
                           </div>
-                          <div className="space-y-1">
-                            <h4 id="section-liabilities-noncurrent-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Pasivo No Corriente</h4>
-                            <div className="space-y-0.5">
-                              {[...currentBalance.liabilitiesAndEquity.nonCurrent].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                                <BalanceRow key={item.name} item={item} />
-                              ))}
-                            </div>
+                          <div className="pt-2 border-t border-zinc-200 flex justify-between items-center">
+                            <span className="text-[11px] font-bold text-zinc-500 uppercase">Total PN + P</span>
+                            <span className="text-lg font-black text-emerald-600"><AnimatedNumber value={totalLiabilities} /></span>
                           </div>
-                          <div className="space-y-1">
-                            <h4 id="section-liabilities-current-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Pasivo Corriente</h4>
-                            <div className="space-y-0.5">
-                              {[...currentBalance.liabilitiesAndEquity.current].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                                <BalanceRow key={item.name} item={item} />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="pt-2 border-t border-zinc-200 flex justify-between items-center">
-                          <span className="text-[11px] font-bold text-zinc-500 uppercase">Total PN + P</span>
-                          <span className="text-lg font-black text-emerald-600"><AnimatedNumber value={totalLiabilities} /></span>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Resizable Divider */}
-            {pizarraColumns === 2 && (
+            {pizarraColumns === 2 && showPizarraBalance && (
               <div 
                 onMouseDown={handleMouseDown}
                 className={`hidden lg:flex w-1 hover:w-3 -mx-0.5 hover:-mx-1.5 h-full absolute top-0 bottom-0 cursor-col-resize z-10 items-center justify-center group transition-all ${isResizing ? 'bg-emerald-500/20' : ''}`}
@@ -3536,7 +3508,7 @@ export default function App() {
 
             {/* Journal Column */}
             <div className="flex-grow min-w-0">
-              <div className={pizarraColumns === 2 ? "ml-4" : "mt-8"}>
+              <div className={pizarraColumns === 2 && showPizarraBalance ? "ml-4" : "mt-0"}>
                 <div className="bg-zinc-900 rounded-2xl border border-zinc-800 shadow-xl overflow-hidden flex flex-col">
                   <div className="p-4 border-b border-zinc-800 bg-zinc-800/50 flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -3745,262 +3717,6 @@ export default function App() {
               </div>
             </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
-            {/* Left Column: Visual Balance Sheet */}
-            <section className="lg:col-span-6 flex flex-col gap-6 overflow-y-auto pr-2">
-              
-              {/* Visual Balance Sheet */}
-              <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
-                <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
-                    <Calculator className="w-4 h-4 text-emerald-600" /> Balance de Situación Visual
-                  </span>
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Tiempo Real</span>
-                </div>
-                <div className="p-4 grid grid-cols-2 gap-6 overflow-y-auto max-h-[550px] scrollbar-thin scrollbar-thumb-zinc-200 scrollbar-track-transparent">
-                  {/* Assets side */}
-                  <div className="space-y-4">
-                    <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Activo</h3>
-                    
-                    {/* Non-Current Assets */}
-                    <div className="space-y-1">
-                      <h4 id="section-assets-noncurrent" className="text-[10px] font-bold text-zinc-400 uppercase">No Corriente</h4>
-                      <div className="space-y-0.5 min-h-[30px]">
-                        {[...currentBalance.assets.nonCurrent].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item, idx) => (
-                          <BalanceRow key={item.name} item={item} />
-                        ))}
-                        {currentBalance.assets.nonCurrent.length === 0 && <div className="text-[10px] text-zinc-300 italic px-2">Sin elementos</div>}
-                      </div>
-                    </div>
-
-                    {/* Current Assets */}
-                    <div className="space-y-1">
-                      <h4 id="section-assets-current" className="text-[10px] font-bold text-zinc-400 uppercase">Corriente</h4>
-                      <div className="space-y-0.5 min-h-[30px]">
-                        {[...currentBalance.assets.current].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item, idx) => (
-                          <BalanceRow key={item.name} item={item} />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-zinc-200 flex justify-between items-center">
-                      <span className="text-[11px] font-bold text-zinc-500">TOTAL ACTIVO</span>
-                      <span className="text-base font-black text-emerald-600"><AnimatedNumber value={totalAssets} /></span>
-                    </div>
-                  </div>
-
-                  {/* Liabilities & Equity side */}
-                  <div className="space-y-4">
-                    <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Patrimonio Neto + Pasivo</h3>
-                    
-                    {/* Equity */}
-                    <div className="space-y-1">
-                      <h4 id="section-equity" className="text-[10px] font-bold text-zinc-400 uppercase">Patrimonio Neto</h4>
-                      <div className="space-y-0.5 min-h-[30px]">
-                        {[...currentBalance.liabilitiesAndEquity.equity].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item, idx) => (
-                          <BalanceRow key={item.name} item={item} />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Non-Current Liabilities */}
-                    <div className="space-y-1">
-                      <h4 id="section-liabilities-noncurrent" className="text-[10px] font-bold text-zinc-400 uppercase">Pasivo No Corriente</h4>
-                      <div className="space-y-0.5 min-h-[30px]">
-                        {[...currentBalance.liabilitiesAndEquity.nonCurrent].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item, idx) => (
-                          <BalanceRow key={item.name} item={item} />
-                        ))}
-                        {currentBalance.liabilitiesAndEquity.nonCurrent.length === 0 && <div className="text-[10px] text-zinc-300 italic px-2">Sin elementos</div>}
-                      </div>
-                    </div>
-
-                    {/* Current Liabilities */}
-                    <div className="space-y-1">
-                      <h4 id="section-liabilities-current" className="text-[10px] font-bold text-zinc-400 uppercase">Pasivo Corriente</h4>
-                      <div className="space-y-0.5 min-h-[30px]">
-                        {[...currentBalance.liabilitiesAndEquity.current].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item, idx) => (
-                          <BalanceRow key={item.name} item={item} />
-                        ))}
-                        {currentBalance.liabilitiesAndEquity.current.length === 0 && <div className="text-[10px] text-zinc-300 italic px-2">Sin elementos</div>}
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-zinc-200 flex justify-between items-center">
-                      <span className="text-[11px] font-bold text-zinc-500">TOTAL PN + P</span>
-                      <span className="text-base font-black text-emerald-600"><AnimatedNumber value={totalLiabilities} /></span>
-                    </div>
-                  </div>
-                </div>
-                <div className="px-6 pb-6">
-                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center gap-3">
-                    <AlertCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                    <p className="text-[10px] text-emerald-800 leading-tight">
-                      Observa cómo cada operación que discutimos se refleja aquí. La contabilidad es el arte de mantener este equilibrio.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Right Column: Chat Interface & Journal */}
-            <section className="lg:col-span-6 flex flex-col gap-6 overflow-y-auto pr-2">
-              <div className="flex flex-col bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden h-[500px]">
-                <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-emerald-600" /> Conversación
-                  </span>
-                  <button 
-                    onClick={() => {
-                      setMessages([{
-                        id: '1',
-                        role: 'bot',
-                        text: '¡Hola! Soy tu tutor de contabilidad. ¿En qué operación te gustaría trabajar hoy?',
-                        timestamp: new Date(),
-                        balance: INITIAL_BALANCE
-                      }]);
-                      setCurrentBalance(INITIAL_BALANCE);
-                    }}
-                    className="p-2 hover:bg-zinc-200 rounded-lg transition-colors text-zinc-500"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div 
-                  ref={chatContainerRef}
-                  className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-zinc-200"
-                >
-                  <AnimatePresence initial={false}>
-                    {messages.map((msg) => (
-                      <motion.div
-                        key={msg.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div className={`flex gap-3 max-w-[90%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                          <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${
-                            msg.role === 'user' ? 'bg-zinc-800' : 'bg-emerald-100'
-                          }`}>
-                            {msg.role === 'user' ? <User className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-emerald-700" />}
-                          </div>
-                          <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
-                            msg.role === 'user' 
-                              ? 'bg-zinc-900 text-white rounded-tr-none' 
-                              : 'bg-zinc-50 border border-zinc-100 text-zinc-800 rounded-tl-none'
-                          }`}>
-                            <div className="whitespace-pre-wrap prose prose-sm max-w-none">
-                              {msg.text}
-                            </div>
-                            <div className={`text-[10px] mt-2 opacity-50 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                              {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                  {isLoading && (
-                    <div className="flex justify-start">
-                      <div className="bg-zinc-50 border border-zinc-100 p-4 rounded-2xl rounded-tl-none flex gap-2 items-center">
-                        <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" />
-                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce [animation-delay:0.2s]" />
-                        <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full animate-bounce [animation-delay:0.4s]" />
-                      </div>
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-
-                <div className="p-4 bg-white border-t border-zinc-100">
-                  <div className="relative flex items-center">
-                    <input
-                      type="text"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                      placeholder="Describe una operación contable..."
-                      className="w-full pl-4 pr-12 py-3 bg-zinc-100 border-none rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all text-sm outline-none"
-                    />
-                    <button
-                      onClick={handleSend}
-                      disabled={!input.trim() || isLoading}
-                      className="absolute right-2 p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-all"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Real-time Journal Entry */}
-              <div className="bg-zinc-900 rounded-2xl border border-zinc-800 shadow-xl overflow-hidden flex flex-col">
-                <div className="p-4 border-b border-zinc-800 bg-zinc-800/50 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-emerald-500" /> Libro Diario (En Tiempo Real)
-                  </span>
-                  <button 
-                    onClick={() => setIsJournalFullscreen(true)}
-                    className="p-2 hover:bg-zinc-700 rounded-lg transition-colors text-zinc-400"
-                    title="Pantalla Completa"
-                  >
-                    <Maximize2 className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="p-4 space-y-3 font-mono flex-1 overflow-hidden flex flex-col max-h-[400px]">
-                  <div className="grid grid-cols-12 gap-2 text-[12px] font-bold text-zinc-500 uppercase tracking-widest px-2 border-b border-zinc-800 pb-2 flex-shrink-0">
-                    <div className="col-span-6">Cuenta / Concepto</div>
-                    <div className="col-span-3 text-right">Debe</div>
-                    <div className="col-span-3 text-right">Haber</div>
-                  </div>
-                  <div className="space-y-4 min-h-[100px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
-                    {currentJournal.map((asiento, aIdx) => (
-                      <div key={aIdx} className={aIdx > 0 ? "border-t border-white pt-4" : ""}>
-                        {asiento.map((row, idx) => (
-                          <motion.div 
-                            key={idx} 
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="grid grid-cols-12 gap-2 text-[14px] py-1 px-2 hover:bg-zinc-800/50 rounded transition-colors"
-                          >
-                                <div className={`col-span-6 ${row.haber > 0 ? 'pl-4 text-zinc-400' : 'text-emerald-400 font-bold'}`}>
-                                  {row.haber > 0 ? 'a ' : ''}
-                                  {row.code && <span className="text-[12px] opacity-80 mr-4 font-black text-emerald-500">{row.code}</span>}
-                                  {row.account}
-                                </div>
-                            <div className="col-span-3 text-right text-zinc-300">
-                              {row.debe > 0 ? formatCurrency(row.debe) : '-'}
-                            </div>
-                            <div className="col-span-3 text-right text-zinc-300">
-                              {row.haber > 0 ? formatCurrency(row.haber) : '-'}
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    ))}
-                    {currentJournal.length === 0 && (
-                      <div className="flex flex-col items-center justify-center h-[100px] text-zinc-600 text-[13px] italic">
-                        <p>El tutor irá completando el asiento</p>
-                        <p>a medida que aciertes el razonamiento</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {currentJournal.length > 0 && (
-                    <div className="pt-3 mt-3 border-t border-zinc-800 flex justify-between items-center text-[13px] font-bold flex-shrink-0">
-                      <div className="text-zinc-500 uppercase">Sumas y Saldos</div>
-                      <div className="flex gap-4">
-                        <div className="text-emerald-500">D: {formatCurrency(currentJournal.flat().reduce((acc, r) => acc + r.debe, 0))}</div>
-                        <div className="text-zinc-400">H: {formatCurrency(currentJournal.flat().reduce((acc, r) => acc + r.haber, 0))}</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
-          </div>
-        )}
       </main>
 
       {/* Fullscreen Journal Overlay */}
@@ -4116,6 +3832,12 @@ export default function App() {
               formatCurrency={formatCurrency}
             />
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isPizarraMode && showChatAssistant && (
+          <ChatAssistant onClose={() => setShowChatAssistant(false)} />
         )}
       </AnimatePresence>
 

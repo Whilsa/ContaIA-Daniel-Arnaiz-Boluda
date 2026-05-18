@@ -20,6 +20,8 @@ import {
   Columns2,
   Copy,
   Square,
+  LogOut,
+  LayoutDashboard,
   Undo2,
   Redo2
 } from 'lucide-react';
@@ -743,159 +745,41 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
     if (isExporting) return;
     setIsExporting(true);
     
+    // Deselect everything for a cleaner export
+    setSelectedIds([]);
+    
     const originalPageIndex = currentPageIndex;
     
     try {
       for (let i = 0; i < pages.length; i++) {
         setCurrentPageIndex(i);
         // Wait for React to render the page and Konva to update
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 800));
         
-        if (stageRef.current) {
-          const stage = stageRef.current;
-          const layer = stage.getLayers()[0];
-          
-          // 1. Get content bounds
-          const konvaBox = layer.getClientRect({ skipTransform: false });
-          
-          // Convert to world coordinates
-          const worldKonvaBox = {
-            x: (konvaBox.x - stage.x()) / stage.scaleX(),
-            y: (konvaBox.y - stage.y()) / stage.scaleY(),
-            width: konvaBox.width / stage.scaleX(),
-            height: konvaBox.height / stage.scaleY()
-          };
-
-          // Fallback if empty
-          if (konvaBox.width <= 0 || konvaBox.height <= 0) {
-            worldKonvaBox.x = 0;
-            worldKonvaBox.y = 0;
-            worldKonvaBox.width = dimensions.width;
-            worldKonvaBox.height = dimensions.height;
-          }
-
-          let exportBox = { ...worldKonvaBox };
-          let journalCanvas = null;
-
-          // 2. Journal inclusion
-          if (i === 0 && journalRef.current) {
-            const journalEl = journalRef.current;
-            const journalWidth = 1000;
-            const journalHeight = journalEl.scrollHeight;
-            const journalBox = { x: 10, y: 10, width: journalWidth, height: journalHeight };
-            
-            exportBox = {
-              x: Math.min(worldKonvaBox.x, journalBox.x) - 50,
-              y: Math.min(worldKonvaBox.y, journalBox.y) - 50,
-              width: Math.max(worldKonvaBox.x + worldKonvaBox.width, journalBox.x + journalBox.width) - Math.min(worldKonvaBox.x, journalBox.x) + 100,
-              height: Math.max(worldKonvaBox.y + worldKonvaBox.height, journalBox.y + journalBox.height) - Math.min(worldKonvaBox.y, journalBox.y) + 100
-            };
-
-            try {
-              journalCanvas = await html2canvas(journalEl, {
-                backgroundColor: '#18181b',
-                scale: 4, // Increase scale for sharper text
-                useCORS: true,
-                logging: false,
-                width: journalWidth,
-                height: journalHeight,
-                onclone: (clonedDoc) => {
-                  const el = clonedDoc.getElementById('journal-overlay');
-                  if (el) {
-                    el.style.transform = 'none';
-                    el.style.position = 'static';
-                    el.style.width = '1000px';
-                    el.style.opacity = '1';
-                  }
-                }
-              });
-            } catch (e) {
-              console.error("Journal capture failed", e);
-            }
-          } else {
-            // Add padding to drawings-only pages
-            exportBox.x -= 50;
-            exportBox.y -= 50;
-            exportBox.width += 100;
-            exportBox.height += 100;
-          }
-
-          // Cap dimensions to avoid browser crashes (max 8000px)
-          const MAX_DIM = 8000;
-          // finalScale is the visual scale (zoom)
-          let finalScale = scale;
-          
-          // We want 4x pixel density for ultra-high resolution
-          const pixelRatio = 4;
-
-          if (exportBox.width * finalScale * pixelRatio > MAX_DIM) {
-            finalScale = (MAX_DIM / pixelRatio) / exportBox.width;
-          }
-          if (exportBox.height * finalScale * pixelRatio > MAX_DIM) {
-            finalScale = Math.min(finalScale, (MAX_DIM / pixelRatio) / exportBox.height);
-          }
-
-          // Ensure positive dimensions
-          exportBox.width = Math.max(1, exportBox.width);
-          exportBox.height = Math.max(1, exportBox.height);
-
-          const konvaDataURL = stage.toDataURL({
-            x: exportBox.x * stage.scaleX() + stage.x(),
-            y: exportBox.y * stage.scaleY() + stage.y(),
-            width: exportBox.width * stage.scaleX(),
-            height: exportBox.height * stage.scaleY(),
-            pixelRatio: (finalScale * pixelRatio) / stage.scaleX()
+        const container = containerRef.current;
+        if (container) {
+          // Capture the entire container exactly as displayed using html2canvas
+          // We use a high scale (3) to ensure superior resolution
+          const canvas = await html2canvas(container, {
+            scale: 3,
+            backgroundColor: currentTheme.bg,
+            useCORS: true,
+            logging: false,
+            width: container.offsetWidth,
+            height: container.offsetHeight,
+            scrollX: 0,
+            scrollY: 0
           });
 
-          const finalCanvas = document.createElement('canvas');
-          finalCanvas.width = exportBox.width * finalScale * pixelRatio;
-          finalCanvas.height = exportBox.height * finalScale * pixelRatio;
-          const ctx = finalCanvas.getContext('2d');
-          
-          if (ctx) {
-            // Disable image smoothing for sharper lines
-            ctx.imageSmoothingEnabled = false;
-            
-            ctx.fillStyle = '#09090b';
-            ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-            
-            if (journalCanvas) {
-              const jX = (10 - exportBox.x) * finalScale * pixelRatio;
-              const jY = (10 - exportBox.y) * finalScale * pixelRatio;
-              // Scale journal to match the final export scale (journalCanvas was captured at 4x)
-              ctx.drawImage(journalCanvas, jX, jY, journalCanvas.width * (finalScale * pixelRatio / 4), journalCanvas.height * (finalScale * pixelRatio / 4));
-            }
-            
-            const konvaImg = new Image();
-            await new Promise((resolve, reject) => {
-              konvaImg.onload = resolve;
-              konvaImg.onerror = reject;
-              konvaImg.src = konvaDataURL;
-            });
-            ctx.drawImage(konvaImg, 0, 0);
-            
-            await new Promise<void>((resolve) => {
-              finalCanvas.toBlob((blob) => {
-                if (blob) {
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.download = `pizarra-pagina-${i + 1}.jpg`;
-                  link.href = url;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  setTimeout(() => {
-                    URL.revokeObjectURL(url);
-                    resolve();
-                  }, 100);
-                } else {
-                  resolve();
-                }
-              }, 'image/jpeg', 0.95); // Increase quality to 0.95
-            });
-          }
+          const dataURL = canvas.toDataURL('image/jpeg', 0.95);
+          const link = document.createElement('a');
+          link.download = `pizarra-pagina-${i + 1}.jpg`;
+          link.href = dataURL;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         }
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 400));
       }
     } catch (error) {
       console.error("Export error:", error);
@@ -925,6 +809,15 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
       {/* Toolbar */}
       <div className="bg-zinc-900 border-b border-zinc-800 p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
+          <button 
+            onClick={onClose}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all shadow-lg shadow-emerald-900/20 mr-2 group"
+            title="Volver a Contabilizar"
+          >
+            <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-black uppercase tracking-widest">Contabilizar</span>
+          </button>
+
           <div className="flex bg-zinc-800 p-1 rounded-xl border border-zinc-700 mr-4">
             <ToolButton active={tool === 'select'} onClick={() => setTool('select')} icon={<MousePointer2 className="w-4 h-4" />} title="Seleccionar" />
             <ToolButton active={tool === 'hand'} onClick={() => setTool('hand')} icon={<Hand className="w-4 h-4" />} title="Mano (Desplazar)" />
@@ -1067,12 +960,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
             <Download className={`w-4 h-4 ${isExporting ? 'animate-bounce' : ''}`} />
             <span className="text-sm font-bold">{isExporting ? 'Exportando...' : 'Exportar'}</span>
           </button>
-          <button 
-            onClick={onClose}
-            className="p-2 hover:bg-zinc-800 rounded-xl text-zinc-400 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
+
         </div>
       </div>
 
