@@ -26,7 +26,8 @@ import {
   Heart,
   Trophy,
   History,
-  Monitor
+  Monitor,
+  Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DigitalWhiteboard } from './components/DigitalWhiteboard';
@@ -936,6 +937,730 @@ const ACCOUNT_MAPPING: Record<string, string> = {
   '769': 'Otros ingresos financieros'
 };
 
+const ACCOUNT_MAPPING_EN: Record<string, string> = {
+  '10': 'Capital',
+  '11': 'Reserves and other equity instruments',
+  '12': 'Profit/Loss pending distribution or application',
+  '13': 'Grants, donations and valuation adjustments',
+  '14': 'Provisions',
+  '15': 'Non-current payables of a special nature',
+  '16': 'Non-current payables to related parties',
+  '17': 'Non-current payables for loans, debentures and other',
+  '18': 'Non-current guarantees, deposits and other liabilities',
+  '19': 'Temporary financing',
+  '20': 'Intangible assets',
+  '21': 'Property, plant and equipment',
+  '22': 'Investment property',
+  '23': 'Property, plant and equipment under construction',
+  '24': 'Non-current investments in related parties',
+  '25': 'Other non-current investments',
+  '26': 'Non-current guarantees and deposits extended',
+  '28': 'Accumulated amortisation and depreciation',
+  '29': 'Impairment of non-current assets',
+  '30': 'Goods for resale',
+  '31': 'Raw materials',
+  '32': 'Other supplies',
+  '33': 'Work in progress',
+  '34': 'Semi-finished goods',
+  '35': 'Finished goods',
+  '36': 'By-products, waste and recovered materials',
+  '39': 'Impairment of inventories',
+  '40': 'Suppliers',
+  '41': 'Other payables',
+  '43': 'Trade receivables',
+  '44': 'Other receivables',
+  '46': 'Personnel',
+  '47': 'Public entities',
+  '48': 'Prepaid expenses and deferred income',
+  '49': 'Impairment of trade receivables and current provisions',
+  '50': 'Current debentures, payables of a special nature and similar issuances',
+  '51': 'Current payables to related parties',
+  '52': 'Current payables for loans and other',
+  '53': 'Current investments in related parties',
+  '54': 'Other current investments',
+  '55': 'Accounts other than bank accounts',
+  '56': 'Current guarantees, deposits, prepaid expenses and deferred income',
+  '57': 'Cash',
+  '58': 'Non-current assets held for sale and associated assets and liabilities',
+  '59': 'Impairment of current investments and non-current assets held for sale',
+  '60': 'Purchases',
+  '61': 'Changes in inventories',
+  '62': 'External services',
+  '63': 'Taxes',
+  '64': 'Personnel expenses',
+  '65': 'Other expenses',
+  '66': 'Finance expenses',
+  '67': 'Losses on non-current assets and exceptional expenses',
+  '68': 'Amortisation and depreciation',
+  '69': 'Impairment losses and other charges',
+  '70': 'Sales of merchandise, work carried out by the company for assets, services, etc.',
+  '71': 'Changes in inventories',
+  '73': 'Work carried out by the company for assets',
+  '74': 'Grants, donations and bequests',
+  '75': 'Other income',
+  '76': 'Finance income',
+  '77': 'Gains on non-current assets and exceptional income',
+  '79': 'Surplus and use of provisions and impairment losses',
+  '100': 'Share capital',
+  '101': 'Assigned capital',
+  '102': 'Capital',
+  '103': 'Uncalled capital',
+  '104': 'Uncalled non-monetary contributions',
+  '108': 'Own shares or equity holdings in special situations',
+  '109': 'Own shares or equity holdings for reduction of capital',
+  '110': 'Share premium or additional paid-in capital',
+  '111': 'Other equity instruments',
+  '112': 'Legal reserve',
+  '113': 'Voluntary reserves',
+  '114': 'Special reserves',
+  '115': 'Reserves for actuarial gains and losses and other adjustments',
+  '118': 'Contributions from equity holders or owners',
+  '119': 'Differences on translation of capital to euros',
+  '120': 'Retained earnings',
+  '121': 'Prior periods’ losses',
+  '129': 'Profit/loss for the period',
+  '130': 'Government capital grants',
+  '131': 'Capital donations and bequests',
+  '132': 'Valuation adjustments to available-for-sale financial assets',
+  '133': 'Valuation adjustments to available-for-sale financial assets',
+  '134': 'Hedging transactions',
+  '135': 'Translation differences',
+  '136': 'Valuation adjustments to non-current assets and disposal groups held for sale',
+  '137': 'Deferred tax income for tax deductions and credits',
+  '140': 'Provisions for long-term employee benefits',
+  '141': 'Provision for taxes',
+  '142': 'Provision for other liabilities',
+  '143': 'Provision for dismantlement, removal or restoration of fixed assets',
+  '145': 'Provision for environmental actions',
+  '146': 'Provision for restructuring costs',
+  '147': 'Provisions for share-based payment transactions',
+  '150': 'Non-current liability-classified shares or equity holdings',
+  '153': 'Liability-classified uncalled share capital or equity holdings',
+  '154': 'Liability-classified uncalled non-monetary contributions',
+  '160': 'Non-current debt with related financial institutions',
+  '161': 'Non-current payables to suppliers of fixed assets, related parties',
+  '162': 'Non-current finance leases payables, related parties',
+  '163': 'Other non-current payables to related parties',
+  '170': 'Non-current debt with financial institutions',
+  '171': 'Non-current payables',
+  '172': 'Non-current payables convertible into grants, donations and bequests',
+  '173': 'Non-current payables to suppliers of fixed assets',
+  '174': 'Non-current finance lease payables',
+  '175': 'Non-current bills payable',
+  '176': 'Non-current liabilities arising from derivative financial instruments',
+  '177': 'Bonds and obligations',
+  '178': 'Convertible bonds and obligations',
+  '179': 'Other marketable securities',
+  '180': 'Non-current guarantees received',
+  '181': 'Advances of long-term sales',
+  '185': 'Non-current deposits received',
+  '189': 'Non-current financial guarantees',
+  '190': 'Shares or equity holdings issued',
+  '192': 'Subscribed shares',
+  '194': 'Issued capital pending registration',
+  '195': 'Liability-classified shares or equity holdings issued',
+  '197': 'Liability-classified subscribed shares',
+  '199': 'Liability-classified shares or equity holdings issued pending registration',
+  '200': 'Research',
+  '201': 'Development',
+  '202': 'Administrative concessions',
+  '203': 'Industrial property',
+  '204': 'Goodwill',
+  '205': 'Leaseholds',
+  '206': 'Computer software',
+  '209': 'Advances for intangible assets',
+  '210': 'Land and natural resources',
+  '211': 'Buildings',
+  '212': 'Technical installations',
+  '213': 'Machinery',
+  '214': 'Equipment',
+  '215': 'Other installations',
+  '216': 'Furniture',
+  '217': 'Information technology equipment',
+  '218': 'Motor vehicles',
+  '219': 'Other property, plant and equipment',
+  '220': 'Investments in land and natural resources',
+  '221': 'Investments in buildings',
+  '230': 'Preparation of land and natural resources',
+  '231': 'Buildings under construction',
+  '232': 'Technical installations under assembly',
+  '233': 'Machinery under assembly',
+  '237': 'Information technology equipment under assembly',
+  '239': 'Advances for property, plant and equipment',
+  '240': 'Non-current investments in related parties',
+  '241': 'Non-current debt securities of related parties',
+  '242': 'Non-current loans to related parties',
+  '249': 'Non-current uncalled equity holdings in related parties',
+  '250': 'Non-current investments in equity instruments',
+  '251': 'Non-current debt securities',
+  '252': 'Non-current loans',
+  '253': 'Non-current loans for disposal of fixed assets',
+  '254': 'Non-current loans for personnel',
+  '255': 'Non-current assets arising from derivative financial instruments',
+  '257': 'Reimbursement rights of insurance contracts for long-term employee benefits',
+  '258': 'Non-current deposits',
+  '259': 'Non-current uncalled equity holdings',
+  '260': 'Non-current guarantees extended',
+  '265': 'Non-current deposits extended',
+  '280': 'Accumulated amortisation of intangible assets',
+  '281': 'Accumulated amortisation of property, plant and equipment',
+  '282': 'Accumulated amortisation of investment property',
+  '290': 'Impairment of intangible assets',
+  '291': 'Impairment of property, plant and equipment',
+  '292': 'Impairment of investment property',
+  '293': 'Impairment of non-current investments in related parties',
+  '294': 'Impairment of non-current debt securities of related parties',
+  '295': 'Impairment of non-current loans to related parties',
+  '297': 'Impairment of non-current debt securities',
+  '298': 'Impairment of non-current loans',
+  '300': 'Merchandise A',
+  '301': 'Merchandise B',
+  '310': 'Raw materials A',
+  '311': 'Raw materials B',
+  '320': 'Components',
+  '321': 'Fuel',
+  '322': 'Spare parts',
+  '325': 'Sundry materials',
+  '326': 'Packaging',
+  '327': 'Containers',
+  '328': 'Office supplies',
+  '330': 'Work in progress A',
+  '331': 'Work in progress B',
+  '350': 'Finished goods A',
+  '351': 'Finished goods B',
+  '360': 'By-products A',
+  '361': 'By-products B',
+  '365': 'Waste A',
+  '366': 'Waste B',
+  '368': 'Recovered materials A',
+  '369': 'Recovered materials B',
+  '390': 'Impairment of merchandise',
+  '391': 'Impairment of raw materials',
+  '392': 'Impairment of other supplies',
+  '393': 'Impairment of work in progress',
+  '394': 'Impairment of semi-finished goods',
+  '395': 'Impairment of finished goods',
+  '396': 'Impairment of by-products, waste and recovered materials',
+  '400': 'Suppliers',
+  '401': 'Suppliers, trade bills payable',
+  '403': 'Suppliers, group companies',
+  '404': 'Suppliers, associates',
+  '405': 'Suppliers, other related parties',
+  '406': 'Containers and packaging returnable to suppliers',
+  '407': 'Advances to suppliers',
+  '410': 'Payables for the rendering of services',
+  '411': 'Trade bills payable',
+  '419': 'Payables for profit-sharing agreements',
+  '430': 'Trade receivables',
+  '431': 'Trade receivables, trade bills receivable',
+  '432': 'Trade receivables, factoring',
+  '433': 'Trade receivables, group companies',
+  '434': 'Trade receivables, associates',
+  '435': 'Trade receivables, other related parties',
+  '436': 'Doubtful trade receivables',
+  '437': 'Containers and packaging returnable by customers',
+  '438': 'Advances from customers',
+  '440': 'Receivables',
+  '441': 'Receivables, trade bills',
+  '446': 'Doubtful receivables',
+  '449': 'Receivables for profit-sharing agreements',
+  '460': 'Salary advances',
+  '465': 'Salaries payable',
+  '466': 'Employee benefits payable through defined contribution schemes',
+  '470': 'Taxation authorities, receivables',
+  '471': 'Social Security, receivables',
+  '472': 'Input VAT',
+  '473': 'Withholdings and payments on account',
+  '474': 'Deferred tax assets',
+  '475': 'Taxation authorities, taxes payable',
+  '476': 'Social Security, payables',
+  '477': 'Output VAT',
+  '479': 'Liabilities arising from taxable temporary differences',
+  '480': 'Prepaid expenses',
+  '485': 'Deferred income',
+  '490': 'Impairment of trade receivables',
+  '493': 'Impairment of trade receivables from related parties',
+  '499': 'Trade provisions',
+  '500': 'Current bonds and obligations',
+  '501': 'Current convertible bonds and obligations',
+  '502': 'Current liability-classified shares or equity holdings',
+  '505': 'Other current marketable securities',
+  '506': 'Current interest on debentures and similar issues',
+  '507': 'Dividends payable on liability-classified instruments',
+  '509': 'Redeemed marketable securities',
+  '510': 'Current debt with related financial institutions',
+  '511': 'Current payables to suppliers of fixed assets, related parties',
+  '512': 'Current finance lease payables, related parties',
+  '513': 'Other current payables to related parties',
+  '514': 'Current interest on payables to related parties',
+  '520': 'Current debt with financial institutions',
+  '521': 'Current payables',
+  '522': 'Current payables convertible into grants, donations and bequests',
+  '523': 'Current payables to suppliers of fixed assets',
+  '524': 'Current finance lease payables',
+  '525': 'Current bills payable',
+  '526': 'Dividend payable',
+  '527': 'Current interest on debt with financial institutions',
+  '528': 'Current interest on payables',
+  '529': 'Current provisions',
+  '530': 'Current investments in related parties',
+  '531': 'Current debt securities of related parties',
+  '532': 'Current loans to related parties',
+  '533': 'Current interest on debt securities of related parties',
+  '534': 'Current interest on loans to related parties',
+  '535': 'Dividend receivable on investments in related parties',
+  '539': 'Current uncalled equity holdings in related parties',
+  '540': 'Current investments in equity instruments',
+  '541': 'Current debt securities',
+  '542': 'Current loans',
+  '543': 'Current loans for disposal of fixed assets',
+  '544': 'Current loans to personnel',
+  '545': 'Dividend receivable',
+  '546': 'Current interest on debt securities',
+  '547': 'Current interest on loans',
+  '548': 'Current deposits',
+  '549': 'Current uncalled equity holdings',
+  '550': 'Current account with owner',
+  '551': 'Current account with equity holders and directors',
+  '552': 'Current account with other individuals and related entities',
+  '553': 'Current accounts in mergers and spin-offs',
+  '554': 'Current account with temporary joint ventures and co-ownerships',
+  '555': 'Items pending application',
+  '556': 'Called-up equity holdings',
+  '557': 'Interim dividend',
+  '558': 'Receivable on called-up capital',
+  '559': 'Current derivative financial instruments',
+  '560': 'Current guarantees received',
+  '561': 'Current deposits received',
+  '565': 'Current guarantees extended',
+  '566': 'Current deposits extended',
+  '567': 'Prepaid interest',
+  '568': 'Unearned interest received',
+  '569': 'Current financial guarantees',
+  '570': 'Cash, euros',
+  '571': 'Cash, foreign currency',
+  '572': 'Banks and financial institutions, demand current accounts, euros',
+  '573': 'Banks and financial institutions, demand current accounts, foreign currency',
+  '574': 'Banks and financial institutions, savings accounts, euros',
+  '575': 'Banks and financial institutions, savings accounts, foreign currency',
+  '576': 'Short-term highly-liquid investments',
+  '580': 'Fixed assets',
+  '581': 'Investments with individuals and related entities',
+  '582': 'Investments',
+  '583': 'Inventories and trade and other receivables',
+  '584': 'Other assets',
+  '585': 'Provisions',
+  '586': 'Payables of a special nature',
+  '587': 'Payables to individuals and related entities',
+  '588': 'Trade and other payables',
+  '589': 'Other liabilities',
+  '593': 'Impairment of current investments in related parties',
+  '594': 'Impairment of current debt securities of related parties',
+  '595': 'Impairment of current loans to related parties',
+  '597': 'Impairment of current debt securities',
+  '598': 'Impairment of current loans',
+  '599': 'Impairment of non-current assets held for sale',
+  '600': 'Merchandise purchased',
+  '601': 'Raw materials purchased',
+  '602': 'Other supplies purchased',
+  '606': 'Prompt payment discounts on purchases',
+  '607': 'Subcontracted work',
+  '608': 'Purchase returns and similar transactions',
+  '609': 'Volume discounts',
+  '610': 'Changes in inventories of merchandise',
+  '611': 'Changes in inventories of raw materials',
+  '612': 'Changes in inventories of other supplies',
+  '620': 'Research and development expenses for the period',
+  '621': 'Leases and royalties',
+  '622': 'Repairs and maintenance',
+  '623': 'Independent professional services',
+  '624': 'Transport',
+  '625': 'Insurance premiums',
+  '626': 'Banking and similar services',
+  '627': 'Advertising, publicity and public relations',
+  '628': 'Utilities',
+  '629': 'Other services',
+  '630': 'Income tax',
+  '631': 'Other taxes',
+  '633': 'Negative adjustments to income tax',
+  '634': 'Negative adjustments to indirect taxes',
+  '636': 'Tax refunds',
+  '638': 'Positive adjustments to income tax',
+  '639': 'Positive adjustments to indirect taxes',
+  '640': 'Salaries and wages',
+  '641': 'Termination benefits',
+  '642': 'Social Security payable by the company',
+  '643': 'Long-term employee benefits payable through defined contribution schemes',
+  '644': 'Long-term employee benefits payable through defined benefit schemes',
+  '645': 'Equity-based employee benefits',
+  '649': 'Employee benefits expense',
+  '650': 'Losses on irrecoverable trade receivables',
+  '651': 'Results on profit-sharing agreements',
+  '659': 'Other operating losses',
+  '660': 'Finance expenses arising from provision adjustments',
+  '661': 'Interest on bonds and obligations',
+  '662': 'Interest on payables',
+  '663': 'Losses on fair value measurement of financial instruments',
+  '664': 'Expenses arising on dividends payable on liability-classified instruments',
+  '665': 'Interest on discounted bills and factoring transactions',
+  '666': 'Losses on investments and debt securities',
+  '667': 'Losses on non-trade receivables',
+  '668': 'Exchange losses',
+  '669': 'Other finance expenses',
+  '670': 'Losses on intangible assets',
+  '671': 'Losses on property, plant and equipment',
+  '672': 'Losses on investment property',
+  '673': 'Losses on non-current investments in related parties',
+  '675': 'Losses on transactions with own bonds',
+  '678': 'Exceptional expenses',
+  '680': 'Amortisation of intangible assets',
+  '681': 'Depreciation of property, plant and equipment',
+  '682': 'Depreciation of investment property',
+  '690': 'Impairment losses on intangible assets',
+  '691': 'Impairment losses on property, plant and equipment',
+  '692': 'Impairment losses on investment property',
+  '693': 'Impairment losses on inventories',
+  '694': 'Impairment losses on trade receivables',
+  '695': 'Trade provisions',
+  '696': 'Impairment losses on non-current investments and debt securities',
+  '697': 'Impairment losses on non-current loans',
+  '698': 'Impairment losses on current investments and debt securities',
+  '699': 'Impairment losses on current loans',
+  '700': 'Merchandise sold',
+  '701': 'Finished goods sold',
+  '702': 'Semi-finished goods sold',
+  '703': 'By-products and waste sold',
+  '704': 'Containers and packaging sold',
+  '705': 'Services rendered',
+  '706': 'Prompt payment discounts',
+  '708': 'Sales returns and similar transactions',
+  '709': 'Volume discounts',
+  '710': 'Changes in inventories of work in progress',
+  '711': 'Changes in inventories of semi-finished goods',
+  '712': 'Changes in inventories of finished goods',
+  '713': 'Changes in inventories of by-products, waste and recovered materials',
+  '730': 'Work carried out by the company for intangible assets',
+  '731': 'Work carried out by the company for property, plant and equipment',
+  '732': 'Work carried out by the company for investment property',
+  '733': 'Work carried out by the company for property, plant and equipment in progress',
+  '740': 'Operating grants, donations and bequests',
+  '746': 'Capital grants, donations and bequests taken to income',
+  '747': 'Other grants, donations and bequests taken to income',
+  '751': 'Results on profit-sharing agreements',
+  '752': 'Income from lease agreements',
+  '753': 'Income from transfer of industrial property rights',
+  '754': 'Commission income',
+  '755': 'Income from services to personnel',
+  '759': 'Income from other services',
+  '760': 'Dividends',
+  '761': 'Income from debt securities',
+  '762': 'Income from loans',
+  '763': 'Gains on fair value measurement of financial instruments',
+  '766': 'Gains on investments and debt securities',
+  '767': 'Income from related assets and reimbursement rights from long-term employee benefits',
+  '768': 'Exchange gains',
+  '769': 'Other finance income',
+  '770': 'Gains on intangible assets',
+  '771': 'Gains on property, plant and equipment',
+  '772': 'Gains on investment property',
+  '773': 'Gains on non-current investments in related parties',
+  '774': 'Negative goodwill on business combinations',
+  '775': 'Gains on transactions with own bonds',
+  '778': 'Exceptional income',
+  '790': 'Reversal of impairment of intangible assets',
+  '791': 'Reversal of impairment of property, plant and equipment',
+  '792': 'Reversal of impairment of investment property',
+  '793': 'Reversal of impairment of inventories',
+  '794': 'Reversal of impairment of trade receivables',
+  '795': 'Provision surpluses',
+  '796': 'Reversal of impairment of non-current investments and debt securities',
+  '797': 'Reversal of impairment of non-current loans',
+  '798': 'Reversal of impairment of current investments and debt securities',
+  '799': 'Reversal of impairment of current loans'
+};
+
+const SECTION_DISPLAY: Record<string, string> = {
+  'Activo no corriente': 'Non-current assets',
+  'Activo corriente': 'Current assets',
+  'Patrimonio neto': 'Equity',
+  'Pasivo no corriente': 'Non-current liabilities',
+  'Pasivo corriente': 'Current liabilities'
+};
+
+const BALANCE_DISPLAY: Record<string, string> = {
+  'Saldo deudor': 'Debit balance',
+  'Saldo acreedor': 'Credit balance',
+  'Saldo nulo': 'Zero/Null balance'
+};
+
+const TYPE_DISPLAY: Record<string, string> = {
+  'Código de cuenta': 'Account code',
+  'Asiento contable': 'Accounting entry',
+  'Sección del balance': 'Balance sheet section',
+  'Saldos posibles': 'Possible balances'
+};
+
+const SCENARIO_TRANSLATIONS: Record<string, string> = {
+  'En la constitución de la sociedad (Ej: creación de una S.A. con talón bancario) de Capital social': 'Upon incorporation of the company (e.g., creation of a S.A. with a bank check) of Share capital',
+  'Por las reducciones de capital o extinción de la sociedad de Capital social': 'For capital reductions or liquidation of the company of Share capital',
+  'Por la aportación inicial al crear una entidad sin ánimo de lucro (Ej: tres amigos crean una asociación depositando fondos) de Fondo social': 'For initial contribution when creating a non-profit entity (e.g., three friends create an association by depositing funds) of Assigned capital',
+  'A la extinción de la entidad de Fondo social': 'Upon dissolution of the entity of Assigned capital',
+  'Por el capital inicial (Ej: empresario individual aporta efectivo a su firma) de Capital': 'For initial capital (e.g., sole proprietor contributes cash to the firm) of Capital',
+  'Por el cese o cesión de los negocios de Capital': 'Upon cessation or transfer of business of Capital',
+  'Al constituirse la sociedad por el nominal no desembolsado (Ej: constitución de S.A. desembolsando solo el mínimo legal) de Socios por desembolsos no exigidos': 'Upon incorporation of the company for uncalled par value (e.g., incorporation of a S.A. depositing only the legal minimum) of Uncalled capital',
+  'Cuando la sociedad exige formalmente el desembolso de Socios por desembolsos no exigidos': 'When the company formally demands payment of Uncalled capital',
+  'Al cierre del ejercicio con cargo a la cuenta de resultados (Ej: destino de parte del beneficio tras la regularización) de Reserva legal': 'At year-end charged to the result account (e.g., allocation of part of profit after adjustment) of Legal reserve',
+  'Por la disposición que se haga de ella de Reserva legal': 'For any use made of it of Legal reserve',
+  'Para determinar el resultado si los ingresos superan a los gastos (Ej: regularización de ingresos del grupo 7) de Resultado del ejercicio': 'To determine profit if income exceeds expenses (e.g., closing entry for group 7 revenues) of Profit/Loss for the year',
+  'Si los gastos superan a los ingresos o al aplicar el beneficio de Resultado del ejercicio': 'If expenses exceed revenues or upon profit distribution of Profit/Loss for the year',
+  'Al formalizar el préstamo (Ej: préstamo bancario a devolver en 5 años) de Deudas a largo plazo con entidades de crédito': 'Upon formalization of the loan (e.g., bank loan to be repaid in 5 years) of Non-current payables to credit institutions',
+  'Por el reintegro anticipado o la reclasificación a corto plazo de Deudas a largo plazo con entidades de crédito': 'For early repayment or reclassification to short term of Non-current payables to credit institutions',
+  'Por la recepción conforme de los bienes (Ej: compra de máquina pagando una parte a 18 meses) de Proveedores de inmovilizado a largo plazo': 'Upon satisfactory reception of goods (e.g., purchase of machinery paying part at 18 months) of Non-current suppliers of non-current assets',
+  'Al cancelar o pagar la deuda anticipadamente de Proveedores de inmovilizado a largo plazo': 'Upon cancelling or paying the debt early of Non-current suppliers of non-current assets',
+  'Al aceptar los efectos (Ej: letras aceptadas a 24 meses por compra de inmuebles) de Efectos a pagar a largo plazo': 'Upon accepting bills/promissory notes (e.g., bills accepted at 24 months for purchase of real estate) of Non-current bills payable',
+  'Por el pago anticipado o reclasificación de Efectos a pagar a largo plazo': 'For early payment or reclassification of Non-current bills payable',
+  'Al recibir la garantía (Ej: cobro de fianza por alquiler de edificio a 6 años) de Fianzas recibidas a largo plazo': 'Upon receiving the guarantee (e.g., collection of deposit for a 6-year building lease) of Non-current guarantees received',
+  'Al devolver la fianza o por su reclasificación a corto plazo de Fianzas recibidas a largo plazo': 'Upon returning the deposit or its reclassification to short term of Non-current guarantees received',
+  'Por la adquisición (Ej: compra de patente para fabricar carne vegetal) de Propiedad industrial': 'Upon acquisition (e.g., purchase of patent to manufacture plant-based meat) of Industrial property',
+  'Por enajenación o baja del activo de Propiedad industrial': 'Upon disposal or write-off of the asset of Industrial property',
+  'Al pagar al arrendatario anterior (Ej: pago por subrogación en contrato de oficinas) de Derechos de traspaso': 'Upon paying previous lessee (e.g., payment by subrogation in office lease contract) of Leasehold rights',
+  'Por baja o venta del derecho de Derechos de traspaso': 'Upon write-off or sale of the right of Leasehold rights',
+  'Por la compra a terceros (Ej: adquisición de software de gestión) de Aplicaciones informáticas': 'Upon purchase from third parties (e.g., acquisition of management software) of Computer software',
+  'Por su baja o venta de Aplicaciones informáticas': 'Upon write-off or sale of Computer software',
+  'Al adquirir el suelo (Ej: compra de un hotel separando el valor del solar) de Terrenos y bienes naturales': 'Upon acquiring land (e.g., purchase of a hotel separating the value of the plot) of Land and natural resources',
+  'Al vender el terreno (Ej: venta del local social) de Terrenos y bienes naturales': 'Upon selling the land (e.g., sale of social headquarters) of Land and natural resources',
+  'Por la compra del edificio (Ej: adquisición de naves u oficinas) de Construcciones': 'Upon purchasing the building (e.g., acquisition of warehouses or offices) of Buildings',
+  'Por su venta (Ej: enajenación de locales sin beneficio ni pérdida) de Construcciones': 'Upon selling it (e.g., disposal of premises with no profit or loss) of Buildings',
+  'Por la compra (Ej: hospital adquiere equipo quirúrgico especial) de Instalaciones técnicas': 'Upon purchase (e.g., hospital acquires special surgical equipment) of Technical facilities',
+  'Por devolución al proveedor o enajenación de Instalaciones técnicas': 'Upon return to supplier or disposal of Technical facilities',
+  'Por la adquisición (Ej: compra de máquina de uso industrial) de Maquinaria': 'Upon acquisition (e.g., purchase of machine for industrial use) of Machinery',
+  'Por venta (Ej: venta de equipo industrial obsoleto) de Maquinaria': 'Upon sale (e.g., sale of obsolete industrial equipment) of Machinery',
+  'Al comprar las herramientas (Ej: compra de herramientas para el almacén pagadas con tarjeta) de Utillaje': 'Upon purchasing tools (e.g., purchase of tools for warehouse paid by card) of Tooling',
+  'Por regularización anual o rotura de Utillaje': 'Upon annual adjustment or breakage of Tooling',
+  'Por la compra (Ej: adquisición de pistas de fútbol/baloncesto para empleados) de Otras instalaciones': 'Upon purchase (e.g., acquisition of soccer/basketball courts for employees) of Other facilities',
+  'Por baja o venta de Otras instalaciones': 'Upon write-off or sale of Other facilities',
+  'Por la adquisición (Ej: compra a crédito de muebles de oficina) de Mobiliario': 'Upon acquisition (e.g., purchase of office furniture on credit) of Furniture',
+  'Por su baja del activo de Mobiliario': 'Upon write-off from assets of Furniture',
+  'Por la compra (Ej: empresa de fruta adquiere ordenadores para el almacén) de Equipos para procesos de información': 'Upon purchase (e.g., fruit company acquires computers for warehouse) of Computer hardware',
+  'Por venta o fin de vida útil de Equipos para procesos de información': 'Upon sale or end of useful life of Computer hardware',
+  'Por la adquisición (Ej: compra al contado de una furgoneta de reparto) de Elementos de transporte': 'Upon acquisition (e.g., cash purchase of a delivery van) of Transport equipment',
+  'Por baja definitiva (Ej: furgoneta carbonizada en incendio declarada siniestro total) de Elementos de transporte': 'Upon definitive write-off (e.g., van carbonized in fire declared a total loss) of Transport equipment',
+  'Por la compra (Ej: adquisición de papeleras y contenedores para administración) de Otro inmovilizado material': 'Upon purchase (e.g., acquisition of waste bins and administration containers) of Other tangible assets',
+  'Por baja del activo de Otro inmovilizado material': 'Upon write-off from assets of Other tangible assets',
+  'A la compra (Ej: empresa adquiere acciones de una firma de su mismo grupo) de Participaciones a largo plazo en partes vinculadas': 'Upon purchasing (e.g., company acquires shares of a group firm) of Non-current investments in related parties',
+  'Por enajenación o deterioro de Participaciones a largo plazo en partes vinculadas': 'Upon disposal or impairment of Non-current investments in related parties',
+  'A la suscripción (Ej: compra de títulos de renta fija con vencimiento a 5 años) de Valores representativos de deuda a largo plazo con partes vinculadas': 'Upon subscribing (e.g., purchase of fixed-income bonds with a 5-year maturity) of Non-current debt securities in related parties',
+  'Por venta o amortización de Valores representativos de deuda a largo plazo con partes vinculadas': 'Upon sale or amortization of Non-current debt securities in related parties',
+  'A la compra (Ej: empresa adquiere acciones de una firma) de Participaciones a largo plazo': 'Upon purchasing (e.g., company acquires shares of a firm) of Non-current investments',
+  'Por enajenación o deterioro de Participaciones a largo plazo': 'Upon disposal or impairment of Non-current investments',
+  'A la suscripción (Ej: compra de títulos de renta fija con vencimiento a 5 años) de Valores representativos de deuda a largo plazo': 'Upon subscribing (e.g., purchase of fixed-income bonds with a 5-year maturity) of Non-current debt securities',
+  'Por venta o amortización de Valores representativos de deuda a largo plazo': 'Upon sale or amortization of Non-current debt securities',
+  'A la formalización (Ej: préstamo concedido a un amigo a devolver en 30 meses) de Créditos a largo plazo': 'Upon formalization (e.g., loan granted to a friend to be repaid in 30 months) of Non-current loans',
+  'Por el cobro o reclasificación de Créditos a largo plazo': 'Upon collection or reclassification of Non-current loans',
+  'Al recuperar los fondos de Imposiciones a largo plazo': 'Upon recovering the funds of Non-current time deposits',
+  'Al cierre del ejercicio por el valor de las existencias finales (Ej: recuento físico de fruta en almacén el 31/12)': 'At year-end for final inventory value (e.g., physical recount of fruit in warehouse on 12/31)',
+  'Al cierre del ejercicio por el valor de las existencias iniciales de Mercaderías': 'At year-end for initial inventory value of Goods for resale',
+  'Al cierre del ejercicio por el valor de las existencias finales (Ej: recuento de harina en una panadería)': 'At year-end for final inventory value (e.g., recount of flour in a bakery)',
+  'Al cierre del ejercicio por el valor de las existencias iniciales de Materias primas': 'At year-end for initial inventory value of Raw materials',
+  'Al cierre del ejercicio por el valor de las existencias finales (Ej: recuento de envases o repuestos)': 'At year-end for final inventory value (e.g., recount of packing elements or spare parts)',
+  'Al cierre del ejercicio por el valor de las existencias iniciales de Otros aprovisionamientos': 'At year-end for initial inventory value of Other supplies',
+  'Al recibir el pedido (Ej: compra de naranjas a un agricultor)': 'Upon receiving order (e.g., purchase of oranges from a farmer)',
+  'Al cierre del ejercicio para saldar la cuenta de Compra de mercaderías contra Resultado del ejercicio': 'At year-end to close the Purchase of goods for resale account against Profit/Loss for the year',
+  'compra de madera para fabricar muebles': 'purchase of wood to manufacture furniture',
+  'Al cierre del ejercicio para saldar la cuenta de Compra de materias primas': 'At year-end to close the Purchase of raw materials account',
+  'compra de cajas de cartón para embalaje': 'purchase of cardboard boxes for packaging',
+  'Al cierre del ejercicio para saldar la cuenta de Compras de otros aprovisionamientos': 'At year-end to close the Purchase of other supplies account',
+  'Al pagar antes del plazo pactado (Ej: descuento del 2 % por pagar al contado)': 'When paying before agreed due date (e.g., 2% discount for cash payment)',
+  'Al cierre del ejercicio para saldar la cuenta de Descuentos sobre compras por pronto pago': 'At year-end to close the Cash discounts on purchases account',
+  'Al devolver mercancía defectuosa (Ej: devolución de fruta en mal estado)': 'Upon returning defective goods (e.g., return of spoiled fruit)',
+  'Al cierre del ejercicio para saldar la cuenta de Devoluciones de compras': 'At year-end to close the Purchase returns account',
+  'Descuento que te aplica el vendedor por alcanzar un volumen de pedido alto': 'Discount applied by seller for reaching a high volume of orders',
+  'Al cierre del ejercicio para saldar la cuenta de Rappels por compras': 'At year-end to close the Volume discounts on purchases account',
+  'Al cierre del ejercicio por las existencias iniciales de Variación de existencias de mercaderías': 'At year-end for initial inventory of Change in inventories of goods for resale',
+  'Al cierre del ejercicio por las existencias finales de Variación de existencias de mercaderías': 'At year-end for final inventory of Change in inventories of goods for resale',
+  'Por los gastos realizados (Ej: pago a laboratorio por estudio de nuevos sabores)': 'For expenses incurred (e.g., payment to lab for studying new flavors)',
+  'Al cierre del ejercicio para saldar la cuenta de Gastos en I+D': 'At year-end to close the Research and development expenses account',
+  'Al recibir la factura del alquiler (Ej: pago mensual del local de la tienda)': 'Upon receiving rental invoice (e.g., monthly lease payment for the store premises)',
+  'Al cierre del ejercicio para saldar la cuenta de Arrendamientos': 'At year-end to close the Leases and royalties account',
+  'Por el mantenimiento (Ej: factura del técnico que arregla el aire acondicionado)': 'For maintenance (e.g., invoice from technician repairing the air conditioning)',
+  'Al cierre del ejercicio para saldar la cuenta de Reparaciones': 'At year-end to close the Repairs and maintenance account',
+  'Por los honorarios (Ej: factura del abogado o del gestor contable)': 'For professional fees (e.g., invoice from lawyer or accountant)',
+  'Al cierre del ejercicio para saldar la cuenta de Servicios profesionales': 'At year-end to close the Independent professional services account',
+  'Por los portes (Ej: pago a la agencia de transportes por enviar pedidos)': 'For transport costs (e.g., payment to transport agency for shipping orders)',
+  'Al cierre del ejercicio para saldar la cuenta de Transportes': 'At year-end to close the Transport account',
+  'Al pagar la póliza (Ej: seguro anual contra incendios del almacén)': 'Upon paying the policy premium (e.g., annual warehouse fire insurance)',
+  'Al cierre del ejercicio para saldar la cuenta de Seguros': 'At year-end to close the Insurance premiums account',
+  'Por las comisiones (Ej: cargo del banco por mantenimiento de cuenta)': 'For fees and commissions (e.g., bank charge for account maintenance)',
+  'Al cierre del ejercicio para saldar la cuenta de Servicios bancarios': 'At year-end to close the Bank service fees account',
+  'Por el consumo (Ej: factura de la luz, agua o gas)': 'For consumption (e.g., electricity, water or gas invoice)',
+  'Al cierre del ejercicio para saldar la cuenta de Suministros': 'At year-end to close the Utilities account',
+  'Por gastos diversos (Ej: compra de material de oficina o gastos de viaje)': 'For miscellaneous expenses (e.g., purchase of office supplies or travel expenses)',
+  'Al cierre del ejercicio para saldar la cuenta de Otros servicios': 'At year-end to close the Other services account',
+  'Al declarar un cliente como fallido (Ej: cliente en concurso de acreedores que no pagará)': 'Upon declaring a client as bankrupt (e.g., client in bankruptcy proceedings who will not pay)',
+  'Al cierre del ejercicio para saldar la cuenta de Pérdidas por incobrables': 'At year-end to close the Losses on bad debts account',
+  'Al devengarse los intereses (Ej: cargo bancario por intereses del préstamo)': 'Upon accrual of interest (e.g., bank charge for loan interest)',
+  'Al cierre del ejercicio para saldar la cuenta de Intereses de deudas': 'At year-end to close the Interest on payables account',
+  'Al vender con pérdida (Ej: venta de acciones por debajo de su precio de compra)': 'Upon selling with losses (e.g., sale of shares below purchase price)',
+  'Al cierre del ejercicio para saldar la cuenta de Pérdidas financieras': 'At year-end to close the Losses on non-current financial assets account',
+  'Por sucesos imprevistos (Ej: pago de una multa de tráfico de la furgoneta)': 'On unexpected events (e.g., payment of cargo van traffic fine)',
+  'Al cierre del ejercicio para saldar la cuenta de Gastos excepcionales': 'At year-end to close the Exceptional expenses account',
+  'Al realizar la venta (Ej: venta de 500 kg de manzanas a un supermercado)': 'Upon performing sale (e.g., sale of 500 kg of apples to a supermarket)',
+  'Al cierre del ejercicio para saldar la cuenta de Venta de mercaderías contra Resultado del ejercicio': 'At year-end to close the Sales of goods for resale account against Profit/Loss for the year',
+  'Al realizar la venta (Ej: panadería vende sus barras de pan a tiendas)': 'Upon performing sale (e.g., bakery sells its bread loaves to shops)',
+  'Al cierre del ejercicio para saldar la cuenta de Venta de productos terminados': 'At year-end to close the Sales of finished goods account',
+  'Al vender los envases (Ej: venta de palets usados a otra empresa)': 'Upon selling packagings (e.g., sale of used pallets to another company)',
+  'Al cierre del ejercicio para saldar la cuenta de Venta de envases': 'At year-end to close the Sales of packagings account',
+  'Al facturar el servicio (Ej: cobro por asesorar a otra empresa en logística)': 'Upon billing the service (e.g., collection for logistics consulting)',
+  'Al cierre del ejercicio para saldar la cuenta de Prestación de servicios': 'At year-end to close the Performance of services account',
+  'Al conceder el descuento (Ej: rebaja al cliente por pagarnos al contado)': 'Upon granting discount (e.g., discount to client for cash payment)',
+  'Al cierre del ejercicio para saldar la cuenta de Descuentos sobre ventas por pronto pago': 'At year-end to close the Cash discounts on sales account',
+  'Al recibir mercancía devuelta (Ej: cliente nos devuelve fruta por no ser el calibre pactado)': 'Upon receiving returned goods (e.g., client returns fruit due to wrong size)',
+  'Al cierre del ejercicio para saldar la cuenta de Devoluciones de ventas': 'At year-end to close the Sales returns account',
+  'Al conceder el abono por volumen (Ej: descuento al cliente por comprarnos más de 50 toneladas)': 'Upon granting volume discount (e.g., rebate to client for buying over 50 tons)',
+  'Al cierre del ejercicio para saldar la cuenta de Rappels sobre ventas': 'At year-end to close the Volume discounts on sales account',
+  'Al facturar el alquiler (Ej: cobro mensual por alquilar una oficina que nos sobra)': 'Upon billing lease (e.g., monthly collection for rental of spare office)',
+  'Al cierre del ejercicio para saldar la cuenta de Ingresos por arrendamientos': 'At year-end to close the Revenues from leases account',
+  'Al devengar la comisión (Ej: cobro por mediar en una venta entre terceros)': 'Upon commission accrual (e.g., collection for mediating sale between third parties)',
+  'Al cierre del ejercicio para saldar la cuenta de Ingresos por comisiones': 'At year-end to close the Revenues from commissions account',
+  'Por servicios prestados (Ej: cobro a empleados por el uso del comedor de empresa)': 'For services rendered (e.g., charge to employees for company cafeteria usage)',
+  'Al cierre del ejercicio para saldar la cuenta de Ingresos por servicios al personal': 'At year-end to close the Revenues from services to personnel account',
+  'Al cobrar dividendos (Ej: cobro de beneficios de las acciones que poseemos)': 'Upon collecting dividends (e.g., collection of profits from owned shares)',
+  'Al cierre del ejercicio para saldar la cuenta de Ingresos de participaciones': 'At year-end to close the Revenues from equity investments account',
+  'Al vender con beneficio (Ej: venta de acciones por encima de su precio de compra)': 'Upon selling with profit (e.g., sale of shares above purchase price)',
+  'Al cierre del ejercicio para saldar la cuenta de Beneficios financieros': 'At year-end to close the Financial revenues account',
+  'Por intereses a nuestro favor (Ej: intereses abonados por el banco en nuestra cuenta)': 'For interest in our favor (e.g., interest paid by bank to our account)',
+  'Al cierre del ejercicio para saldar la cuenta de Otros ingresos financieros': 'At year-end to close the Other finance income account',
+  'Al recibir la factura de compra (Ej: compra de fruta a pagar en 30 días)': 'Upon receiving the purchase invoice (e.g., purchase of fruit to be paid in 30 days)',
+  'Al pagar la deuda (Ej: transferencia bancaria al proveedor) de Proveedores': 'Upon paying debt (e.g., bank transfer to supplier) of Suppliers',
+  'Al recibir la mercancía sin factura (Ej: llega el camión de fruta pero no el documento de cargo)': 'Upon receiving goods without invoice (e.g., fruit truck arrives without the invoice document)',
+  'Al recibir la factura definitiva de Proveedores, facturas pendientes de recibir o formalizar': 'Upon receiving the definitive invoice of Suppliers, invoices pending receipt or formalization',
+  'Al aceptar la letra o pagaré (Ej: aceptamos pagaré a 60 días por compra de mercancía)': 'Upon accepting bill/promissory note (e.g., we accept 60-day promissory note for merchandise purchase)',
+  'Al pagar el efecto al vencimiento de Proveedores, efectos comerciales a pagar': 'Upon paying bill at maturity of Suppliers, bills payable',
+  'Al recibir envases con facultad de devolución (Ej: recibimos cajas de plástico retornables con la fruta)': 'Upon receiving packagings with return option (e.g., we receive returnable plastic crates with the fruit)',
+  'Al devolver los envases o decidir quedárselos de Envases y embalajes a devolver a proveedores': 'Upon returning the packagings or deciding to keep them of Packing elements to be returned to suppliers',
+  'Al entregar dinero a cuenta (Ej: pago de 1.000 € antes de recibir el pedido de fruta)': 'Upon delivering money on account (e.g., payment of €1,000 before receiving the fruit order)',
+  'Al recibir la mercancía y aplicar el anticipo de Anticipos a proveedores': 'Upon receiving the goods and applying the advance of Advances to suppliers',
+  'Al recibir la factura de un servicio (Ej: deuda con la empresa de limpieza o seguridad)': 'Upon receiving service invoice (e.g., debt with cleaning or security firm)',
+  'Al pagar la factura de Acreedores por prestaciones de servicios': 'Upon paying the invoice of Sundry creditors for services',
+  'Al emitir la factura de venta (Ej: venta de fruta a cobrar en 15 días)': 'Upon issuing sale invoice (e.g., sale of fruit to be collected in 15 days)',
+  'Al cobrar la factura (Ej: ingreso en cuenta del pago del cliente) de Clientes': 'Upon collecting the invoice (e.g., receipt on account of client payment) of Customers',
+  'Al recibir el efecto aceptado (Ej: el cliente nos entrega un pagaré por su compra)': 'Upon receiving accepted bill (e.g., client hands us a promissory note for their purchase)',
+  'Al cobrar el efecto al vencimiento de Clientes, efectos comerciales a cobrar': 'Upon collecting the commercial paper at maturity of Customers, bills receivable',
+  'Al vender a una empresa del mismo grupo (Ej: venta de fruta a una filial de la sociedad) de Clientes, empresas asociadas': 'Upon selling to a group company (e.g., sale of fruit to a subsidiary of the company) of Customers, related parties',
+  'Al cobrar la deuda de Clientes, empresas asociadas': 'Upon collecting the debt of Customers, related parties',
+  'Al recibir dinero a cuenta (Ej: el cliente nos paga 500 € antes de que le enviemos la fruta) de Anticipos de clientes': 'Upon receiving money on account (e.g., client pays us €500 before we send the fruit) of Advances from customers',
+  'Al realizar la venta y aplicar el anticipo de Anticipos de clientes': 'Upon performing the sale and applying the advance of Advances from customers',
+  'Por ingresos que no son ventas (Ej: deuda de un tercero por habernos comprado mobiliario usado)': 'For income from non-sales sources (e.g., third party debt for having bought used furniture from us)',
+  'Al cobrar la deuda de Deudores': 'Upon collecting the debt of Sundry debtors',
+  'Al comprar bienes o servicios (Ej: IVA del 21 % en la factura de compra de maquinaria)': 'Upon buying goods or services (e.g., 21% VAT in the machinery purchase invoice)',
+  'Al realizar la liquidación trimestral del IVA de Hacienda Pública, IVA soportado': 'Upon performing quarterly VAT filing of Public Treasury, Input VAT',
+  'Al recibir un ingreso con retención (Ej: el banco nos retiene IRPF sobre los intereses)': 'Upon receiving income with withholding tax (e.g., bank withholds PIT on interest)',
+  'Al liquidar el Impuesto sobre Sociedades de Hacienda Pública, retenciones y pagos a cuenta': 'Upon settling Corporate Income Tax of Public Treasury, withholdings and payments on account',
+  'Al realizar una venta (Ej: IVA del 4 % en la factura de venta de fruta)': 'Upon performing a sale (e.g., 4% VAT in the fruit sale invoice)',
+  'Al realizar la liquidación trimestral del IVA de Hacienda Pública, IVA repercutido': 'Upon performing quarterly VAT filing of Public Treasury, Output VAT',
+  'Al recibir el préstamo (Ej: crédito bancario a devolver en 6 meses)': 'Upon receiving the loan (e.g., bank credit to be repaid in 6 months)',
+  'Al pagar las cuotas o el total de la deuda de Préstamos a corto plazo con entidades de crédito': 'Upon paying installments or total debt of Short-term loans from credit institutions',
+  'Al comprar el activo (Ej: compra de un ordenador a pagar en 90 días)': 'Upon buying the asset (e.g., purchase of a computer to be paid in 90 days)',
+  'Al pagar la deuda de Proveedores de inmovilizado a corto plazo': 'Upon paying the debt of Short-term suppliers of non-current assets',
+  'Al comprar acciones para especular (Ej: compra de acciones de bolsa para vender en 3 meses)': 'Upon buying shares to speculate (e.g., purchase of stock shares to sell in 3 months)',
+  'Al vender las acciones de Inversiones financieras a corto plazo en instrumentos de patrimonio': 'Upon selling the shares of Short-term investments in equity instruments',
+  'Al suscribir los títulos (Ej: compra de letras del tesoro a 6 meses)': 'Upon subscribing securities (e.g., purchase of treasury bills at 6 months)',
+  'Al recuperar la inversión de Valores representativos de deuda a corto plazo': 'Upon recovering investment of Short-term debt securities',
+  'Al conceder el préstamo (Ej: dinero prestado a otra empresa a devolver en 8 meses)': 'Upon granting loan (e.g., money lent to another company to be repaid in 8 months)',
+  'Al cobrar el préstamo de Créditos a corto plazo': 'Upon collecting loan of Short-term loans',
+  'Al abrir el depósito (Ej: imposición a plazo fijo de 4 meses)': 'Upon opening deposit (e.g., time deposit at 4 months)',
+  'Al recuperar los fondos de Imposiciones a corto plazo': 'Upon recovering funds of Short-term time deposits',
+  'Cuando la sociedad pide el dinero (Ej: se exige el pago del 25 % restante de las acciones)': 'When the company calls of payments (e.g., requiring the remaining 25% payment of shares)',
+  'Cuando los socios realizan el ingreso de Socios por desembolsos exigidos': 'When shareholders make the contribution of Capital called-up',
+  'Al recibir la garantía (Ej: cobro de fianza por alquiler de equipo para un evento de 1 mes)': 'Upon receiving guarantee (e.g., deposit collection for 1-month equipment rental)',
+  'Al devolver la fianza de Fianzas recibidas a corto plazo': 'Upon returning the guarantee of Short-term guarantees received',
+  'Al entregar la garantía (Ej: pago de fianza por alquilar una furgoneta una semana)': 'Upon delivering guarantee (e.g., payment of deposit to rent a van for a week)',
+  'Al recuperar la fianza de Fianzas constituidas a corto plazo': 'Upon recovering deposit of Short-term guarantees extended',
+  'Por las entradas de efectivo (Ej: cobro en metálico de una venta menor)': 'For cash entries (e.g., cash collection of a minor sale)',
+  'Por los pagos en metálico (Ej: pago de correos o pequeños suministros) de Caja': 'For cash payments (e.g., post office or small supplies payments) of Cash',
+  'Por los ingresos en cuenta (Ej: transferencia recibida de un cliente)': 'For account deposits (e.g., transfer received from a customer)',
+  'Por los pagos por banco (Ej: pago de nóminas o recibos domiciliados) de Bancos': 'For bank payments (e.g., payroll or direct-debited bills) of Banks',
+  'Por ingresos en divisas (Ej: cobro en dólares de una venta a EE.UU.)': 'For currency deposits (e.g., collection in dollars of a sale to the USA)',
+  'Por pagos en divisas de Bancos, moneda extranjera': 'For payments in foreign currency of Banks, foreign currency'
+};
+
+const translateScenarioText = (text: string, lang: string): string => {
+  if (lang !== 'en') return text;
+  
+  if (SCENARIO_TRANSLATIONS[text]) {
+    return SCENARIO_TRANSLATIONS[text];
+  }
+  
+  let translated = text;
+  if (translated.startsWith('CASO: ')) {
+    const rawBody = translated.substring(6);
+    return `CASE: ${SCENARIO_TRANSLATIONS[rawBody] || translatePhrases(rawBody, lang)}`;
+  }
+  if (translated.startsWith('EJEMPLO: ')) {
+    const rawBody = translated.substring(9);
+    return `EXAMPLE: ${SCENARIO_TRANSLATIONS[rawBody] || translatePhrases(rawBody, lang)}`;
+  }
+  if (translated.startsWith('CUENTA: ')) {
+    const accountName = translated.substring(8);
+    const foundCode = Object.keys(ACCOUNT_MAPPING).find(code => ACCOUNT_MAPPING[code] === accountName);
+    const engName = foundCode ? (ACCOUNT_MAPPING_EN[foundCode] || accountName) : accountName;
+    return `ACCOUNT: ${engName}`;
+  }
+
+  const foundCode = Object.keys(ACCOUNT_MAPPING).find(code => ACCOUNT_MAPPING[code] === text);
+  if (foundCode) {
+    return ACCOUNT_MAPPING_EN[foundCode] || text;
+  }
+  
+  return translatePhrases(translated, lang);
+};
+
+const translatePhrases = (str: string, lang: string): string => {
+  if (lang !== 'en') return str;
+  let res = str;
+  const replaces = [
+    { from: 'Al pagar', to: 'When paying' },
+    { from: 'Al recibir', to: 'When receiving' },
+    { from: 'Por la compra', to: 'On purchase' },
+    { from: 'Por la adquisición', to: 'On acquisition' },
+    { from: 'Por su venta', to: 'On its sale' },
+    { from: 'Por venta', to: 'On sale' },
+    { from: 'Al cierre del ejercicio para saldar la cuenta de', to: 'At fiscal year end to close the account of' },
+    { from: 'Al cierre del ejercicio para saldar la cuenta', to: 'At fiscal year end to close the account' },
+    { from: 'Al cierre del ejercicio por el valor de las existencias finales', to: 'At year-end for final inventory value' },
+    { from: 'Al cierre del ejercicio por el valor de las existencias iniciales', to: 'At year-end for initial inventory value' },
+    { from: 'Al formalizar', to: 'Upon formalization' },
+    { from: 'Por el cobro', to: 'For collection' },
+    { from: 'Al cobrar', to: 'On collection of' },
+    { from: 'Por el pago', to: 'On payment of' },
+    { from: 'Por la baja', to: 'On write-off' },
+    { from: 'A la suscripción', to: 'On subscription' },
+    { from: 'contra Resultado del ejercicio', to: 'against Profit/Loss for the year' },
+  ];
+  for (const r of replaces) {
+    res = res.replace(new RegExp(r.from, 'g'), r.to);
+  }
+  for (const k of Object.keys(ACCOUNT_MAPPING)) {
+    res = res.replace(new RegExp(ACCOUNT_MAPPING[k], 'g'), ACCOUNT_MAPPING_EN[k] || ACCOUNT_MAPPING[k]);
+  }
+  return res;
+};
+
+const translateGameText = (text: string, type: string, lang: string) => {
+  if (lang !== 'en') return text;
+  if (type === 'Sección del balance' || type === 'Balance sheet section') {
+    return SECTION_DISPLAY[text] || text;
+  }
+  if (type === 'Saldos posibles' || type === 'Possible balances' || type === 'Saldos') {
+    return text.split(', ').map(s => BALANCE_DISPLAY[s] || s).join(', ');
+  }
+  if (type === 'Asiento contable' || type === 'Accounting entry') {
+    return text.replace(/Debe/g, 'Debit').replace(/Haber/g, 'Credit');
+  }
+  return text;
+};
+
+
 const INITIAL_BALANCE: BalanceState = {
   assets: {
     nonCurrent: [
@@ -1173,6 +1898,52 @@ Incluye siempre los bloques JSON al final. Si una cuenta aún no ha completado l
 ]
 [/JOURNAL_DATA]`;
 
+const SYSTEM_INSTRUCTION_EN = `You are an expert Intelligent Accounting Tutor specialized in the General Chart of Accounts (PGC). Your goal is to help students understand the logic of accounting entries and double-entry bookkeeping.
+
+CRITICAL RULES OF PEDAGOGY AND WORKFLOW (MANDATORY PROCEDURE FOR EACH ACCOUNT):
+For each account that must take part in the entry, you must follow this STRICT order of questions:
+
+1st FIRST, ASK FOR THE ACCOUNT: Ask which account records the transaction element in question (e.g., fruit, delivery truck, VAT, payment by card, etc.).
+   - IF THE STUDENT IS WRONG: Explain what the account they erroneously suggested actually records, even if they were close.
+   - DO NOT proceed to the next step until the student guesses the correct name and code of the account.
+   - DO NOT add anything to the journal or change the balance sheet yet.
+
+2nd SECOND, ASK FOR THE SIDE (DEBIT/CREDIT): Once the account is correct, ask if it is debited (Debe/Debit) or credited (Haber/Credit).
+   - DO NOT proceed to the next step until the student guesses correctly.
+   - DO NOT add anything to the journal or change the balance sheet yet.
+
+3rd THIRD, ASK FOR THE AMOUNT: Once the side is correct, ask for the exact amount.
+   - DO NOT proceed to the next step until the student guesses correctly.
+   - DO NOT add anything to the journal or change the balance sheet yet.
+
+4th FOURTH, RECORDING AND VISUAL UPDATE: Only when the student has successfully answered the above 3 points for that specific account:
+   - Add the account with its amount to the [JOURNAL_DATA] block.
+   - Update the [BALANCE_DATA] block with the new financial state corresponding to that change.
+   - IF THE ELEMENT DID NOT EXIST IN THE BALANCE SHEET (e.g., selling something they do not own): Reflect the decrease in [BALANCE_DATA] all the same, leading to a negative amount.
+   - Inform the student that the account has been recorded and proceed with the next account of the entry following the same 1-2-3-4 process.
+
+ADDITIONAL RULES:
+- ELEMENTS NOT PRESENT: If the student proposes a scenario with elements not present in the balance sheet, provide clues to help them answer questions 1, 2, and 3.
+- SOCRATIC METHOD: Ask ONLY ONE QUESTION at a time.
+- NEVER provide the full accounting entry or give away too much information in advance.
+- SPEEDY RESPONSES: Be extremely concise. Avoid long introductions.
+
+MANDATORY TECHNICAL FORMAT:
+Always include the JSON blocks at the end. If an account has not completed all 4 steps, do NOT include it inside [JOURNAL_DATA] and do NOT modify [BALANCE_DATA].
+
+[BALANCE_DATA]
+{
+  "assets": { "nonCurrent": [], "current": [] },
+  "liabilitiesAndEquity": { "equity": [], "nonCurrent": [], "current": [] }
+}
+[/BALANCE_DATA]
+
+[JOURNAL_DATA]
+[
+  {"account": "572 Bancos", "debe": 1000, "haber": 0}
+]
+[/JOURNAL_DATA]`;
+
 // --- Components ---
 const FlyingAccount = ({ name, amount, targetId, onComplete }: { 
   name: string; 
@@ -1250,7 +2021,8 @@ const AnimatedNumber = ({ value, duration = 5 }: { value: number, duration?: num
   return <span>{formatCurrency(displayValue)}</span>;
 };
 
-const BalanceRow = ({ item }: { item: BalanceItem, key?: React.Key }) => {
+const BalanceRow = ({ item, language = 'es' }: { item: BalanceItem, language?: 'es' | 'en', key?: React.Key }) => {
+  const isEn = language === 'en';
   const isNegative = item.amount < 0;
   
   // Check if account is a contra-account or allowed to be negative in PGC
@@ -1290,9 +2062,15 @@ const BalanceRow = ({ item }: { item: BalanceItem, key?: React.Key }) => {
   };
 
   const isContra = isContraAccount(item.code || '');
-  const showError = (isNegative && !isContra) || (item.code === '406' && item.amount > 0);
+  const is103Error = (item.code === '103' || (item.code && item.code.startsWith('103'))) && item.amount > 0;
+  const isAmortizationError = (item.code === '280' || item.code === '281' || (item.code && (item.code.startsWith('280') || item.code.startsWith('281')))) && item.amount > 0;
+  const showError = (isNegative && !isContra) || (item.code === '406' && item.amount > 0) || is103Error || isAmortizationError;
   const [showExplanation, setShowExplanation] = useState(false);
   
+  const displayName = item.code 
+    ? (isEn ? (ACCOUNT_MAPPING_EN[item.code] || item.name) : (ACCOUNT_MAPPING[item.code] || item.name)) 
+    : item.name;
+
   return (
     <div className="flex flex-col gap-1">
       <motion.div 
@@ -1307,7 +2085,7 @@ const BalanceRow = ({ item }: { item: BalanceItem, key?: React.Key }) => {
       >
         <span className="font-medium leading-tight">
           <span className={`text-[9px] opacity-40 mr-1 ${showError ? 'text-red-400' : ''}`}>{item.code}</span> 
-          {item.name}
+          {displayName}
         </span>
         <span className={`font-bold whitespace-nowrap ml-2 ${showError ? 'text-red-700' : 'text-zinc-900'}`}>
           <AnimatedNumber value={item.amount} />
@@ -1323,14 +2101,16 @@ const BalanceRow = ({ item }: { item: BalanceItem, key?: React.Key }) => {
             <div className="flex items-start gap-1.5">
               <AlertCircle className="w-3 h-3 text-red-600 mt-0.5 flex-shrink-0" />
               <p className="text-[9px] text-red-800 font-medium leading-tight">
-                Por la propia naturaleza de la cuenta no es posible esta situación.
+                {isEn 
+                  ? "Due to the nature of the account, this situation is not possible."
+                  : "Por la naturaleza de la cuenta no es posible esta situación."}
               </p>
             </div>
             <button 
               onClick={() => setShowExplanation(!showExplanation)}
               className="text-[9px] font-bold text-red-700 hover:underline flex-shrink-0 ml-1"
             >
-              ¿Por qué?
+              {isEn ? "¿Why?" : "¿Por qué?"}
             </button>
           </motion.div>
           
@@ -1344,8 +2124,20 @@ const BalanceRow = ({ item }: { item: BalanceItem, key?: React.Key }) => {
               >
                 <p className="text-[10px] text-zinc-600 leading-relaxed">
                   {item.code === '406' 
-                    ? "La cuenta 406 (Envases y embalajes a devolver a proveedores) tiene naturaleza deudora y figura minorando el pasivo. Por tanto, no puede tener saldo acreedor (positivo en el pasivo)."
-                    : "Contablemente, una cuenta no puede reflejar una cantidad negativa de un bien físico o un derecho. Si esto ocurre, suele deberse a un error en el registro de las existencias iniciales o a una operación (como una venta o pago) de algo que no consta previamente en el patrimonio de la empresa."
+                    ? (isEn 
+                        ? "Account 406 (Packaging to be returned to suppliers) is a debit account and appears as a reduction of liabilities. Therefore, it cannot have a credit balance (positive in liabilities)."
+                        : "La cuenta 406 (Envases y embalajes a devolver a proveedores) tiene naturaleza deudora y figura minorando el pasivo. Por tanto, no puede tener saldo acreedor (positivo en el pasivo).")
+                    : item.code === '103' || (item.code && item.code.startsWith('103'))
+                    ? (isEn
+                        ? "Account 103 (Uncalled capital) represents a claim against partners and has a debit nature. Under Equity, it must appear as a negative deduction. It cannot have a credit balance (positive in Equity)."
+                        : "La cuenta 103 (Socios por desembolsos no exigidos) representa un derecho de cobro sobre los socios y tiene naturaleza deudora. Al figurar en el Patrimonio Neto de la empresa, debe aparecer con signo negativo (restando). Por lo tanto, no puede quedar en un valor positivo (saldo acreedor).")
+                    : item.code === '280' || item.code === '281' || (item.code && (item.code.startsWith('280') || item.code.startsWith('281')))
+                    ? (isEn
+                        ? "Accumulated depreciation accounts (280/281) have a credit nature and must appear in Non-current Assets with a negative sign (decreasing asset value). Therefore, they cannot have a positive balance (debit balance)."
+                        : "Las cuentas de amortización acumulada (280/281) tienen naturaleza acreedora y deben figurar en el Activo No Corriente restando (con signo deudor negativo). Por tanto, no pueden quedar en un valor positivo.")
+                    : (isEn 
+                        ? "In accounting, an account cannot reflect a negative amount of a physical asset or a right. If this occurs, it is usually due to an error in recording initial inventory or a transaction (such as a sale or payment) of something that was not previously part of the company's assets."
+                        : "Contablemente, una cuenta no puede reflejar una cantidad negativa de un bien físico o un derecho. Si esto ocurre, suele deudarse a un error en el registro de las existencias iniciales o a una operación (como una venta o pago) de algo que no consta previamente en el patrimonio de la empresa.")
                   }
                 </p>
               </motion.div>
@@ -1357,60 +2149,69 @@ const BalanceRow = ({ item }: { item: BalanceItem, key?: React.Key }) => {
   );
 };
 
-const BalanceSectionEditor = ({ title, items, onAdd, onRemove, onUpdate, validationErrors }: { 
+const BalanceSectionEditor = ({ title, items, onAdd, onRemove, onUpdate, validationErrors, language = 'es' }: { 
   title: string, 
   items: BalanceItem[], 
   onAdd: () => void, 
   onRemove: (idx: number) => void,
   onUpdate: (idx: number, field: keyof BalanceItem, value: any) => void,
-  validationErrors?: { idx: number, fields: string[] }[]
-}) => (
-  <div className="space-y-3">
-    <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
-      <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{title}</h4>
-      <button onClick={onAdd} className="p-1 hover:bg-zinc-100 rounded-md text-emerald-600 transition-colors">
-        <Plus className="w-4 h-4" />
-      </button>
+  validationErrors?: { idx: number, fields: string[] }[],
+  language?: 'es' | 'en'
+}) => {
+  const isEn = language === 'en';
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
+        <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{title}</h4>
+        <button onClick={onAdd} className="p-1 hover:bg-zinc-100 rounded-md text-emerald-600 transition-colors">
+          <Plus className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="space-y-2">
+        {items.map((item, idx) => {
+          const errors = validationErrors?.find(e => e.idx === idx)?.fields || [];
+          return (
+            <div key={idx} className="flex gap-2 items-center">
+              <input 
+                type="text" 
+                placeholder={isEn ? "Code" : "Cód."} 
+                value={item.code} 
+                onChange={(e) => onUpdate(idx, 'code', e.target.value)}
+                className={`w-12 text-[10px] p-1 border rounded-md focus:ring-1 focus:ring-emerald-500 outline-none ${errors.includes('code') ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}
+              />
+              <input 
+                type="text" 
+                placeholder={isEn ? "Account name" : "Nombre de la cuenta"} 
+                value={item.name} 
+                onChange={(e) => onUpdate(idx, 'name', e.target.value)}
+                className={`flex-1 text-[11px] p-1 border rounded-md focus:ring-1 focus:ring-emerald-500 outline-none ${errors.includes('name') ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}
+              />
+              <input 
+                type="number" 
+                placeholder={isEn ? "Amount" : "Importe"} 
+                value={item.amount || ''} 
+                onChange={(e) => onUpdate(idx, 'amount', e.target.value)}
+                className={`w-20 text-[11px] p-1 border rounded-md focus:ring-1 focus:ring-emerald-500 outline-none font-bold ${errors.includes('amount') ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}
+              />
+              <button onClick={() => onRemove(idx)} className="p-1 text-zinc-300 hover:text-red-500 transition-colors">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          );
+        })}
+        {items.length === 0 && (
+          <p className="text-[10px] text-zinc-300 italic py-2">
+            {isEn ? "No items" : "No hay elementos"}
+          </p>
+        )}
+      </div>
     </div>
-    <div className="space-y-2">
-      {items.map((item, idx) => {
-        const errors = validationErrors?.find(e => e.idx === idx)?.fields || [];
-        return (
-          <div key={idx} className="flex gap-2 items-center">
-            <input 
-              type="text" 
-              placeholder="Cód." 
-              value={item.code} 
-              onChange={(e) => onUpdate(idx, 'code', e.target.value)}
-              className={`w-12 text-[10px] p-1 border rounded-md focus:ring-1 focus:ring-emerald-500 outline-none ${errors.includes('code') ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}
-            />
-            <input 
-              type="text" 
-              placeholder="Nombre de la cuenta" 
-              value={item.name} 
-              onChange={(e) => onUpdate(idx, 'name', e.target.value)}
-              className={`flex-1 text-[11px] p-1 border rounded-md focus:ring-1 focus:ring-emerald-500 outline-none ${errors.includes('name') ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}
-            />
-            <input 
-              type="number" 
-              placeholder="Importe" 
-              value={item.amount || ''} 
-              onChange={(e) => onUpdate(idx, 'amount', e.target.value)}
-              className={`w-20 text-[11px] p-1 border rounded-md focus:ring-1 focus:ring-emerald-500 outline-none font-bold ${errors.includes('amount') ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}
-            />
-            <button onClick={() => onRemove(idx)} className="p-1 text-zinc-300 hover:text-red-500 transition-colors">
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        );
-      })}
-      {items.length === 0 && <p className="text-[10px] text-zinc-300 italic py-2">No hay elementos</p>}
-    </div>
-  </div>
-);
+  );
+};
 
 
 export default function App() {
+  const [language, setLanguage] = useState<'es' | 'en'>('es');
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -1536,6 +2337,7 @@ export default function App() {
       pizarraSplit,
       whiteboardPages,
       whiteboardCurrentPageIndex,
+      language,
       timestamp: new Date().toISOString()
     };
     localStorage.setItem('contaia_session', JSON.stringify(sessionData));
@@ -1559,6 +2361,7 @@ export default function App() {
         if (data.journalFontScale) setJournalFontScale(data.journalFontScale);
         if (data.pizarraColumns) setPizarraColumns(data.pizarraColumns);
         if (data.pizarraSplit) setPizarraSplit(data.pizarraSplit);
+        if (data.language) setLanguage(data.language);
         if (data.whiteboardPages) {
           const migratedPages = data.whiteboardPages.map((page: any) => {
             if (Array.isArray(page)) {
@@ -1583,7 +2386,9 @@ export default function App() {
       {
         id: '1',
         role: 'bot',
-        text: '¡Hola! Soy tu Profesor de Contabilidad. He preparado un balance inicial para hoy. ¿En qué operación te gustaría trabajar?',
+        text: language === 'en' 
+          ? 'Hi! I am your Accounting Professor. I have prepared an initial balance sheet for today. What transaction would you like to work on?'
+          : '¡Hola! Soy tu Profesor de Contabilidad. He preparado un balance inicial para hoy. ¿En qué operación te gustaría trabajar?',
         timestamp: new Date(),
         balance: INITIAL_BALANCE
       }
@@ -1594,7 +2399,10 @@ export default function App() {
     setWhiteboardPages([{ shapes: [], scale: 1, position: { x: 0, y: 0 } }]);
     setWhiteboardCurrentPageIndex(0);
     setShowResetConfirm(false);
-    setShowToast({ message: 'Sesión reiniciada correctamente', type: 'success' });
+    setShowToast({ 
+      message: language === 'en' ? 'Session reset successfully' : 'Sesión reiniciada correctamente', 
+      type: 'success' 
+    });
     setTimeout(() => setShowToast(null), 3000);
   };
 
@@ -1609,7 +2417,7 @@ export default function App() {
       saveSession(true);
     }, 1000);
     return () => clearTimeout(timer);
-  }, [messages, currentBalance, currentJournal, fontScale, balanceFontScale, journalFontScale, pizarraColumns, pizarraSplit, whiteboardPages, whiteboardCurrentPageIndex]);
+  }, [messages, currentBalance, currentJournal, fontScale, balanceFontScale, journalFontScale, pizarraColumns, pizarraSplit, whiteboardPages, whiteboardCurrentPageIndex, language]);
 
   useEffect(() => {
     scrollToBottom();
@@ -1718,7 +2526,7 @@ export default function App() {
           { role: 'user', parts: [{ text: input }] }
         ],
         config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
+          systemInstruction: language === 'en' ? SYSTEM_INSTRUCTION_EN : SYSTEM_INSTRUCTION,
           temperature: 0.7,
           thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
         }
@@ -1921,7 +2729,29 @@ export default function App() {
     currentBalance.liabilitiesAndEquity.current.reduce((acc, item) => acc + item.amount, 0);
 
   const CustomizationModal = () => {
-    const [tempBalance, setTempBalance] = useState<BalanceState>(JSON.parse(JSON.stringify(currentBalance)));
+    const initializeBalance = (bal: BalanceState, lang: 'es' | 'en'): BalanceState => {
+      const clone = JSON.parse(JSON.stringify(bal));
+      const convertList = (list: BalanceItem[]) => {
+        return list.map(item => {
+          if (item.code) {
+            const mappedName = lang === 'en' 
+              ? (ACCOUNT_MAPPING_EN[item.code] || item.name)
+              : (ACCOUNT_MAPPING[item.code] || item.name);
+            return { ...item, name: mappedName };
+          }
+          return item;
+        });
+      };
+      
+      clone.assets.nonCurrent = convertList(clone.assets.nonCurrent);
+      clone.assets.current = convertList(clone.assets.current);
+      clone.liabilitiesAndEquity.equity = convertList(clone.liabilitiesAndEquity.equity);
+      clone.liabilitiesAndEquity.nonCurrent = convertList(clone.liabilitiesAndEquity.nonCurrent);
+      clone.liabilitiesAndEquity.current = convertList(clone.liabilitiesAndEquity.current);
+      return clone;
+    };
+
+    const [tempBalance, setTempBalance] = useState<BalanceState>(() => initializeBalance(currentBalance, language));
 
     const addItem = (section: string, subSection: string) => {
       const newBalance = { ...tempBalance };
@@ -1968,8 +2798,9 @@ export default function App() {
       else if (field === 'code') {
         item.code = value;
         // Auto-fill name if code matches mapping
-        if (ACCOUNT_MAPPING[value] && !item.name) {
-          item.name = ACCOUNT_MAPPING[value];
+        const mappingToUse = language === 'en' ? ACCOUNT_MAPPING_EN : ACCOUNT_MAPPING;
+        if (mappingToUse[value]) {
+          item.name = mappingToUse[value];
         }
         
         // REORGANIZATION LOGIC: If code changes and belongs to another section, move it
@@ -2032,7 +2863,7 @@ export default function App() {
         
         // Check mapping if both code and name are present
         if (item.code && item.name) {
-          const expectedName = ACCOUNT_MAPPING[item.code];
+          const expectedName = language === 'en' ? ACCOUNT_MAPPING_EN[item.code] : ACCOUNT_MAPPING[item.code];
           if (expectedName && !expectedName.toLowerCase().includes(item.name.toLowerCase()) && !item.name.toLowerCase().includes(expectedName.toLowerCase())) {
             if (!fields.includes('code')) fields.push('code');
             if (!fields.includes('name')) fields.push('name');
@@ -2069,7 +2900,9 @@ export default function App() {
       setMessages([{
         id: Date.now().toString(),
         role: 'bot',
-        text: '¡Balance actualizado! He tomado nota de tu balance inicial personalizado. ¿Qué operación te gustaría realizar ahora?',
+        text: language === 'en'
+          ? 'Balance updated! I have registered your custom initial balance sheet. What accounting operation would you like to perform next?'
+          : '¡Balance actualizado! He tomado nota de tu balance inicial personalizado. ¿Qué operación te gustaría realizar ahora?',
         timestamp: new Date(),
         balance: tempBalance
       }]);
@@ -2090,8 +2923,12 @@ export default function App() {
                 <Settings className="text-white w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-zinc-900">Personalizar Balance Inicial</h2>
-                <p className="text-xs text-zinc-500">Configura las cuentas y saldos de partida</p>
+                <h2 className="text-xl font-bold text-zinc-900">
+                  {language === 'en' ? 'Customize Initial Balance' : 'Personalizar Balance Inicial'}
+                </h2>
+                <p className="text-xs text-zinc-500">
+                  {language === 'en' ? 'Configure starting accounts and balances' : 'Configura las cuentas y saldos de partida'}
+                </p>
               </div>
             </div>
             <button onClick={() => setIsCustomizing(false)} className="p-2 hover:bg-zinc-200 rounded-full transition-colors">
@@ -2105,24 +2942,28 @@ export default function App() {
               <div className="space-y-6">
                 <div className="flex items-center gap-2 border-b-2 border-emerald-500 pb-2">
                   <Calculator className="w-5 h-5 text-emerald-600" />
-                  <h3 className="text-lg font-black text-emerald-600 uppercase tracking-widest">Activo</h3>
+                  <h3 className="text-lg font-black text-emerald-600 uppercase tracking-widest">
+                    {language === 'en' ? 'Assets' : 'Activo'}
+                  </h3>
                 </div>
                 <div className="space-y-8">
                   <BalanceSectionEditor 
-                    title="Activo No Corriente" 
+                    title={language === 'en' ? 'Non-Current Assets' : 'Activo No Corriente'} 
                     items={tempBalance.assets.nonCurrent} 
                     onAdd={() => addItem('assets', 'nonCurrent')}
                     onRemove={(idx) => removeItem('assets', 'nonCurrent', idx)}
                     onUpdate={(idx, f, v) => updateItem('assets', 'nonCurrent', idx, f, v)}
                     validationErrors={assetNonCurrentErrors}
+                    language={language}
                   />
                   <BalanceSectionEditor 
-                    title="Activo Corriente" 
+                    title={language === 'en' ? 'Current Assets' : 'Activo Corriente'} 
                     items={tempBalance.assets.current} 
                     onAdd={() => addItem('assets', 'current')}
                     onRemove={(idx) => removeItem('assets', 'current', idx)}
                     onUpdate={(idx, f, v) => updateItem('assets', 'current', idx, f, v)}
                     validationErrors={assetCurrentErrors}
+                    language={language}
                   />
                 </div>
               </div>
@@ -2131,32 +2972,37 @@ export default function App() {
               <div className="space-y-6">
                 <div className="flex items-center gap-2 border-b-2 border-blue-500 pb-2">
                   <BookOpen className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-lg font-black text-blue-600 uppercase tracking-widest">Patrimonio Neto + Pasivo</h3>
+                  <h3 className="text-lg font-black text-blue-600 uppercase tracking-widest">
+                    {language === 'en' ? 'Equity & Liabilities' : 'Patrimonio Neto + Pasivo'}
+                  </h3>
                 </div>
                 <div className="space-y-8">
                   <BalanceSectionEditor 
-                    title="Patrimonio Neto" 
+                    title={language === 'en' ? 'Equity' : 'Patrimonio Neto'} 
                     items={tempBalance.liabilitiesAndEquity.equity} 
                     onAdd={() => addItem('liabilitiesAndEquity', 'equity')}
                     onRemove={(idx) => removeItem('liabilitiesAndEquity', 'equity', idx)}
                     onUpdate={(idx, f, v) => updateItem('liabilitiesAndEquity', 'equity', idx, f, v)}
                     validationErrors={equityErrors}
+                    language={language}
                   />
                   <BalanceSectionEditor 
-                    title="Pasivo No Corriente" 
+                    title={language === 'en' ? 'Non-Current Liabilities' : 'Pasivo No Corriente'} 
                     items={tempBalance.liabilitiesAndEquity.nonCurrent} 
                     onAdd={() => addItem('liabilitiesAndEquity', 'nonCurrent')}
                     onRemove={(idx) => removeItem('liabilitiesAndEquity', 'nonCurrent', idx)}
                     onUpdate={(idx, f, v) => updateItem('liabilitiesAndEquity', 'nonCurrent', idx, f, v)}
                     validationErrors={liabilityNonCurrentErrors}
+                    language={language}
                   />
                   <BalanceSectionEditor 
-                    title="Pasivo Corriente" 
+                    title={language === 'en' ? 'Current Liabilities' : 'Pasivo Corriente'} 
                     items={tempBalance.liabilitiesAndEquity.current} 
                     onAdd={() => addItem('liabilitiesAndEquity', 'current')}
                     onRemove={(idx) => removeItem('liabilitiesAndEquity', 'current', idx)}
                     onUpdate={(idx, f, v) => updateItem('liabilitiesAndEquity', 'current', idx, f, v)}
                     validationErrors={liabilityCurrentErrors}
+                    language={language}
                   />
                 </div>
               </div>
@@ -2167,19 +3013,25 @@ export default function App() {
              <div className="flex flex-col gap-2">
                 <div className="flex gap-8">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase">Total Activo</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase">
+                      {language === 'en' ? 'Total Assets' : 'Total Activo'}
+                    </span>
                     <span className={`text-xl font-black ${isUnbalanced ? 'text-red-600' : 'text-emerald-600'}`}>
                       {formatCurrency(tempTotalAssets)}
                     </span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase">Total P.N. + Pasivo</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase">
+                      {language === 'en' ? 'Total Eq. + Liab.' : 'Total P.N. + Pasivo'}
+                    </span>
                     <span className={`text-xl font-black ${isUnbalanced ? 'text-red-600' : 'text-blue-600'}`}>
                       {formatCurrency(tempTotalLiabilities)}
                     </span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase">Diferencia</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase">
+                      {language === 'en' ? 'Difference' : 'Diferencia'}
+                    </span>
                     <span className={`text-xl font-black ${isUnbalanced ? 'text-red-600' : 'text-emerald-600'}`}>
                       {formatCurrency(tempTotalAssets - tempTotalLiabilities)}
                     </span>
@@ -2187,17 +3039,17 @@ export default function App() {
                 </div>
                 {isUnbalanced && (
                   <p className="text-[10px] text-red-600 font-bold flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" /> El balance inicial debe estar cuadrado para poder guardar.
+                    <AlertCircle className="w-3 h-3" /> {language === 'en' ? 'The initial balance sheet must be balanced before saving.' : 'El balance inicial debe estar cuadrado para poder guardar.'}
                   </p>
                 )}
                 {hasAnyFieldErrors && (
                   <p className="text-[10px] text-red-600 font-bold flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" /> Revisa los campos marcados en rojo (vacíos o con errores de código/nombre).
+                    <AlertCircle className="w-3 h-3" /> {language === 'en' ? 'Please review fields highlighted in red (empty or invalid code/name).' : 'Revisa los campos marcados en rojo (vacíos o con errores de código/nombre).'}
                   </p>
                 )}
                 {hasMismatchError && (
                   <p className="text-[10px] text-red-600 font-bold flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" /> El número de cuenta y el nombre no coinciden según el PGC.
+                    <AlertCircle className="w-3 h-3" /> {language === 'en' ? 'The account number and name do not match according to the PGC.' : 'El número de cuenta y el nombre no coinciden según el PGC.'}
                   </p>
                 )}
              </div>
@@ -2206,14 +3058,14 @@ export default function App() {
                   onClick={() => setTempBalance({ assets: { nonCurrent: [], current: [] }, liabilitiesAndEquity: { equity: [], nonCurrent: [], current: [] } })}
                   className="px-4 py-2 text-zinc-500 font-bold hover:text-zinc-700 transition-colors text-sm"
                 >
-                  Empezar de cero
+                  {language === 'en' ? 'Start from scratch' : 'Empezar de cero'}
                 </button>
                 <button 
                   onClick={handleSave}
                   disabled={hasAnyFieldErrors || isUnbalanced}
                   className="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-200 disabled:opacity-50 disabled:shadow-none transition-all hover:scale-105 active:scale-95"
                 >
-                  Guardar balance final
+                  {language === 'en' ? 'Save final balance' : 'Guardar balance final'}
                 </button>
              </div>
           </div>
@@ -2234,10 +3086,16 @@ export default function App() {
             <RefreshCw className="w-8 h-8 text-red-600" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-xl font-black text-zinc-900 uppercase tracking-tight">¿Reiniciar sesión?</h3>
+            <h3 className="text-xl font-black text-zinc-900 uppercase tracking-tight">
+              {language === 'en' ? 'Reset session?' : '¿Reiniciar sesión?'}
+            </h3>
             <p className="text-sm text-zinc-500 leading-relaxed">
-              Esta acción borrará todos tus mensajes, asientos contables y el estado actual del balance. 
-              <span className="block font-bold text-red-600 mt-1">No se puede deshacer.</span>
+              {language === 'en' 
+                ? 'This action will clear all your messages, accounting entries, and the current state of the balance sheet.' 
+                : 'Esta acción borrará todos tus mensajes, asientos contables y el estado actual del balance.'} 
+              <span className="block font-bold text-red-600 mt-1">
+                {language === 'en' ? 'This cannot be undone.' : 'No se puede deshacer.'}
+              </span>
             </p>
           </div>
           <div className="flex gap-3 w-full mt-4">
@@ -2245,13 +3103,13 @@ export default function App() {
               onClick={() => setShowResetConfirm(false)}
               className="flex-1 px-6 py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-2xl font-bold transition-all"
             >
-              Cancelar
+              {language === 'en' ? 'Cancel' : 'Cancelar'}
             </button>
             <button 
               onClick={resetSession}
               className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold shadow-lg shadow-red-200 transition-all"
             >
-              Sí, reiniciar
+              {language === 'en' ? 'Yes, reset' : 'Sí, reiniciar'}
             </button>
           </div>
         </div>
@@ -2469,7 +3327,12 @@ export default function App() {
 
   const startGame = () => {
     if (gameSelectedModules.length === 0) {
-      setShowToast({ message: "Selecciona al menos un módulo para empezar", type: 'error' });
+      setShowToast({ 
+        message: language === 'en' 
+          ? "Select at least one module to start" 
+          : "Selecciona al menos un módulo para empezar", 
+        type: 'error' 
+      });
       return;
     }
     setGameScore(0);
@@ -2513,9 +3376,15 @@ export default function App() {
         }, 1000);
       } else {
         let msg = "";
-        if (!isCodeCorrect && !isActionCorrect) msg = "Código y acción incorrectos";
-        else if (!isCodeCorrect) msg = "Código de cuenta incorrecto";
-        else msg = "La cuenta debe " + (currentScenario?.action === 'debit' ? "cargarse (Debe)" : "abonarse (Haber)");
+         if (!isCodeCorrect && !isActionCorrect) {
+          msg = language === 'en' ? "Incorrect code and action" : "Código y acción incorrectos";
+         } else if (!isCodeCorrect) {
+          msg = language === 'en' ? "Incorrect account code" : "Código de cuenta incorrecto";
+         } else {
+          msg = language === 'en' 
+            ? "The account must be " + (currentScenario?.action === 'debit' ? "debited (Debe)" : "credited (Haber)")
+            : "La cuenta debe " + (currentScenario?.action === 'debit' ? "cargarse (Debe)" : "abonarse (Haber)");
+         }
         
         setMissedQuestions(prev => [...prev, {
           question: currentQuestionText,
@@ -2542,7 +3411,11 @@ export default function App() {
           userAnswer: selectedSection || 'Sin respuesta',
           type: 'Sección del balance'
         }]);
-        handleWrongAnswer(`Incorrecto. La sección correcta es: ${correct}`);
+        const correctTranslated = SECTION_DISPLAY[correct] || correct;
+        handleWrongAnswer(language === 'en' 
+          ? `Incorrect. The correct section is: ${correctTranslated}` 
+          : `Incorrecto. La sección correcta es: ${correct}`
+        );
       }
     } else {
       const correct = getCorrectBalances(currentQuestion.code);
@@ -2564,7 +3437,11 @@ export default function App() {
           userAnswer: selectedBalances.length > 0 ? selectedBalances.join(', ') : 'Sin respuesta',
           type: 'Saldos posibles'
         }]);
-        handleWrongAnswer(`Incorrecto. Los saldos correctos son: ${correct.join(', ')}`);
+        const correctTranslated = correct.map(b => BALANCE_DISPLAY[b] || b).join(', ');
+        handleWrongAnswer(language === 'en' 
+          ? `Incorrect. The correct balances are: ${correctTranslated}` 
+          : `Incorrecto. Los saldos correctos son: ${correct.join(', ')}`
+        );
       }
     }
   };
@@ -2592,7 +3469,9 @@ export default function App() {
               >
                 <X className="w-6 h-6 text-zinc-600" />
               </button>
-              <h2 className="text-2xl font-black text-zinc-900 tracking-tight uppercase">Repasar Cuentas</h2>
+              <h2 className="text-2xl font-black text-zinc-900 tracking-tight uppercase">
+                {language === 'en' ? 'Review Accounts' : 'Repasar Cuentas'}
+              </h2>
             </div>
             {gameStatus === 'playing' && (
               <div className="flex items-center gap-6">
@@ -2645,23 +3524,27 @@ export default function App() {
               className="grid md:grid-cols-2 gap-8"
             >
               <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-zinc-100 space-y-6">
-                <h3 className="text-xl font-bold text-zinc-900">Selecciona Módulos</h3>
+                <h3 className="text-xl font-bold text-zinc-900">
+                  {language === 'en' ? 'Select Modules' : 'Selecciona Módulos'}
+                </h3>
                 <div className="space-y-3">
                   {/* Master Option: Contabilidad Financiera I */}
                   <label 
                     className={`flex items-center justify-between p-4 pl-2 rounded-2xl border-2 cursor-pointer transition-all ${
-                      gameSelectedModules.length === 4 
+                      gameSelectedModules.length === 5 
                         ? 'border-emerald-600 bg-emerald-100' 
                         : 'border-zinc-200 bg-zinc-50 hover:border-zinc-300'
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${
-                        gameSelectedModules.length === 4 ? 'bg-emerald-600 border-emerald-600' : 'border-zinc-300 bg-white'
+                        gameSelectedModules.length === 5 ? 'bg-emerald-600 border-emerald-600' : 'border-zinc-300 bg-white'
                       }`}>
-                        {gameSelectedModules.length === 4 && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        {gameSelectedModules.length === 5 && <CheckCircle2 className="w-4 h-4 text-white" />}
                       </div>
-                      <span className="font-black text-zinc-900 text-sm uppercase tracking-tight">Contabilidad Financiera I</span>
+                      <span className="font-black text-zinc-900 text-sm uppercase tracking-tight">
+                        {language === 'en' ? 'Financial Accounting I' : 'Contabilidad Financiera I'}
+                      </span>
                     </div>
                     <input 
                       type="checkbox" 
@@ -2691,7 +3574,9 @@ export default function App() {
                         }`}>
                           {gameSelectedModules.includes(m) && <CheckCircle2 className="w-4 h-4 text-white" />}
                         </div>
-                        <span className="font-bold text-zinc-700">Módulo {m}</span>
+                        <span className="font-bold text-zinc-700">
+                          {language === 'en' ? `Module ${m}` : `Módulo ${m}`}
+                        </span>
                       </div>
                       <input 
                         type="checkbox" 
@@ -2708,7 +3593,9 @@ export default function App() {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-xl font-bold text-zinc-900">Dificultad</h3>
+                  <h3 className="text-xl font-bold text-zinc-900">
+                    {language === 'en' ? 'Difficulty' : 'Dificultad'}
+                  </h3>
                   <div className="grid grid-cols-3 gap-3">
                     {(['facil', 'normal', 'extremo'] as const).map((d) => (
                       <button
@@ -2720,7 +3607,11 @@ export default function App() {
                             : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'
                         }`}
                       >
-                        {d === 'facil' ? 'Fácil (30s)' : d === 'normal' ? 'Normal (20s)' : 'Extremo (10s)'}
+                        {d === 'facil' 
+                          ? (language === 'en' ? 'Easy (30s)' : 'Fácil (30s)') 
+                          : d === 'normal' 
+                          ? (language === 'en' ? 'Normal (20s)' : 'Normal (20s)') 
+                          : (language === 'en' ? 'Extreme (10s)' : 'Extremo (10s)')}
                       </button>
                     ))}
                   </div>
@@ -2730,7 +3621,7 @@ export default function App() {
                   onClick={startGame}
                   className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-lg shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95"
                 >
-                  EMPEZAR JUEGO
+                  {language === 'en' ? 'START GAME' : 'EMPEZAR JUEGO'}
                 </button>
               </div>
 
@@ -2738,7 +3629,9 @@ export default function App() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <History className="w-5 h-5 text-zinc-400" />
-                    <h3 className="text-xl font-bold text-zinc-900">Últimas Puntuaciones</h3>
+                    <h3 className="text-xl font-bold text-zinc-900">
+                      {language === 'en' ? 'Latest Scores' : 'Últimas Puntuaciones'}
+                    </h3>
                   </div>
                   {gameHistory.length > 0 && (
                     <div className="flex items-center gap-2 bg-zinc-100 p-1 rounded-xl">
@@ -2751,7 +3644,7 @@ export default function App() {
                           gameSortCriteria === 'date' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
                         }`}
                       >
-                        Fecha {gameSortCriteria === 'date' && (gameSortDirection === 'asc' ? '↑' : '↓')}
+                        {language === 'en' ? 'Date' : 'Fecha'} {gameSortCriteria === 'date' && (gameSortDirection === 'asc' ? '↑' : '↓')}
                       </button>
                       <button 
                         onClick={() => {
@@ -2762,7 +3655,7 @@ export default function App() {
                           gameSortCriteria === 'score' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
                         }`}
                       >
-                        Puntos {gameSortCriteria === 'score' && (gameSortDirection === 'asc' ? '↑' : '↓')}
+                        {language === 'en' ? 'Points' : 'Puntos'} {gameSortCriteria === 'score' && (gameSortDirection === 'asc' ? '↑' : '↓')}
                       </button>
                     </div>
                   )}
@@ -2770,7 +3663,9 @@ export default function App() {
                 {gameHistory.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-zinc-400 space-y-2">
                     <Trophy className="w-12 h-12 opacity-20" />
-                    <p className="font-medium">Aún no hay partidas</p>
+                    <p className="font-medium">
+                      {language === 'en' ? 'No games played yet' : 'Aún no hay partidas'}
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -2809,14 +3704,16 @@ export default function App() {
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-2 group">
-                                  <span className="text-sm font-black text-zinc-900">{entry.name || 'Anónimo'}</span>
+                                  <span className="text-sm font-black text-zinc-900">
+                                    {entry.name || (language === 'en' ? 'Anonymous' : 'Anónimo')}
+                                  </span>
                                   <button 
                                     onClick={() => {
                                       setEditingHistoryIndex(originalIndex);
-                                      setEditingHistoryName(entry.name || 'Anónimo');
+                                      setEditingHistoryName(entry.name || (language === 'en' ? 'Anonymous' : 'Anónimo'));
                                     }}
                                     className="p-1 text-zinc-400 hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-all"
-                                    title="Editar nombre"
+                                    title={language === 'en' ? 'Edit name' : 'Editar nombre'}
                                   >
                                     <Settings className="w-3 h-3" />
                                   </button>
@@ -2825,7 +3722,9 @@ export default function App() {
                               )}
                             </div>
                             <span className="text-xs font-bold text-zinc-600">
-                              {entry.modules.length === 5 ? 'Contabilidad Financiera I' : `Módulos: ${entry.modules.join(', ')}`}
+                              {entry.modules.length === 5 
+                                ? (language === 'en' ? 'Financial Accounting I' : 'Contabilidad Financiera I') 
+                                : (language === 'en' ? `Modules: ${entry.modules.join(', ')}` : `Módulos: ${entry.modules.join(', ')}`)}
                             </span>
                           </div>
                           <span className="text-xl font-black text-emerald-600 shrink-0">{entry.score}</span>
@@ -2893,14 +3792,23 @@ export default function App() {
 
                 <div className="space-y-4">
                   <span className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em]">
-                    {gameQuestionType === 'code' ? '¿Cuál es el número de cuenta?' : 
-                     gameQuestionType === 'entry' ? 'Indica el número de cuenta y si se carga o abona' :
-                     gameQuestionType === 'section' ? '¿Dónde figura esta cuenta en el balance?' :
-                     '¿Qué saldos puede tener esta cuenta?'}
+                    {language === 'en' ? (
+                      gameQuestionType === 'code' ? 'What is the account number?' : 
+                      gameQuestionType === 'entry' ? 'Indicate the account number and whether it is debited or credited' :
+                      gameQuestionType === 'section' ? 'Where is this account placed in the balance sheet?' :
+                      'What balances can this account have?'
+                    ) : (
+                      gameQuestionType === 'code' ? '¿Cuál es el número de cuenta?' : 
+                      gameQuestionType === 'entry' ? 'Indica el número de cuenta y si se carga o abona' :
+                      gameQuestionType === 'section' ? '¿Dónde figura esta cuenta en el balance?' :
+                      '¿Qué saldos puede tener esta cuenta?'
+                    )}
                   </span>
                   <div className="flex flex-col items-center gap-2">
                     <h3 className="text-4xl font-black text-zinc-900 leading-tight">
-                      {gameQuestionType === 'balance' || gameQuestionType === 'section' ? `${currentQuestion.code} - ${currentQuestion.name}` : currentQuestionText}
+                      {gameQuestionType === 'balance' || gameQuestionType === 'section' 
+                        ? `${currentQuestion.code} - ${(language === 'en' ? (ACCOUNT_MAPPING_EN[currentQuestion.code] || currentQuestion.name) : currentQuestion.name)}`
+                        : (language === 'en' ? translateScenarioText(currentQuestionText, 'en') : currentQuestionText)}
                     </h3>
                   </div>
                 </div>
@@ -2908,13 +3816,13 @@ export default function App() {
                 <form onSubmit={handleGameAnswer} className="space-y-6">
                   {gameQuestionType === 'code' || gameQuestionType === 'entry' ? (
                     <div className="space-y-8">
-                      <div className="relative">
+                       <div className="relative">
                         <input 
                           autoFocus
                           type="text"
                           value={userAnswer}
                           onChange={(e) => setUserAnswer(e.target.value)}
-                          placeholder="Código de cuenta..."
+                          placeholder={language === 'en' ? "Account code..." : "Código de cuenta..."}
                           className={`w-full text-center text-5xl font-black p-8 rounded-[2rem] border-4 transition-all outline-none ${
                             lastAnswerCorrect === true ? 'border-emerald-500 bg-emerald-50 text-emerald-600' :
                             lastAnswerCorrect === false ? 'border-red-500 bg-red-50 text-red-600 animate-shake' :
@@ -2950,7 +3858,7 @@ export default function App() {
                                 : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'
                             }`}
                           >
-                            CARGA (DEBE)
+                            {language === 'en' ? 'DEBIT' : 'CARGA (DEBE)'}
                           </button>
                           <button
                             type="button"
@@ -2961,7 +3869,7 @@ export default function App() {
                                 : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'
                             }`}
                           >
-                            ABONA (HABER)
+                            {language === 'en' ? 'CREDIT' : 'ABONA (HABER)'}
                           </button>
                         </div>
                       )}
@@ -2985,7 +3893,7 @@ export default function App() {
                               : 'border-zinc-100 bg-zinc-50 text-zinc-500 hover:border-zinc-200'
                           }`}
                         >
-                          {section}
+                          {language === 'en' ? (SECTION_DISPLAY[section] || section) : section}
                           <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                             selectedSection === section ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-300'
                           }`}>
@@ -3015,7 +3923,7 @@ export default function App() {
                               : ''
                           }`}
                         >
-                          {balance}
+                          {language === 'en' ? (BALANCE_DISPLAY[balance] || balance) : balance}
                           <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${
                             selectedBalances.includes(balance) ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-300'
                           }`}>
@@ -3034,7 +3942,9 @@ export default function App() {
                     }
                     className="w-full py-5 bg-zinc-900 text-white rounded-[1.5rem] font-black text-xl shadow-xl hover:bg-black transition-all active:scale-95 disabled:opacity-50"
                   >
-                    {gameQuestionType === 'balance' || gameQuestionType === 'section' ? 'CONFIRMAR SELECCIÓN' : 'COMPROBAR'}
+                    {gameQuestionType === 'balance' || gameQuestionType === 'section' 
+                      ? (language === 'en' ? 'CONFIRM SELECTION' : 'CONFIRMAR SELECCIÓN') 
+                      : (language === 'en' ? 'CHECK' : 'COMPROBAR')}
                   </button>
                 </form>
               </div>
@@ -3043,9 +3953,9 @@ export default function App() {
 
           {gameStatus === 'gameover' && (
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className={`${isScoreSaved && missedQuestions.length > 0 ? 'max-w-xl' : 'max-w-md'} mx-auto w-full transition-all duration-500`}
+               initial={{ opacity: 0, scale: 0.9 }}
+               animate={{ opacity: 1, scale: 1 }}
+               className={`${isScoreSaved && missedQuestions.length > 0 ? 'max-w-xl' : 'max-w-md'} mx-auto w-full transition-all duration-500`}
             >
               <div className="bg-white p-12 rounded-[3rem] shadow-2xl border border-zinc-100 text-center space-y-8">
                 <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto">
@@ -3053,22 +3963,28 @@ export default function App() {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-4xl font-black text-zinc-900 uppercase tracking-tight">GAME OVER</h3>
-                  <p className="text-zinc-500 font-medium">¡Te has quedado sin vidas!</p>
+                  <p className="text-zinc-500 font-medium">
+                    {language === 'en' ? 'You have run out of lives!' : '¡Te has quedado sin vidas!'}
+                  </p>
                 </div>
                 <div className="p-6 bg-zinc-50 rounded-3xl border border-zinc-100">
-                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest block mb-1">Puntuación Final</span>
+                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest block mb-1">
+                    {language === 'en' ? 'Final Score' : 'Puntuación Final'}
+                  </span>
                   <span className="text-5xl font-black text-emerald-600">{gameScore}</span>
                 </div>
                 
                 {!isScoreSaved ? (
                   <div className="space-y-4">
                     <div className="text-left space-y-1.5">
-                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-4">Tu Nombre</label>
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-4">
+                        {language === 'en' ? 'Your Name' : 'Tu Nombre'}
+                      </label>
                       <input 
                         type="text"
                         value={playerName}
                         onChange={(e) => setPlayerName(e.target.value)}
-                        placeholder="Escribe tu nombre..."
+                        placeholder={language === 'en' ? "Write your name..." : "Escribe tu nombre..."}
                         className="w-full p-4 bg-zinc-50 border-2 border-zinc-100 rounded-2xl focus:border-emerald-500 outline-none font-bold text-zinc-700 transition-all"
                         autoFocus
                       />
@@ -3077,42 +3993,82 @@ export default function App() {
                       onClick={() => saveScore(gameScore, playerName)}
                       className="w-full py-5 bg-zinc-900 text-white rounded-[1.5rem] font-black text-xl shadow-xl hover:bg-black transition-all active:scale-95"
                     >
-                      GUARDAR PUNTUACIÓN
+                      {language === 'en' ? 'SAVE SCORE' : 'GUARDAR PUNTUACIÓN'}
                     </button>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center gap-2 text-emerald-700 font-bold">
                       <CheckCircle2 className="w-5 h-5" />
-                      ¡Puntuación guardada!
+                      {language === 'en' ? 'Score saved!' : '¡Puntuación guardada!'}
                     </div>
 
                     {missedQuestions.length > 0 && (
                       <div className="space-y-4 text-left">
                         <div className="flex items-center gap-2 px-2">
                           <AlertCircle className="w-4 h-4 text-red-500" />
-                          <h4 className="text-sm font-bold text-zinc-900 uppercase tracking-widest">Repaso de errores</h4>
+                          <h4 className="text-sm font-bold text-zinc-900 uppercase tracking-widest">
+                            {language === 'en' ? 'Review errors' : 'Repaso de errores'}
+                          </h4>
                         </div>
                         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-zinc-200">
-                          {missedQuestions.map((q, i) => (
-                            <div key={i} className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 space-y-2">
-                              <div className="flex justify-between items-start gap-2">
-                                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">{q.type}</span>
-                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">#{q.code}</span>
-                              </div>
-                              <p className="text-sm font-bold text-zinc-800 leading-tight">{q.question}</p>
-                              <div className="grid grid-cols-2 gap-2 pt-1">
-                                <div>
-                                  <span className="text-[9px] font-bold text-red-400 uppercase tracking-widest block">Tu respuesta</span>
-                                  <span className="text-xs font-medium text-red-600 line-clamp-2">{q.userAnswer}</span>
+                          {missedQuestions.map((q, i) => {
+                            const getLocalizedValue = (val: string) => {
+                              if (language !== 'en') return val;
+                              return val.split(', ').map(v => {
+                                const trimmed = v.trim();
+                                if (SECTION_DISPLAY[trimmed]) return SECTION_DISPLAY[trimmed];
+                                if (BALANCE_DISPLAY[trimmed]) return BALANCE_DISPLAY[trimmed];
+                                const match = trimmed.match(/^(\d+)\s*\((Debe|Haber|\?)\)$/i);
+                                if (match) {
+                                  const code = match[1];
+                                  const action = match[2];
+                                  const localizedAction = action === 'Debe' ? 'Debit' : action === 'Haber' ? 'Credit' : '?';
+                                  return `${code} (${localizedAction})`;
+                                }
+                                if (trimmed === 'Sin respuesta') return 'No answer';
+                                return trimmed;
+                              }).join(', ');
+                            };
+
+                            const localizedType = q.type === 'Código de cuenta' 
+                              ? (language === 'en' ? 'Account code' : 'Código de cuenta') 
+                              : q.type === 'Asiento contable' 
+                              ? (language === 'en' ? 'Accounting entry' : 'Asiento contable') 
+                              : q.type === 'Sección del balance' 
+                              ? (language === 'en' ? 'Balance section' : 'Sección del balance') 
+                              : (language === 'en' ? 'Possible balances' : 'Saldos posibles');
+
+                            const localizedQuestion = language === 'en' 
+                              ? (q.type === 'Sección del balance' || q.type === 'Saldos posibles'
+                                  ? `${q.code} - ${(ACCOUNT_MAPPING_EN[q.code] || q.question.split(' - ')[1])}`
+                                  : translateScenarioText(q.question, 'en'))
+                              : q.question;
+
+                            return (
+                              <div key={i} className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 space-y-2">
+                                <div className="flex justify-between items-start gap-2">
+                                  <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">{localizedType}</span>
+                                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">#{q.code}</span>
                                 </div>
-                                <div>
-                                  <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest block">Correcta</span>
-                                  <span className="text-xs font-bold text-emerald-700 line-clamp-2">{q.correctAnswer}</span>
+                                <p className="text-sm font-bold text-zinc-800 leading-tight">{localizedQuestion}</p>
+                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                  <div>
+                                    <span className="text-[9px] font-bold text-red-400 uppercase tracking-widest block">
+                                      {language === 'en' ? 'Your answer' : 'Tu respuesta'}
+                                    </span>
+                                    <span className="text-xs font-medium text-red-600 line-clamp-2">{getLocalizedValue(q.userAnswer)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest block">
+                                      {language === 'en' ? 'Correct' : 'Correcta'}
+                                    </span>
+                                    <span className="text-xs font-bold text-emerald-700 line-clamp-2">{getLocalizedValue(q.correctAnswer)}</span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -3121,7 +4077,7 @@ export default function App() {
                       onClick={() => setGameStatus('selection')}
                       className="w-full py-5 bg-emerald-600 text-white rounded-[1.5rem] font-black text-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95"
                     >
-                      VOLVER A INTENTAR
+                      {language === 'en' ? 'TRY AGAIN' : 'VOLVER A INTENTAR'}
                     </button>
                   </div>
                 )}
@@ -3134,8 +4090,21 @@ export default function App() {
   }
 
   if (currentView === 'home') {
+    const isEn = language === 'en';
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6 font-sans">
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-6 font-sans relative">
+        {/* Floating Language Switcher */}
+        <div className="absolute top-6 right-6">
+          <button 
+            onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+            className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-zinc-100 text-zinc-700 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md border border-zinc-200"
+            title={isEn ? "Cambiar a Español" : "Switch to English"}
+          >
+            <Globe className="w-4 h-4 text-emerald-600" />
+            <span>{isEn ? "Español" : "English"}</span>
+          </button>
+        </div>
+
         <div className="max-w-4xl w-full space-y-12">
           <div className="text-center space-y-4">
             <motion.div 
@@ -3143,7 +4112,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               className="inline-block px-4 py-1.5 bg-emerald-100 text-emerald-700 text-[11px] font-bold uppercase tracking-[0.2em] rounded-full mb-2"
             >
-              Plataforma de Aprendizaje
+              {isEn ? 'Learning Platform' : 'Plataforma de Aprendizaje'}
             </motion.div>
             <motion.h1 
               initial={{ opacity: 0, y: -20 }}
@@ -3151,7 +4120,11 @@ export default function App() {
               transition={{ delay: 0.1 }}
               className="text-5xl md:text-7xl font-black text-zinc-900 tracking-tight"
             >
-              Tutor de <span className="text-emerald-600">Contabilidad</span>
+              {isEn ? (
+                <>Accounting <span className="text-emerald-600">Tutor</span></>
+              ) : (
+                <>Tutor de <span className="text-emerald-600">Contabilidad</span></>
+              )}
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: -20 }}
@@ -3159,7 +4132,9 @@ export default function App() {
               transition={{ delay: 0.2 }}
               className="text-xl text-zinc-500 font-medium max-w-2xl mx-auto"
             >
-              Domina el ciclo contable con la herramienta interactiva diseñada para estudiantes y profesionales por Daniel Arnaiz Boluda.
+              {isEn 
+                ? 'Master the accounting cycle with the interactive tool designed for students and professionals by Daniel Arnaiz Boluda.'
+                : 'Domina el ciclo contable con la herramienta interactiva diseñada para estudiantes y profesionales por Daniel Arnaiz Boluda.'}
             </motion.p>
           </div>
 
@@ -3177,12 +4152,16 @@ export default function App() {
               <div className="w-20 h-20 bg-emerald-100 rounded-3xl flex items-center justify-center mb-8 group-hover:bg-emerald-600 transition-colors duration-300">
                 <Calculator className="w-10 h-10 text-emerald-600 group-hover:text-white" />
               </div>
-              <h3 className="text-3xl font-bold text-zinc-900 mb-4">Contabilizar</h3>
+              <h3 className="text-3xl font-bold text-zinc-900 mb-4">
+                {isEn ? 'Accounting' : 'Contabilizar'}
+              </h3>
               <p className="text-zinc-500 leading-relaxed text-lg">
-                Practica asientos contables, gestiona el libro diario y visualiza el balance de situación en tiempo real con ayuda de IA.
+                {isEn 
+                  ? 'Practice accounting entries, manage the journal ledger and inspect the Balance Sheet in real time with AI.'
+                  : 'Practica asientos contables, gestiona el libro diario y visualiza el balance de situación en tiempo real con ayuda de IA.'}
               </p>
               <div className="mt-10 flex items-center text-emerald-600 font-bold text-sm uppercase tracking-widest">
-                Empezar ahora <ChevronRight className="ml-2 w-5 h-5" />
+                {isEn ? 'Start now' : 'Empezar ahora'} <ChevronRight className="ml-2 w-5 h-5" />
               </div>
             </motion.button>
 
@@ -3200,14 +4179,18 @@ export default function App() {
                 <BookOpen className="w-10 h-10 text-zinc-400 group-hover:text-emerald-600 transition-colors" />
               </div>
               <div className="absolute top-10 right-10 px-4 py-1.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full">
-                Nuevo
+                {isEn ? 'New' : 'Nuevo'}
               </div>
-              <h3 className="text-3xl font-bold text-zinc-900 mb-4">Repasar cuentas</h3>
+              <h3 className="text-3xl font-bold text-zinc-900 mb-4">
+                {isEn ? 'Review accounts' : 'Repasar cuentas'}
+              </h3>
               <p className="text-zinc-500 leading-relaxed text-lg">
-                Aprende y memoriza el Plan General Contable con ejercicios interactivos de clasificación y definición de cuentas.
+                {isEn 
+                  ? 'Learn and memorize the General Chart of Accounts (PGC) with interactive templates, definitions and classification tasks.'
+                  : 'Aprende y memoriza el Plan General Contable con ejercicios interactivos de clasificación y definición de cuentas.'}
               </p>
               <div className="mt-10 flex items-center text-emerald-600 font-bold text-sm uppercase tracking-widest">
-                Jugar ahora <ChevronRight className="ml-2 w-5 h-5" />
+                {isEn ? 'Play now' : 'Jugar ahora'} <ChevronRight className="ml-2 w-5 h-5" />
               </div>
             </motion.button>
           </div>
@@ -3254,13 +4237,15 @@ export default function App() {
           <button 
             onClick={() => setCurrentView('home')}
             className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-colors group"
-            title="Volver al menú principal"
+            title={language === 'en' ? 'Back to main menu' : 'Volver al menú principal'}
           >
             <Calculator className="text-white w-6 h-6 group-hover:scale-110 transition-transform" />
           </button>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-zinc-900">ContaIA ─ Daniel Arnaiz Boluda</h1>
-            <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Balance Dinámico & Tutoría Socrática</p>
+            <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              {language === 'en' ? 'Dynamic Balance Sheet & Socratic Tutoring' : 'Balance Dinámico & Tutoría Socrática'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
@@ -3281,40 +4266,60 @@ export default function App() {
                     ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100' 
                     : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200'
                 }`}
-                title={showPizarraBalance ? "Ocultar Balance" : "Mostrar Balance"}
+                title={showPizarraBalance 
+                  ? (language === 'en' ? "Hide Balance Sheet" : "Ocultar Balance") 
+                  : (language === 'en' ? "Show Balance Sheet" : "Mostrar Balance")}
               >
                 <Layout className="w-4 h-4" />
-                <span className="hidden md:inline">Balance</span>
+                <span className="hidden md:inline">
+                  {language === 'en' ? 'Balance Sheet' : 'Balance'}
+                </span>
               </button>
             )}
             {isPizarraMode && !showChatAssistant && (
               <button 
                 onClick={() => setShowChatAssistant(true)}
                 className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl text-xs sm:text-sm font-bold transition-colors shadow-lg shadow-emerald-200"
-                title="Profesor IA de Contabilidad"
+                title={language === 'en' ? 'Accounting AI Professor' : 'Profesor IA de Contabilidad'}
               >
                 <HelpCircle className="w-4 h-4" />
-                <span className="hidden md:inline">Profesor IA</span>
+                <span className="hidden md:inline">
+                  {language === 'en' ? 'AI Professor' : 'Profesor IA'}
+                </span>
               </button>
             )}
             <button 
               onClick={() => setShowResetConfirm(true)}
               className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-xs sm:text-sm font-bold transition-colors border border-red-100"
-              title="Reiniciar sesión"
+              title={language === 'en' ? 'Reset session' : 'Reiniciar sesión'}
             >
               <RefreshCw className="w-4 h-4" />
-              <span className="hidden md:inline">Reiniciar</span>
+              <span className="hidden md:inline">
+                {language === 'en' ? 'Reset' : 'Reiniciar'}
+              </span>
             </button>
           </div>
 
           <div className="h-6 w-px bg-zinc-200 hidden sm:block" />
+
+          {/* Language toggle inside app header */}
+          <button 
+            onClick={() => setLanguage(language === 'es' ? 'en' : 'es')}
+            className="flex items-center gap-2 px-3 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-xs sm:text-sm font-bold transition-colors border border-zinc-200"
+            title={language === 'es' ? "Switch to English" : "Cambiar a Español"}
+          >
+            <Globe className="w-4 h-4 text-emerald-600" />
+            <span>{language === 'es' ? "EN" : "ES"}</span>
+          </button>
 
           <button 
             onClick={() => setIsCustomizing(true)}
             className="flex items-center gap-2 px-3 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-xs sm:text-sm font-bold transition-colors"
           >
             <Settings className="w-4 h-4" />
-            <span className="hidden md:inline">Personalizar</span>
+            <span className="hidden md:inline">
+              {language === 'en' ? 'Customize' : 'Personalizar'}
+            </span>
           </button>
           
         </div>
@@ -3401,13 +4406,13 @@ export default function App() {
                     <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <span className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
-                          <Calculator className="w-4 h-4 text-emerald-600" /> Balance actualizado
+                          <Calculator className="w-4 h-4 text-emerald-600" /> {language === 'en' ? 'Updated Balance Sheet' : 'Balance actualizado'}
                         </span>
                         <div className="flex items-center bg-zinc-100 rounded-lg px-1 py-0.5">
                           <button 
                             onClick={() => setBalanceFontScale(prev => Math.max(70, prev - 10))}
                             className="p-1 hover:bg-zinc-200 text-zinc-600 rounded transition-colors"
-                            title="Disminuir letra"
+                            title={language === 'en' ? 'Decrease font size' : 'Disminuir letra'}
                           >
                             <Minus className="w-3 h-3" />
                           </button>
@@ -3415,76 +4420,96 @@ export default function App() {
                           <button 
                             onClick={() => setBalanceFontScale(prev => Math.min(200, prev + 10))}
                             className="p-1 hover:bg-zinc-200 text-zinc-600 rounded transition-colors"
-                            title="Aumentar letra"
+                            title={language === 'en' ? 'Increase font size' : 'Aumentar letra'}
                           >
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
                       </div>
                       <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                        {Math.abs(totalAssets - totalLiabilities) < 0.01 ? 'Cuadrado' : 'Descuadrado'}
+                        {Math.abs(totalAssets - totalLiabilities) < 0.01 
+                          ? (language === 'en' ? 'Balanced' : 'Cuadrado') 
+                          : (language === 'en' ? 'Unbalanced' : 'Descuadrado')}
                       </div>
                     </div>
                     <div className="p-6 pizarra-balance-container">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Assets side */}
                         <div className="space-y-4">
-                          <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Activo</h3>
+                          <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">
+                            {language === 'en' ? 'Assets' : 'Activo'}
+                          </h3>
                           <div className="space-y-4">
                             <div className="space-y-1">
-                              <h4 id="section-assets-noncurrent-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">No Corriente</h4>
+                              <h4 id="section-assets-noncurrent-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">
+                                {language === 'en' ? 'Non-Current' : 'No Corriente'}
+                              </h4>
                               <div className="space-y-0.5">
                                 {[...currentBalance.assets.nonCurrent].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                                  <BalanceRow key={item.name} item={item} />
+                                  <BalanceRow key={item.name} item={item} language={language} />
                                 ))}
                               </div>
                             </div>
                             <div className="space-y-1">
-                              <h4 id="section-assets-current-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Corriente</h4>
+                              <h4 id="section-assets-current-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">
+                                {language === 'en' ? 'Current' : 'Corriente'}
+                              </h4>
                               <div className="space-y-0.5">
                                 {[...currentBalance.assets.current].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                                  <BalanceRow key={item.name} item={item} />
+                                  <BalanceRow key={item.name} item={item} language={language} />
                                 ))}
                               </div>
                             </div>
                           </div>
                           <div className="pt-2 border-t border-zinc-200 flex justify-between items-center">
-                            <span className="text-[11px] font-bold text-zinc-500 uppercase">Total Activo</span>
+                            <span className="text-[11px] font-bold text-zinc-500 uppercase">
+                              {language === 'en' ? 'Total Assets' : 'Total Activo'}
+                            </span>
                             <span className="text-lg font-black text-emerald-600"><AnimatedNumber value={totalAssets} /></span>
                           </div>
                         </div>
 
                         {/* Liabilities & Equity side */}
                         <div className="space-y-4">
-                          <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">Patrimonio Neto + Pasivo</h3>
+                          <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 pb-1">
+                            {language === 'en' ? 'Equity + Liabilities' : 'Patrimonio Neto + Pasivo'}
+                          </h3>
                           <div className="space-y-4">
                             <div className="space-y-1">
-                              <h4 id="section-equity-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Patrimonio Neto</h4>
+                              <h4 id="section-equity-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">
+                                {language === 'en' ? 'Equity' : 'Patrimonio Neto'}
+                              </h4>
                               <div className="space-y-0.5">
                                 {[...currentBalance.liabilitiesAndEquity.equity].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                                  <BalanceRow key={item.name} item={item} />
+                                  <BalanceRow key={item.name} item={item} language={language} />
                                 ))}
                               </div>
                             </div>
                             <div className="space-y-1">
-                              <h4 id="section-liabilities-noncurrent-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Pasivo No Corriente</h4>
+                              <h4 id="section-liabilities-noncurrent-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">
+                                {language === 'en' ? 'Non-Current Liabilities' : 'Pasivo No Corriente'}
+                              </h4>
                               <div className="space-y-0.5">
                                 {[...currentBalance.liabilitiesAndEquity.nonCurrent].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                                  <BalanceRow key={item.name} item={item} />
+                                  <BalanceRow key={item.name} item={item} language={language} />
                                 ))}
                               </div>
                             </div>
                             <div className="space-y-1">
-                              <h4 id="section-liabilities-current-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">Pasivo Corriente</h4>
+                              <h4 id="section-liabilities-current-pizarra" className="text-[10px] font-bold text-zinc-400 uppercase">
+                                {language === 'en' ? 'Current Liabilities' : 'Pasivo Corriente'}
+                              </h4>
                               <div className="space-y-0.5">
                                 {[...currentBalance.liabilitiesAndEquity.current].sort((a, b) => (a.code || '').localeCompare(b.code || '')).map((item) => (
-                                  <BalanceRow key={item.name} item={item} />
+                                  <BalanceRow key={item.name} item={item} language={language} />
                                 ))}
                               </div>
                             </div>
                           </div>
                           <div className="pt-2 border-t border-zinc-200 flex justify-between items-center">
-                            <span className="text-[11px] font-bold text-zinc-500 uppercase">Total PN + P</span>
+                            <span className="text-[11px] font-bold text-zinc-500 uppercase">
+                              {language === 'en' ? 'Total E + L' : 'Total PN + P'}
+                            </span>
                             <span className="text-lg font-black text-emerald-600"><AnimatedNumber value={totalLiabilities} /></span>
                           </div>
                         </div>
@@ -3513,13 +4538,13 @@ export default function App() {
                   <div className="p-4 border-b border-zinc-800 bg-zinc-800/50 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <span className="text-lg font-bold text-zinc-100 flex items-center gap-3">
-                        <BookOpen className="w-5 h-5 text-emerald-500" /> Libro Diario
+                        <BookOpen className="w-5 h-5 text-emerald-500" /> {language === 'en' ? 'Journal Book' : 'Libro Diario'}
                       </span>
                       <div className="flex items-center bg-zinc-800 rounded-lg px-1 py-0.5 border border-zinc-700">
                         <button 
                           onClick={() => setJournalFontScale(prev => Math.max(70, prev - 10))}
                           className="p-1 hover:bg-zinc-700 text-zinc-400 rounded transition-colors"
-                          title="Disminuir letra"
+                          title={language === 'en' ? "Decrease font size" : "Disminuir letra"}
                         >
                           <Minus className="w-3 h-3" />
                         </button>
@@ -3527,7 +4552,7 @@ export default function App() {
                         <button 
                           onClick={() => setJournalFontScale(prev => Math.min(200, prev + 10))}
                           className="p-1 hover:bg-zinc-700 text-zinc-400 rounded transition-colors"
-                          title="Aumentar letra"
+                          title={language === 'en' ? "Increase font size" : "Aumentar letra"}
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -3537,7 +4562,7 @@ export default function App() {
                         <button 
                           onClick={() => setIsJournalFullscreen(true)}
                           className="p-2 hover:bg-zinc-700 rounded-lg transition-colors text-zinc-400"
-                          title="Pantalla Completa"
+                          title={language === 'en' ? "Fullscreen" : "Pantalla Completa"}
                         >
                           <Maximize2 className="w-4 h-4" />
                         </button>
@@ -3545,13 +4570,13 @@ export default function App() {
                           onClick={clearDraft}
                           className="text-[13px] font-bold uppercase text-zinc-500 hover:text-zinc-300 transition-colors"
                         >
-                          Limpiar Borrador
+                          {language === 'en' ? 'Clear Draft' : 'Limpiar Borrador'}
                         </button>
                         <button 
                           onClick={() => setCurrentJournal([])}
                           className="text-[13px] font-bold uppercase text-red-500 hover:text-red-400 transition-colors"
                         >
-                          Borrar Diario
+                          {language === 'en' ? 'Clear Journal' : 'Borrar Diario'}
                         </button>
                       </div>
                     </div>
@@ -3561,10 +4586,12 @@ export default function App() {
                     <div className="space-y-4">
                       <div className="flex items-center gap-4 px-2">
                         <div className="flex flex-col gap-1">
-                          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Fecha del Asiento</label>
+                          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                            {language === 'en' ? 'Entry Date' : 'Fecha del Asiento'}
+                          </label>
                           <input 
                             type="text"
-                            placeholder="dd/mm/aa"
+                            placeholder={language === 'en' ? "dd/mm/yy" : "dd/mm/aa"}
                             value={draftDate}
                             onChange={(e) => setDraftDate(e.target.value)}
                             className="bg-zinc-800 border-zinc-700 text-zinc-200 text-[14px] rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-emerald-500 w-32"
@@ -3573,10 +4600,18 @@ export default function App() {
                       </div>
 
                       <div className="grid grid-cols-12 gap-3 text-[12px] font-bold text-zinc-500 uppercase tracking-widest px-2">
-                        <div className="col-span-2">Nº Cuenta</div>
-                        <div className="col-span-4">Concepto</div>
-                        <div className="col-span-2 text-right">Debe</div>
-                        <div className="col-span-2 text-right">Haber</div>
+                        <div className="col-span-2">
+                          {language === 'en' ? 'Account No.' : 'Nº Cuenta'}
+                        </div>
+                        <div className="col-span-4">
+                          {language === 'en' ? 'Concept' : 'Concepto'}
+                        </div>
+                        <div className="col-span-2 text-right">
+                          {language === 'en' ? 'Debit' : 'Debe'}
+                        </div>
+                        <div className="col-span-2 text-right">
+                          {language === 'en' ? 'Credit' : 'Haber'}
+                        </div>
                         <div className="col-span-2"></div>
                       </div>
                       
@@ -3586,7 +4621,7 @@ export default function App() {
                             <div className="col-span-2">
                               <input 
                                 type="text"
-                                placeholder="Código"
+                                placeholder={language === 'en' ? "Code" : "Código"}
                                 value={row.code}
                                 onChange={(e) => updateDraft(idx, 'code', e.target.value)}
                                 className="w-full bg-zinc-800 border-zinc-700 text-zinc-200 text-[14px] rounded-lg px-2 py-2 outline-none focus:ring-1 focus:ring-emerald-500"
@@ -3595,7 +4630,7 @@ export default function App() {
                             <div className="col-span-4">
                               <input 
                                 type="text"
-                                placeholder="Cuenta"
+                                placeholder={language === 'en' ? "Account" : "Cuenta"}
                                 value={row.account}
                                 onChange={(e) => updateDraft(idx, 'account', e.target.value)}
                                 className="w-full bg-zinc-800 border-zinc-700 text-zinc-200 text-[14px] rounded-lg px-2 py-2 outline-none focus:ring-1 focus:ring-emerald-500"
@@ -3628,7 +4663,9 @@ export default function App() {
                                     ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30' 
                                     : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600 border border-zinc-600'
                                 } disabled:opacity-30 flex items-center justify-center`}
-                                title={row.reflected ? 'Reflejado' : 'Reflejar'}
+                                title={row.reflected 
+                                  ? (language === 'en' ? 'Reflected' : 'Reflejado') 
+                                  : (language === 'en' ? 'Reflect' : 'Reflejar')}
                               >
                                 <RefreshCw className={`w-3 h-3 ${row.reflected ? 'animate-pulse' : ''}`} />
                               </button>
@@ -3638,19 +4675,9 @@ export default function App() {
                                   className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors"
                                 >
                                   <Trash2 className="w-3 h-3" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="flex justify-between items-center pt-4">
-                        <button 
-                          onClick={addDraftRow}
-                          className="flex items-center gap-2 text-xs font-bold text-emerald-500 hover:text-emerald-400 transition-colors"
+                                        </button>)}</div></div>))}</div><div className="flex justify-between items-center pt-4"><button onClick={addDraftRow} className="flex items-center gap-2 text-xs font-bold text-emerald-500 hover:text-emerald-400 transition-colors"
                         >
-                          <Plus className="w-4 h-4" /> Añadir línea
+                          <Plus className="w-4 h-4" /> {language === 'en' ? 'Add line' : 'Añadir línea'}
                         </button>
                         
                         <div className="flex items-center gap-6">
@@ -3662,7 +4689,7 @@ export default function App() {
                             onClick={applyManualEntry}
                             className="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-900/20 hover:bg-emerald-500 transition-all"
                           >
-                            Contabilizar Asiento
+                            {language === 'en' ? 'Post Entry' : 'Contabilizar Asiento'}
                           </button>
                         </div>
                       </div>
@@ -3670,33 +4697,44 @@ export default function App() {
 
                     {/* Historical Journal */}
                     <div className="pt-8 border-t border-zinc-800 space-y-4">
-                      <h4 className="text-[13px] font-bold text-zinc-500 uppercase tracking-widest">Asientos Realizados</h4>
+                      <h4 className="text-[13px] font-bold text-zinc-500 uppercase tracking-widest">
+                        {language === 'en' ? 'Registered Entries' : 'Asientos Realizados'}
+                      </h4>
                       <div className="space-y-4 font-mono">
                         {currentJournal.map((asiento, aIdx) => (
                           <div key={aIdx} className={aIdx > 0 ? "border-t border-zinc-800 pt-4" : ""}>
                             <div className="mb-2 px-2 flex flex-col">
-                              <span className="text-[11px] text-zinc-500">Asiento #{aIdx + 1}</span>
+                              <span className="text-[11px] text-zinc-500">
+                                {language === 'en' ? `Entry #${aIdx + 1}` : `Asiento #${aIdx + 1}`}
+                              </span>
                               <span className="text-[11px] font-bold text-emerald-500/80">{asiento[0]?.date || 'xx/xx/xx'}</span>
                             </div>
-                            {asiento.map((row, idx) => (
-                              <div key={idx} className="grid grid-cols-12 gap-4 text-[14px] py-1 px-2 hover:bg-zinc-800/50 rounded transition-colors">
-                                <div className={`col-span-6 ${row.haber > 0 ? 'pl-4 text-zinc-400' : 'text-emerald-400 font-bold'}`}>
-                                  {row.haber > 0 ? 'a ' : ''}
-                                  {row.code && <span className="text-[12px] opacity-80 mr-4 font-black text-emerald-500">{row.code}</span>}
-                                  {row.account}
+                            {asiento.map((row, idx) => {
+                              const displayName = row.code 
+                                ? (language === 'en' ? (ACCOUNT_MAPPING_EN[row.code] || row.account) : (ACCOUNT_MAPPING[row.code] || row.account)) 
+                                : row.account;
+                              return (
+                                <div key={idx} className="grid grid-cols-12 gap-4 text-[14px] py-1 px-2 hover:bg-zinc-800/50 rounded transition-colors">
+                                  <div className={`col-span-6 ${row.haber > 0 ? 'pl-4 text-zinc-400' : 'text-emerald-400 font-bold'}`}>
+                                    {row.haber > 0 ? (language === 'en' ? 'to ' : 'a ') : ''}
+                                    {row.code && <span className="text-[12px] opacity-80 mr-4 font-black text-emerald-500">{row.code}</span>}
+                                    {displayName}
+                                  </div>
+                                  <div className="col-span-3 text-right text-zinc-300">
+                                    {row.debe > 0 ? formatCurrency(row.debe) : '-'}
+                                  </div>
+                                  <div className="col-span-3 text-right text-zinc-300">
+                                    {row.haber > 0 ? formatCurrency(row.haber) : '-'}
+                                  </div>
                                 </div>
-                                <div className="col-span-3 text-right text-zinc-300">
-                                  {row.debe > 0 ? formatCurrency(row.debe) : '-'}
-                                </div>
-                                <div className="col-span-3 text-right text-zinc-300">
-                                  {row.haber > 0 ? formatCurrency(row.haber) : '-'}
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         ))}
                         {currentJournal.length === 0 && (
-                          <p className="text-[13px] text-zinc-600 italic text-center py-4">No hay asientos registrados aún</p>
+                          <p className="text-[13px] text-zinc-600 italic text-center py-4">
+                            {language === 'en' ? 'No entries registered yet' : 'No hay asientos registrados aún'}
+                          </p>
                         )}
                       </div>
 
@@ -3705,10 +4743,12 @@ export default function App() {
                         <button 
                           onClick={() => setIsDigitalWhiteboardOpen(true)}
                           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all shadow-lg shadow-emerald-900/20 group"
-                          title="Activar Pizarra Digital"
+                          title={language === 'en' ? 'Activate Digital Whiteboard' : 'Activar Pizarra Digital'}
                         >
                           <Monitor className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                          <span className="text-sm font-bold uppercase tracking-wider">Pizarra Digital</span>
+                          <span className="text-sm font-bold uppercase tracking-wider">
+                            {language === 'en' ? 'Digital Whiteboard' : 'Pizarra Digital'}
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -3734,8 +4774,12 @@ export default function App() {
                   <BookOpen className="text-white w-7 h-7" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Libro Diario ─ Vista Completa</h2>
-                  <p className="text-sm text-zinc-500 uppercase tracking-widest">Historial de Asientos y Registro</p>
+                  <h2 className="text-2xl font-bold text-white">
+                    {language === 'en' ? 'Journal Book ─ Full View' : 'Libro Diario ─ Vista Completa'}
+                  </h2>
+                  <p className="text-sm text-zinc-500 uppercase tracking-widest">
+                    {language === 'en' ? 'Entry History & Recording' : 'Historial de Asientos y Registro'}
+                  </p>
                 </div>
               </div>
               <button 
@@ -3751,9 +4795,15 @@ export default function App() {
                 <div className="w-full space-y-8">
                   {/* Header for columns */}
                   <div className="grid grid-cols-12 gap-6 text-sm font-bold text-zinc-500 uppercase tracking-widest px-4 border-b border-zinc-800 pb-4">
-                    <div className="col-span-6">Cuenta / Concepto</div>
-                    <div className="col-span-3 text-right">Debe</div>
-                    <div className="col-span-3 text-right">Haber</div>
+                    <div className="col-span-6">
+                      {language === 'en' ? 'Account / Concept' : 'Cuenta / Concepto'}
+                    </div>
+                    <div className="col-span-3 text-right">
+                      {language === 'en' ? 'Debit' : 'Debe'}
+                    </div>
+                    <div className="col-span-3 text-right">
+                      {language === 'en' ? 'Credit' : 'Haber'}
+                    </div>
                   </div>
 
                   {/* Entries */}
@@ -3761,29 +4811,38 @@ export default function App() {
                     {currentJournal.map((asiento, aIdx) => (
                       <div key={aIdx} className={aIdx > 0 ? "border-t border-white pt-8" : ""}>
                         <div className="mb-4 flex items-center gap-3">
-                          <span className="bg-zinc-800 text-zinc-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Asiento #{aIdx + 1}</span>
+                          <span className="bg-zinc-800 text-zinc-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase">
+                            {language === 'en' ? `Entry #${aIdx + 1}` : `Asiento #${aIdx + 1}`}
+                          </span>
                         </div>
-                        {asiento.map((row, idx) => (
-                          <div key={idx} className="grid grid-cols-12 gap-6 text-[18px] py-2 px-4 hover:bg-zinc-800/50 rounded-xl transition-colors">
-                            <div className={`col-span-6 ${row.haber > 0 ? 'pl-8 text-zinc-400' : 'text-emerald-400 font-bold'}`}>
-                              {row.haber > 0 ? 'a ' : ''}
-                              {row.code && <span className="text-[12px] opacity-50 mr-2">{row.code}</span>}
-                              {row.account}
+                        {asiento.map((row, idx) => {
+                          const displayName = row.code 
+                            ? (language === 'en' ? (ACCOUNT_MAPPING_EN[row.code] || row.account) : (ACCOUNT_MAPPING[row.code] || row.account)) 
+                            : row.account;
+                          return (
+                            <div key={idx} className="grid grid-cols-12 gap-6 text-[18px] py-2 px-4 hover:bg-zinc-800/50 rounded-xl transition-colors">
+                              <div className={`col-span-6 ${row.haber > 0 ? 'pl-8 text-zinc-400' : 'text-emerald-400 font-bold'}`}>
+                                {row.haber > 0 ? (language === 'en' ? 'to ' : 'a ') : ''}
+                                {row.code && <span className="text-[12px] opacity-50 mr-2">{row.code}</span>}
+                                {displayName}
+                              </div>
+                              <div className="col-span-3 text-right text-zinc-200">
+                                {row.debe > 0 ? formatCurrency(row.debe) : '-'}
+                              </div>
+                              <div className="col-span-3 text-right text-zinc-200">
+                                {row.haber > 0 ? formatCurrency(row.haber) : '-'}
+                              </div>
                             </div>
-                            <div className="col-span-3 text-right text-zinc-200">
-                              {row.debe > 0 ? formatCurrency(row.debe) : '-'}
-                            </div>
-                            <div className="col-span-3 text-right text-zinc-200">
-                              {row.haber > 0 ? formatCurrency(row.haber) : '-'}
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ))}
                     {currentJournal.length === 0 && (
                       <div className="flex flex-col items-center justify-center py-20 text-zinc-600 italic">
                         <BookOpen className="w-16 h-16 mb-4 opacity-20" />
-                        <p className="text-xl">No hay asientos registrados aún</p>
+                        <p className="text-xl">
+                          {language === 'en' ? 'No entries registered yet' : 'No hay asientos registrados aún'}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -3830,6 +4889,7 @@ export default function App() {
               currentPageIndex={whiteboardCurrentPageIndex}
               setCurrentPageIndex={setWhiteboardCurrentPageIndex}
               formatCurrency={formatCurrency}
+              language={language}
             />
           </motion.div>
         )}
@@ -3837,7 +4897,7 @@ export default function App() {
 
       <AnimatePresence>
         {isPizarraMode && showChatAssistant && (
-          <ChatAssistant onClose={() => setShowChatAssistant(false)} />
+          <ChatAssistant onClose={() => setShowChatAssistant(false)} language={language} />
         )}
       </AnimatePresence>
 

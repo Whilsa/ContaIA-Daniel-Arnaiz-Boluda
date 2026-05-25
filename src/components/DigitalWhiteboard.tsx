@@ -49,6 +49,7 @@ interface WhiteboardProps {
   currentPageIndex: number;
   setCurrentPageIndex: (index: number) => void;
   formatCurrency: (value: number) => string;
+  language?: 'es' | 'en';
 }
 
 interface Shape {
@@ -79,8 +80,10 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
   setPages, 
   currentPageIndex, 
   setCurrentPageIndex,
-  formatCurrency
+  formatCurrency,
+  language = 'es'
 }) => {
+  const isEn = language === 'en';
   const [tool, setTool] = useState<'select' | 'hand' | 'pen' | 'eraser' | 't-account' | 'journal-entry' | 'line' | 'text'>('pen');
   const [color, setColor] = useState('#10b981'); // Emerald-500
   const [strokeWidth, setStrokeWidth] = useState(3);
@@ -759,21 +762,24 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
         const container = containerRef.current;
         if (container) {
           // Capture the entire container exactly as displayed using html2canvas
-          // We use a high scale (3) to ensure superior resolution
+          // We use a high scale to ensure superior resolution and prevent clippings
           const canvas = await html2canvas(container, {
-            scale: 3,
+            scale: Math.max(window.devicePixelRatio || 2, 2),
             backgroundColor: currentTheme.bg,
             useCORS: true,
+            allowTaint: true,
             logging: false,
-            width: container.offsetWidth,
-            height: container.offsetHeight,
+            width: container.clientWidth,
+            height: container.clientHeight,
             scrollX: 0,
-            scrollY: 0
+            scrollY: 0,
+            windowWidth: container.clientWidth,
+            windowHeight: container.clientHeight
           });
 
           const dataURL = canvas.toDataURL('image/jpeg', 0.95);
           const link = document.createElement('a');
-          link.download = `pizarra-pagina-${i + 1}.jpg`;
+          link.download = isEn ? `whiteboard-page-${i + 1}.jpg` : `pizarra-pagina-${i + 1}.jpg`;
           link.href = dataURL;
           document.body.appendChild(link);
           link.click();
@@ -783,7 +789,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
       }
     } catch (error) {
       console.error("Export error:", error);
-      alert("Hubo un error al exportar. Por favor, intenta de nuevo.");
+      alert(isEn ? "There was an error during the export. Please try again." : "Hubo un error al exportar. Por favor, intenta de nuevo.");
     } finally {
       setCurrentPageIndex(originalPageIndex);
       setIsExporting(false);
@@ -812,21 +818,21 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
           <button 
             onClick={onClose}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all shadow-lg shadow-emerald-900/20 mr-2 group"
-            title="Volver a Contabilizar"
+            title={isEn ? "Back to accounting" : "Volver a Contabilizar"}
           >
             <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-black uppercase tracking-widest">Contabilizar</span>
+            <span className="text-xs font-black uppercase tracking-widest">{isEn ? "Accounting" : "Contabilizar"}</span>
           </button>
 
           <div className="flex bg-zinc-800 p-1 rounded-xl border border-zinc-700 mr-4">
-            <ToolButton active={tool === 'select'} onClick={() => setTool('select')} icon={<MousePointer2 className="w-4 h-4" />} title="Seleccionar" />
-            <ToolButton active={tool === 'hand'} onClick={() => setTool('hand')} icon={<Hand className="w-4 h-4" />} title="Mano (Desplazar)" />
-            <ToolButton active={tool === 'pen'} onClick={() => setTool('pen')} icon={<Pencil className="w-4 h-4" />} title="Lápiz" />
-            <ToolButton active={tool === 'eraser'} onClick={() => setTool('eraser')} icon={<Eraser className="w-4 h-4" />} title="Borrador" />
-            <ToolButton active={tool === 't-account'} onClick={() => setTool('t-account')} icon={<Columns2 className="w-4 h-4" />} title="Libro Mayor" />
-            <ToolButton active={tool === 'journal-entry'} onClick={() => setTool('journal-entry')} icon={<BookOpen className="w-4 h-4" />} title="Asiento" />
-            <ToolButton active={tool === 'line'} onClick={() => setTool('line')} icon={<Minus className="w-4 h-4" />} title="Línea" />
-            <ToolButton active={tool === 'text'} onClick={() => setTool('text')} icon={<Type className="w-4 h-4" />} title="Texto" />
+            <ToolButton active={tool === 'select'} onClick={() => setTool('select')} icon={<MousePointer2 className="w-4 h-4" />} title={isEn ? "Select" : "Seleccionar"} />
+            <ToolButton active={tool === 'hand'} onClick={() => setTool('hand')} icon={<Hand className="w-4 h-4" />} title={isEn ? "Hand (Pan)" : "Mano (Desplazar)"} />
+            <ToolButton active={tool === 'pen'} onClick={() => setTool('pen')} icon={<Pencil className="w-4 h-4" />} title={isEn ? "Pen" : "Lápiz"} />
+            <ToolButton active={tool === 'eraser'} onClick={() => setTool('eraser')} icon={<Eraser className="w-4 h-4" />} title={isEn ? "Eraser" : "Borrador"} />
+            <ToolButton active={tool === 't-account'} onClick={() => setTool('t-account')} icon={<Columns2 className="w-4 h-4" />} title={isEn ? "T-Account (Ledger)" : "Libro Mayor"} />
+            <ToolButton active={tool === 'journal-entry'} onClick={() => setTool('journal-entry')} icon={<BookOpen className="w-4 h-4" />} title={isEn ? "Journal Entry" : "Asiento"} />
+            <ToolButton active={tool === 'line'} onClick={() => setTool('line')} icon={<Minus className="w-4 h-4" />} title={isEn ? "Line" : "Línea"} />
+            <ToolButton active={tool === 'text'} onClick={() => setTool('text')} icon={<Type className="w-4 h-4" />} title={isEn ? "Text" : "Texto"} />
           </div>
 
           {tool === 'select' && selectedIds.length > 0 && (
@@ -837,7 +843,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                   setClipboard(toCopy);
                 }}
                 className="p-2 text-zinc-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-all"
-                title="Copiar (Ctrl+C)"
+                title={isEn ? "Copy (Ctrl+C)" : "Copiar (Ctrl+C)"}
               >
                 <Copy className="w-4 h-4" />
               </button>
@@ -848,7 +854,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                   setSelectedIds([]);
                 }}
                 className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                title="Eliminar (Supr)"
+                title={isEn ? "Delete (Del)" : "Eliminar (Supr)"}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -870,7 +876,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
           </div>
 
           <div className="flex items-center gap-2 bg-zinc-800 p-1 rounded-xl border border-zinc-700 px-3 ml-2">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase">Grosor</span>
+            <span className="text-[10px] font-bold text-zinc-500 uppercase">{isEn ? "Size" : "Grosor"}</span>
             <input 
               type="range" 
               min="1" 
@@ -882,13 +888,13 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
           </div>
 
           <div className="flex items-center gap-1 bg-zinc-800 p-1 rounded-xl border border-zinc-700 ml-4">
-            <button onClick={handleZoomOut} className="p-1.5 text-zinc-400 hover:text-white transition-colors" title="Alejar">
+            <button onClick={handleZoomOut} className="p-1.5 text-zinc-400 hover:text-white transition-colors" title={isEn ? "Zoom Out" : "Alejar"}>
               <ZoomOut className="w-4 h-4" />
             </button>
             <button onClick={resetZoom} className="text-[10px] font-bold text-zinc-300 min-w-[3rem] text-center hover:text-emerald-500 transition-colors">
               {Math.round(scale * 100)}%
             </button>
-            <button onClick={handleZoomIn} className="p-1.5 text-zinc-400 hover:text-white transition-colors" title="Acercar">
+            <button onClick={handleZoomIn} className="p-1.5 text-zinc-400 hover:text-white transition-colors" title={isEn ? "Zoom In" : "Acercar"}>
               <ZoomIn className="w-4 h-4" />
             </button>
           </div>
@@ -897,7 +903,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
             <button 
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
               className={`p-1.5 rounded-lg transition-all ${theme === 'light' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-white'}`}
-              title="Cambiar tema"
+              title={isEn ? "Change Theme" : "Cambiar tema"}
             >
               <Palette className="w-4 h-4" />
             </button>
@@ -909,7 +915,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
               onClick={prevPage}
               disabled={currentPageIndex === 0}
               className="p-1.5 text-zinc-400 hover:text-white disabled:opacity-20 transition-colors"
-              title="Página anterior"
+              title={isEn ? "Previous Page" : "Página anterior"}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -919,7 +925,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
             <button 
               onClick={nextPage}
               className="p-1.5 text-zinc-400 hover:text-white transition-colors"
-              title={currentPageIndex < pages.length - 1 ? "Página siguiente" : "Añadir página"}
+              title={currentPageIndex < pages.length - 1 ? (isEn ? "Next Page" : "Página siguiente") : (isEn ? "Add Page" : "Añadir página")}
             >
               {currentPageIndex < pages.length - 1 ? <ChevronRight className="w-5 h-5" /> : <PlusCircle className="w-5 h-5 text-emerald-500" />}
             </button>
@@ -932,7 +938,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
               onClick={undo}
               disabled={historyStep <= 0}
               className="p-1.5 text-zinc-400 hover:text-white disabled:opacity-20 transition-colors"
-              title="Deshacer (Ctrl+Z)"
+              title={isEn ? "Undo (Ctrl+Z)" : "Deshacer (Ctrl+Z)"}
             >
               <Undo2 className="w-5 h-5" />
             </button>
@@ -940,7 +946,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
               onClick={redo}
               disabled={historyStep >= history.length - 1}
               className="p-1.5 text-zinc-400 hover:text-white disabled:opacity-20 transition-colors"
-              title="Rehacer (Ctrl+Y)"
+              title={isEn ? "Redo (Ctrl+Y)" : "Rehacer (Ctrl+Y)"}
             >
               <Redo2 className="w-5 h-5" />
             </button>
@@ -950,7 +956,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
             className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-red-900/30 text-zinc-400 hover:text-red-400 rounded-xl transition-all border border-zinc-700"
           >
             <Trash2 className="w-4 h-4" />
-            <span className="text-sm font-bold">Limpiar</span>
+            <span className="text-sm font-bold">{isEn ? "Clear" : "Limpiar"}</span>
           </button>
           <button 
             onClick={exportAllPages}
@@ -958,7 +964,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all shadow-lg ${isExporting ? 'bg-zinc-700 text-zinc-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/20'}`}
           >
             <Download className={`w-4 h-4 ${isExporting ? 'animate-bounce' : ''}`} />
-            <span className="text-sm font-bold">{isExporting ? 'Exportando...' : 'Exportar'}</span>
+            <span className="text-sm font-bold">{isExporting ? (isEn ? 'Exporting...' : 'Exportando...') : (isEn ? 'Export' : 'Exportar')}</span>
           </button>
 
         </div>
@@ -992,14 +998,14 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
               }}
             >
               <BookOpen className="w-5 h-5" style={{ color: theme === 'dark' ? '#10b981' : '#065f46' }} />
-              <span className="text-lg font-bold" style={{ color: theme === 'dark' ? '#f4f4f5' : '#18181b' }}>Libro Diario</span>
+              <span className="text-lg font-bold" style={{ color: theme === 'dark' ? '#f4f4f5' : '#18181b' }}>{isEn ? "Journal" : "Libro Diario"}</span>
             </div>
             <div className="p-6 space-y-6" style={{ fontSize: '160%', color: theme === 'dark' ? '#f4f4f5' : '#18181b' }}>
               <div className="space-y-4 font-mono">
                 {entries.map((asiento, aIdx) => (
                   <div key={aIdx} className={aIdx > 0 ? "pt-4" : ""} style={{ borderTop: aIdx > 0 ? `1px solid ${theme === 'dark' ? '#27272a' : '#e4e4e7'}` : 'none' }}>
                     <div className="mb-2 px-2 flex flex-col">
-                      <span className="text-[0.7em]" style={{ color: '#71717a' }}>Asiento #{aIdx + 1}</span>
+                      <span className="text-[0.7em]" style={{ color: '#71717a' }}>{isEn ? `Entry #${aIdx + 1}` : `Asiento #${aIdx + 1}`}</span>
                       <span className="text-[0.7em] font-bold" style={{ color: theme === 'dark' ? 'rgba(16, 185, 129, 0.8)' : 'rgba(6, 95, 70, 0.9)' }}>{asiento[0]?.date || 'xx/xx/xx'}</span>
                     </div>
                     {asiento.map((row, idx) => (
@@ -1008,7 +1014,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                           className={`col-span-6 ${row.haber > 0 ? 'pl-4' : 'font-bold'}`}
                           style={{ color: row.haber > 0 ? (theme === 'dark' ? '#a1a1aa' : '#71717a') : (theme === 'dark' ? '#34d399' : '#059669') }}
                         >
-                          {row.haber > 0 ? 'a ' : ''}
+                          {row.haber > 0 ? (isEn ? 'to ' : 'a ') : ''}
                           {row.code && <span className="text-[0.8em] opacity-80 mr-4 font-black" style={{ color: theme === 'dark' ? '#10b981' : '#065f46' }}>{row.code}</span>}
                           {row.account}
                         </div>
@@ -1023,7 +1029,7 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                   </div>
                 ))}
                 {entries.length === 0 && (
-                  <p className="text-[0.8em] italic text-center py-4" style={{ color: '#52525b' }}>No hay asientos registrados aún</p>
+                  <p className="text-[0.8em] italic text-center py-4" style={{ color: '#52525b' }}>{isEn ? "No entries recorded yet" : "No hay asientos registrados aún"}</p>
                 )}
               </div>
             </div>
@@ -1741,25 +1747,29 @@ export const DigitalWhiteboard: React.FC<WhiteboardProps> = ({
                 <Trash2 className="w-8 h-8 text-red-500" />
               </div>
               <h3 className="text-2xl font-bold text-white text-center mb-2">
-                {currentPageIndex === 0 ? '¿Limpiar dibujos?' : '¿Eliminar página?'}
+                {currentPageIndex === 0 
+                  ? (isEn ? 'Clear drawings?' : '¿Limpiar dibujos?') 
+                  : (isEn ? 'Delete page?' : '¿Eliminar página?')}
               </h3>
               <p className="text-zinc-400 text-center mb-8">
                 {currentPageIndex === 0 
-                  ? 'Se borrarán todos los trazos sobre el Libro Diario. Esta acción no se puede deshacer.'
-                  : 'Esta página y todos sus dibujos se eliminarán permanentemente.'}
+                  ? (isEn ? 'All drawings over the Journal Overlay will be cleared. This action cannot be undone.' : 'Se borrarán todos los trazos sobre el Libro Diario. Esta acción no se puede deshacer.')
+                  : (isEn ? 'This page and all its drawings will be permanently deleted.' : 'Esta página y todos sus dibujos se eliminarán permanentemente.')}
               </p>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowClearConfirm(false)}
                   className="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl font-bold transition-all"
                 >
-                  Cancelar
+                  {isEn ? 'Cancel' : 'Cancelar'}
                 </button>
                 <button 
                   onClick={confirmClear}
                   className="flex-1 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-red-900/20"
                 >
-                  {currentPageIndex === 0 ? 'Limpiar' : 'Eliminar'}
+                  {currentPageIndex === 0 
+                    ? (isEn ? 'Clear' : 'Limpiar') 
+                    : (isEn ? 'Delete' : 'Eliminar')}
                 </button>
               </div>
             </div>

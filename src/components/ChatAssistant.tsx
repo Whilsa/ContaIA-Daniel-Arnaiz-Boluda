@@ -21,15 +21,24 @@ interface Message {
 
 interface ChatAssistantProps {
   onClose: () => void;
+  language?: 'es' | 'en';
 }
 
-const ChatAssistant: React.FC<ChatAssistantProps> = ({ onClose }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    { 
-      role: 'assistant', 
-      content: '¡Hola! Soy tu tutor contable de ContaIA. ¿En qué puedo ayudarte con tu asiento de hoy? No te daré la solución directamente, pero te guiaré con pistas y pautas para que lo aprendas por ti mismo.' 
-    }
-  ]);
+const ChatAssistant: React.FC<ChatAssistantProps> = ({ onClose, language = 'es' }) => {
+  const isEn = language === 'en';
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    // Set initial welcome message depending on language
+    setMessages([
+      { 
+        role: 'assistant', 
+        content: isEn 
+          ? 'Hello! I am your ContaIA accounting tutor. How can I help you with your entry today? I won\'t give you the solution directly, but I will guide you with clues and steps so you can learn it yourself.'
+          : '¡Hola! Soy tu tutor contable de ContaIA. ¿En qué puedo ayudarte con tu asiento de hoy? No te daré la solución directamente, pero te guiaré con pistas y pautas para que lo aprendas por ti mismo.' 
+      }
+    ]);
+  }, [language]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -112,7 +121,24 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ onClose }) => {
           { role: 'user', parts: [{ text: userMessage }] }
         ],
         config: {
-          systemInstruction: `Eres un Tutor Inteligente de Contabilidad experto en el Plan General Contable (PGC) de España. 
+          systemInstruction: isEn 
+            ? `You are an expert Intelligent Accounting Tutor specialized in the Spanish General Accounting Plan (PGC). 
+          Your goal is to help students understand the logic of double-entry bookkeeping and journal entries using a pure socratic method.
+          
+          GOLDEN RULES (MAXIMUM PRIORITY):
+          1. EXTREME SOCRATIC METHOD: NEVER, under any circumstance, provide the full journal entry or the final solution.
+          2. STEP-BY-STEP (ACCOUNT-BY-ACCOUNT) STRATEGY:
+             - If the user asks about an entry, focus ONLY on the first account.
+             - NEVER mention more than one account in the same message.
+             - First help identify the nature of the account (asset, liability, equity, etc.).
+             - Next help determine whether the account increases or decreases.
+             - Finally ask whether it should go to DEBIT (Debe) or CREDIT (Haber).
+             - ONLY when the user has resolved that specific account, move on to ask about the corresponding account or matching contra-entry.
+          3. CLUES NOT SOLUTIONS: If the user is wrong, do not correct them by giving the name of the correct account. Ask a question that helps them see their own mistake.
+          4. CONTEXT: Your assistance is purely theoretical and educational.
+          5. BREVITY: Answer very directly and briefly. Max 2-3 sentences per answer.
+          6. LANGUAGE: English.`
+            : `Eres un Tutor Inteligente de Contabilidad experto en el Plan General Contable (PGC) de España. 
           Tu objetivo es ayudar a estudiantes a comprender la lógica de los asientos contables mediante un método socrático puro.
           
           REGLAS DE ORO (MÁXIMA PRIORIDAD):
@@ -131,11 +157,11 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ onClose }) => {
         }
       });
 
-      const aiContent = response.text || 'Lo siento, no he podido procesar tu solicitud.';
+      const aiContent = response.text || (isEn ? 'Sorry, I could not process your request.' : 'Lo siento, no he podido procesar tu solicitud.');
       setMessages(prev => [...prev, { role: 'assistant', content: aiContent }]);
     } catch (error) {
       console.error('Gemini Error:', error);
-      setMessages(prev => [...prev, { role: 'assistant', content: 'He tenido un problema de conexión. Por favor, inténtalo de nuevo en unos momentos.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: isEn ? 'I\'ve had a connection issue. Please try again in a few moments.' : 'He tenido un problema de conexión. Por favor, inténtalo de nuevo en unos momentos.' }]);
     } finally {
       setIsLoading(false);
     }
@@ -178,17 +204,17 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ onClose }) => {
       <div 
         onMouseDown={handleResizeStart('vertical')}
         className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize z-[110] hover:bg-emerald-500/20 transition-colors"
-        title="Arrastra para cambiar altura"
+        title={isEn ? "Drag to change height" : "Arrastra para cambiar altura"}
       />
       <div 
         onMouseDown={handleResizeStart('horizontal')}
         className="absolute top-0 left-0 bottom-0 w-2 cursor-ew-resize z-[110] hover:bg-emerald-500/20 transition-colors"
-        title="Arrastra para cambiar anchura"
+        title={isEn ? "Drag to change width" : "Arrastra para cambiar anchura"}
       />
       <div 
         onMouseDown={handleResizeStart('both')}
         className="absolute top-0 left-0 w-6 h-6 cursor-nwse-resize z-[120] hover:bg-emerald-500/40 transition-colors rounded-br-full"
-        title="Arrastra para cambiar tamaño"
+        title={isEn ? "Drag to change size" : "Arrastra para cambiar tamaño"}
       />
       
       {/* Header */}
@@ -198,10 +224,10 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ onClose }) => {
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="font-bold text-sm">Profesor IA</h3>
+            <h3 className="font-bold text-sm">{isEn ? "AI Tutor" : "Profesor IA"}</h3>
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">En línea</span>
+              <span className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">{isEn ? "Online" : "En línea"}</span>
             </div>
           </div>
         </div>
@@ -257,7 +283,7 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ onClose }) => {
               </div>
               <div className="bg-white text-zinc-400 shadow-sm border border-zinc-100 rounded-2xl rounded-tl-none p-4 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-[12px] font-medium italic">Consultando el PGC...</span>
+                <span className="text-[12px] font-medium italic">{isEn ? "Consulting Chart of Accounts..." : "Consultando el PGC..."}</span>
               </div>
             </div>
           </div>
@@ -272,7 +298,7 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ onClose }) => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Pregunta sobre una cuenta o asiento..."
+            placeholder={isEn ? "Ask about an account or entry..." : "Pregunta sobre una cuenta o asiento..."}
             className="w-full bg-zinc-100 border-transparent rounded-2xl pl-5 pr-14 py-4 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all"
           />
           <button 
@@ -284,7 +310,7 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ onClose }) => {
           </button>
         </div>
         <p className="mt-3 text-[10px] text-center text-zinc-400 font-medium italic">
-          Esta conversación es privada y no afecta a tus registros contables.
+          {isEn ? "This conversation is private and does not affect your accounting ledger." : "Esta conversación es privada y no afecta a tus registros contables."}
         </p>
       </div>
     </motion.div>
