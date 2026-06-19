@@ -27,7 +27,8 @@ import {
   Trophy,
   History,
   Monitor,
-  Globe
+  Globe,
+  Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DigitalWhiteboard } from './components/DigitalWhiteboard';
@@ -1376,7 +1377,385 @@ const ACCOUNT_MAPPING_EN: Record<string, string> = {
   '796': 'Reversal of impairment of non-current investments and debt securities',
   '797': 'Reversal of impairment of non-current loans',
   '798': 'Reversal of impairment of current investments and debt securities',
-  '799': 'Reversal of impairment of current loans'
+};
+
+const ACCOUNT_DEFINITIONS: Record<string, { es: string; en: string }> = {
+  // Grupo 1: Financiación Básica
+  '100': {
+    es: 'Capital aportado por los socios en sociedades mercantiles que revisten forma societaria.',
+    en: 'Capital contributed by partners in mercantile companies that have a corporate form.'
+  },
+  '101': {
+    es: 'Aportación inicial o ampliaciones de capital en entidades sin ánimo de lucro.',
+    en: 'Initial contribution or capital increases in non-profit entities.'
+  },
+  '102': {
+    es: 'Capital aportado a la empresa por el empresario individual o titular.',
+    en: 'Capital contributed to the company by the sole proprietor or owner.'
+  },
+  '103': {
+    es: 'Parte del capital social suscrito que se encuentra pendiente de desembolso por los socios.',
+    en: 'Part of the subscribed social capital that is pending payout by the partners.'
+  },
+  '112': {
+    es: 'Reserva obligatoria que debe constituirse detrayendo un 10% del beneficio neto anual.',
+    en: 'Statutory reserve that must be built by setting aside 10% of annual net profit.'
+  },
+  '129': {
+    es: 'Representa el beneficio o pérdida obtenido por la empresa al cierre de un ejercicio económico.',
+    en: 'Represents the profit or loss obtained by the company at the close of a fiscal year.'
+  },
+  '170': {
+    es: 'Deudas contraídas con bancos u otras entidades de crédito con vencimiento superior a un año.',
+    en: 'Debts contracted with banks or other credit institutions with maturity over one year.'
+  },
+  '173': {
+    es: 'Deudas con suministradores de bienes de inmovilizado con vencimiento a largo plazo.',
+    en: 'Debts with suppliers of non-current assets with long-term maturity.'
+  },
+  '175': {
+    es: 'Deudas a largo plazo documentadas en efectos de giro aceptados (letras de cambio o pagarés).',
+    en: 'Long-term debts documented in accepted bills of exchange or promissory notes.'
+  },
+  '180': {
+    es: 'Efectivo recibido en concepto de garantía a largo plazo para asegurar el cumplimiento de un contrato.',
+    en: 'Cash received as a long-term guarantee to secure compliance with a contract.'
+  },
+  // Grupo 2: Inmovilizado
+  '203': {
+    es: 'Importe pagado por la propiedad o derecho de uso de patentes, marcas y diseños industriales.',
+    en: 'Amount paid for the ownership or right to use patents, trademarks, and industrial designs.'
+  },
+  '205': {
+    es: 'Importe abonado por la subrogación en los derechos y obligaciones de un local de negocio.',
+    en: 'Amount paid for subrogation into the rights and duties of a business lease.'
+  },
+  '206': {
+    es: 'Gastos de adquisición o desarrollo de programas informáticos y licencias de software.',
+    en: 'Costs of acquiring or developing computer software and software licenses.'
+  },
+  '210': {
+    es: 'Solares de naturaleza urbana, fincas rústicas y otros terrenos propiedad de la empresa.',
+    en: 'Urban lots, rustic estates, and other land owned by the company.'
+  },
+  '211': {
+    es: 'Edificaciones, naves industriales, oficinas y otros inmuebles propiedad de la empresa.',
+    en: 'Buildings, industrial plants, offices, and other real estate owned by the company.'
+  },
+  '212': {
+    es: 'Conjuntos de elementos ligados de forma definitiva para el proceso productivo (ej. líneas de montaje).',
+    en: 'Groups of items permanently linked to the production process (e.g., assembly lines).'
+  },
+  '213': {
+    es: 'Máquinas y aparatos industriales destinados a la elaboración o fabricación de productos.',
+    en: 'Industrial machines and apparatus used for compiling or manufacturing products.'
+  },
+  '214': {
+    es: 'Utensilios y herramientas de mano que se utilizan en la producción o mantenimiento.',
+    en: 'Hand tools and utensils used in production or maintenance activities.'
+  },
+  '215': {
+    es: 'Redes de agua, gas, calefacción u otras instalaciones complejas no ligadas a una máquina.',
+    en: 'Water, gas, heating networks, or other complex facilities not linked to a machine.'
+  },
+  '216': {
+    es: 'Muebles, mesas, estanterías, archivadores y otros elementos de oficina.',
+    en: 'Furniture, desks, shelving, filing cabinets, and other office equipment.'
+  },
+  '217': {
+    es: 'Ordenadores, periféricos, servidores y demás equipamiento informático de la empresa.',
+    en: 'Computers, peripherals, servers, and other hardware owned by the company.'
+  },
+  '218': {
+    es: 'Vehículos de todo tipo aptos para el transporte terrestre, marítimo o aéreo (coches, camiones).',
+    en: 'Vehicles of all types suitable for land, sea, or air transport (cars, trucks).'
+  },
+  '219': {
+    es: 'Cualquier otro elemento de inmovilizado material que no encaje en las cuentas anteriores.',
+    en: 'Any other item of tangible non-current assets that does not fit into other accounts.'
+  },
+  // Amortización / Contra
+  '280': {
+    es: 'Corrección de valor acumulada por el desgaste o envejecimiento del inmovilizado intangible.',
+    en: 'Accumulated valuation adjustment for wear or aging of intangible non-current assets.'
+  },
+  '281': {
+    es: 'Corrección de valor acumulada por el desgaste o envejecimiento del inmovilizado material.',
+    en: 'Accumulated valuation adjustment for wear or aging of tangible non-current assets.'
+  },
+  // Grupo 3: Existencias
+  '300': {
+    es: 'Bienes adquiridos por la empresa destinados a la venta directa sin transformación química o física.',
+    en: 'Goods acquired by the company destined for direct sale without chemical or physical transformation.'
+  },
+  '310': {
+    es: 'Materiales destinados a formar parte de los productos elaborados tras un proceso de fabricación.',
+    en: 'Materials destined to be part of manufactured products after a production process.'
+  },
+  '320': {
+    es: 'Envases, embalajes, repuestos o materiales diversos que se consumen en la actividad.',
+    en: 'Containers, packaging, spare parts, or miscellaneous materials consumed in operations.'
+  },
+  // Grupo 4: Acreedores y Deudores por Operaciones Comerciales
+  '400': {
+    es: 'Deudas con suministradores de mercancías y de materias primas para la actividad habitual.',
+    en: 'Debts with suppliers of goods and raw materials for regular business activity.'
+  },
+  '4009': {
+    es: 'Compras de bienes recibidas sobre las que aún no se ha recibido la factura formal.',
+    en: 'Purchases of goods received for which the formal invoice has not yet been received.'
+  },
+  '401': {
+    es: 'Deudas comerciales documentadas en efectos de giro aceptados (letras o pagarés a pagar).',
+    en: 'Commercial debts documented in accepted bills of exchange or promissory notes to be paid.'
+  },
+  '403': {
+    es: 'Obligaciones comerciales con compañías que pertenecen al mismo grupo corporativo.',
+    en: 'Commercial obligations with companies belonging to the same corporate group.'
+  },
+  '404': {
+    es: 'Obligaciones de pago comerciales con empresas asociadas sobre las que se tiene influencia.',
+    en: 'Commercial payment obligations with associated companies over which influence is held.'
+  },
+  '405': {
+    es: 'Deudas comerciales con otras partes vinculadas especiales de la empresa.',
+    en: 'Commercial debts with other special related parties of the company.'
+  },
+  '406': {
+    es: 'Envases recibidos que se plantean devolver al proveedor tras vaciarse para recuperar una fianza.',
+    en: 'Received containers planned to be returned to the supplier to recover a deposit.'
+  },
+  '407': {
+    es: 'Entregas de dinero en efectivo a proveedores a cuenta de futuras compras de existencias.',
+    en: 'Cash advances paid to suppliers against future purchases of inventory.'
+  },
+  '410': {
+    es: 'Deudas de servicios que no tienen carácter de mercancía habitual (por ejemplo: gestoría, limpieza, etc.) ...',
+    en: 'Debts from services that are not strictly goods-related (e.g., consulting, cleaning).'
+  },
+  '430': {
+    es: 'Derechos de cobro comerciales sobre compradores de mercancías o servicios habituales.',
+    en: 'Commercial collection rights over regular buyers of goods or services.'
+  },
+  '431': {
+    es: 'Derechos de cobro comerciales formalizados en letras de cambio aceptadas por clientes.',
+    en: 'Commercial collection rights formatted in bills of exchange accepted by customers.'
+  },
+  '433': {
+    es: 'Saldos deudores comerciales con sociedades pertenecientes al mismo grupo de empresas.',
+    en: 'Commercial debit balances with companies belonging to the same corporate group.'
+  },
+  '434': {
+    es: 'Derechos de cobro comerciales con entidades asociadas o vinculadas de forma indirecta.',
+    en: 'Commercial collection rights with associated or indirectly related entities.'
+  },
+  '435': {
+    es: 'Derechos de cobro por operaciones de tráfico comercial con otras partes vinculadas.',
+    en: 'Collection rights for commercial traffic transactions with other related parties.'
+  },
+  '438': {
+    es: 'Anticipos recibidos de compradores de forma previa a realizar la entrega o prestación del servicio.',
+    en: 'Advances received from buyers prior to delivering goods or rendering services.'
+  },
+  '440': {
+    es: 'Derechos de cobro con compradores de servicios que no son la actividad principal de la empresa.',
+    en: 'Collection rights with buyers of services that are not the primary activity of the company.'
+  },
+  '472': {
+    es: 'Importe del IVA soportado en las compras y gastos realizados por la empresa.',
+    en: 'Amount of VAT incurred on purchases and expenses made by the company.'
+  },
+  '473': {
+    es: 'Pagos a cuenta del Impuesto sobre Sociedades o retenciones fiscales practicadas sobre ingresos.',
+    en: 'Corporate tax prepayments or tax withholdings deducted from revenues.'
+  },
+  '477': {
+    es: 'Importe del IVA devengado o repercutido en las ventas y prestaciones de servicios de la empresa.',
+    en: 'Amount of VAT accrued or charged on sales and rendering of services by the company.'
+  },
+  // Grupo 5: Cuentas Financieras
+  '5200': {
+    es: 'Deudas contratadas con bancos orientadas a devolver en un plazo no superior a un año.',
+    en: 'Debts contracted with banks expected to be repaid in a term not exceeding one year.'
+  },
+  '523': {
+    es: 'Deudas cortas contraídas por la adquisición de bienes de inmovilizado a corto plazo.',
+    en: 'Short-term debts incurred for acquiring short-term non-current assets.'
+  },
+  '540': {
+    es: 'Inversiones temporales en acciones o participaciones de otras empresas sin fin de vinculación.',
+    en: 'Temporary investments in shares or stock of other companies with no linking purpose.'
+  },
+  '541': {
+    es: 'Adquisición de bonos, pagarés u obligaciones con la intención de enajenarlos a corto plazo.',
+    en: 'Acquisition of bonds, promissory notes, or debentures with the intent of short-term sale.'
+  },
+  '542': {
+    es: 'Préstamos temporales concedidos a terceros con vencimiento inferior o igual a doce meses.',
+    en: 'Temporary loans granted to third parties with maturity less than or equal to twelve months.'
+  },
+  '548': {
+    es: 'Depósitos y cuentas a plazo fijo constituidas en entidades de crédito a corto plazo.',
+    en: 'Deposits and fixed-term accounts set up in short-term credit institutions.'
+  },
+  '558': {
+    es: 'Derechos de cobro exigibles a los socios por desembolsos acordados pendientes de pago.',
+    en: 'Collection rights due from partners for agreed payouts pending payment.'
+  },
+  '560': {
+    es: 'Efectivo recibido como depósito temporal de fianza con vencimiento a corto plazo.',
+    en: 'Cash received as a short-term temporary deposit or guarantee.'
+  },
+  '565': {
+    es: 'Efectivo entregado a terceros como depósito temporal para asegurar el cumplimiento de una obligación corta.',
+    en: 'Cash paid to third parties as a temporary deposit to secure a short-term obligation.'
+  },
+  '570': {
+    es: 'Monedas y billetes de curso legal mantenidos en la caja de la oficina de la empresa.',
+    en: 'Legal tender coins and banknotes kept in the company\'s office cash drawer.'
+  },
+  '572': {
+    es: 'Saldos de efectivo a favor de la empresa depositados en cuentas corrientes bancarias.',
+    en: 'Cash balances in favor of the company deposited in bank checking accounts.'
+  },
+  '573': {
+    es: 'Disponibilidades de efectivo en bancos denominadas en moneda distinta al euro.',
+    en: 'Cash availability in banks denominated in a currency other than the euro.'
+  },
+  // Grupo 6: Compras y Gastos
+  '600': {
+    es: 'Adquisición de mercaderías por parte de la empresa para su posterior comercialización.',
+    en: 'Acquisition of merchandise by the company for its subsequent resale.'
+  },
+  '601': {
+    es: 'Adquisición de materias primas que formarán parte de la transformación de productos.',
+    en: 'Acquisition of raw materials that will be involved in the transformation of products.'
+  },
+  '602': {
+    es: 'Adquisición de embalajes, repuestos o aprovisionamientos que no se transforman directamente.',
+    en: 'Acquisition of packaging, spare parts, or supplies that are not directly processed.'
+  },
+  '606': {
+    es: 'Descuentos de carácter financiero concedidos por proveedores debido a pagos rápidos.',
+    en: 'Financial discounts granted by suppliers because of fast payments.'
+  },
+  '608': {
+    es: 'Mercancías rechazadas o devueltas a proveedores tras detectar fallos de calidad o cantidad.',
+    en: 'Merchandise rejected or returned to suppliers after finding quality or quantity flaws.'
+  },
+  '609': {
+    es: 'Descuentos comerciales recibidos de proveedores basados en alcanzar un volumen alto de compras.',
+    en: 'Commercial discounts received from suppliers based on reaching a high volume of purchases.'
+  },
+  '610': {
+    es: 'Cuenta destinada a reflejar la diferencia entre las existencias de mercaderías al inicio y al final del año.',
+    en: 'Account used to reflect the difference between merchandise stocks at the start and end of the year.'
+  },
+  '620': {
+    es: 'Gastos soportados en actividades de investigación y desarrollo científico.',
+    en: 'Expenses incurred in scientific or operating research and development activities.'
+  },
+  '621': {
+    es: 'Gastos devengados por el uso y alquiler de locales, oficinas, solares, patentes o maquinaria de terceros.',
+    en: 'Expenses incurred for the use and lease of buildings, offices, land, patents, or machinery.'
+  },
+  '622': {
+    es: 'Gastos de mantenimiento, conservación y arreglo de bienes de inmovilizado de la empresa.',
+    en: 'Expenses for maintaining, preserving, and repairing non-current assets.'
+  },
+  '623': {
+    es: 'Honorarios pagados a profesionales como notarios, abogados, auditores o asesores fiscales de la firma.',
+    en: 'Fees paid to professionals such as notaries, lawyers, auditors, or company tax advisors.'
+  },
+  '624': {
+    es: 'Gastos por el desplazamiento de mercancías y envíos realizados a cargo de la sociedad.',
+    en: 'Expenses for transporting merchandise and shipments borne by the company.'
+  },
+  '625': {
+    es: 'Costes vinculados a pólizas de seguro contratadas (antirrobo, responsabilidad civil, etc.).',
+    en: 'Costs linked to contracted insurance policies (anti-theft, civil liability, etc.).'
+  },
+  '626': {
+    es: 'Comisiones cobradas por bancos debido a custodia, transferencias u operaciones de cobro/pago.',
+    en: 'Commissions charged by banks for custody, transfers, or collection/payment transactions.'
+  },
+  '628': {
+    es: 'Gastos de consumo de servicios no acumulables físicamente (ej. electricidad, agua, gas).',
+    en: 'Consumption expenses of physically non-storable services (e.g., electricity, water, gas).'
+  },
+  '629': {
+    es: 'Suma de gastos diversos que no encajan en ninguna de las otras cuentas de servicios exteriores.',
+    en: 'Sum of miscellaneous expenses that do not fit into other external service accounts.'
+  },
+  '650': {
+    es: 'Pérdidas definitivas por créditos de clientes declarados insolventes o fallidos.',
+    en: 'Definite losses from customer credit balances declared bankrupt or bad debts.'
+  },
+  '662': {
+    es: 'Intereses y gastos financieros devengados por deudas recibidas de entidades financieras.',
+    en: 'Interests and financial expenses accrued on debts from financial institutions.'
+  },
+  '666': {
+    es: 'Pérdidas producidas por la baja de valores de deuda o acciones en inversiones financieras.',
+    en: 'Losses produced by removing debt values or shares in financial investments.'
+  },
+  '678': {
+    es: 'Gastos extraordinarios de carácter inusual o infrecuente (ej. inundación, multas graves).',
+    en: 'Extraordinary expenses of unusual or infrequent nature (e.g., flooding, heavy fines).'
+  },
+  // Grupo 7: Ventas e Ingresos
+  '700': {
+    es: 'Ingresos procedentes de la venta directa de mercancías adquiridas para revenderlas.',
+    en: 'Revenues from transferring merchandise acquired for direct resale.'
+  },
+  '701': {
+    es: 'Ingresos por la comercialización de productos fabricados o elaborados internamente.',
+    en: 'Revenues from marketing products manufactured or processed internally.'
+  },
+  '704': {
+    es: 'Facturación por envases o embalajes enajenados de forma definitiva u opcional.',
+    en: 'Invoicing for packaging or containers sold definitively or optionally.'
+  },
+  '705': {
+    es: 'Ingresos por servicios profesionales, técnicos u operativos prestados por la empresa.',
+    en: 'Revenues from professional, technical, or operational services rendered by the company.'
+  },
+  '706': {
+    es: 'Descuentos financieros concedidos a clientes por pagar de forma inmediata o rápida.',
+    en: 'Financial discounts granted to customers for paying immediately or before maturity.'
+  },
+  '708': {
+    es: 'Importe de devoluciones de productos por parte de clientes insatisfechos o defectuosos.',
+    en: 'Amount of product returns by unsatisfied or defective product customers.'
+  },
+  '709': {
+    es: 'Descuentos de carácter comercial concedidos a clientes habituales por volumen elevado.',
+    en: 'Commercial discounts granted to regular customers due to high volume.'
+  },
+  '752': {
+    es: 'Ingresos obtenidos por subarrendar locales, oficinas o bienes de equipo de la sociedad.',
+    en: 'Revenues obtained by subleasing buildings, offices, or company equipment.'
+  },
+  '754': {
+    es: 'Ingresos por actuar como mediadores comerciales devengados en base a comisiones pactadas.',
+    en: 'Revenues for acting as commercial mediators accrued based on agreed commissions.'
+  },
+  '755': {
+    es: 'Ingresos procedentes de servicios como comedores o transporte prestados al personal laboral.',
+    en: 'Revenues from dining halls, transport, or housing provided to staff.'
+  },
+  '760': {
+    es: 'Dividendos procedentes de participaciones o acciones poseídas en el capital de otras corporaciones.',
+    en: 'Dividends from shares or stock held in the capital of other firms.'
+  },
+  '766': {
+    es: 'Beneficios obtenidos en la enajenación o amortización de acciones y obligaciones de deuda.',
+    en: 'Profits obtained in selling or redeeming shares and bonds.'
+  },
+  '769': {
+    es: 'Cualquier otro tipo de ingreso de índole puramente financiera que no encaje en los demás.',
+    en: 'Any other type of purely financial revenue that does not explicitly fit elsewhere.'
+  }
 };
 
 const SECTION_DISPLAY: Record<string, string> = {
@@ -2285,6 +2664,16 @@ export default function App() {
     userAnswer: string;
     type: string;
   }[]>([]);
+
+  // Refactored casual individual review game states
+  const [gameMode, setGameMode] = useState<'casual' | 'time_attack'>('casual');
+  const [gameStreak, setGameStreak] = useState(0);
+  const [gameMaxStreak, setGameMaxStreak] = useState(0);
+  const [gameQuestionIndex, setGameQuestionIndex] = useState(1);
+  const [gameOptions, setGameOptions] = useState<string[]>([]);
+  const [gameCorrectOption, setGameCorrectOption] = useState('');
+  const [gameSelectedOption, setGameSelectedOption] = useState<string | null>(null);
+  const [currentGameQuestionType, setCurrentGameQuestionType] = useState<'def_to_account' | 'account_to_def'>('def_to_account');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -3166,18 +3555,26 @@ export default function App() {
   };
 
   // Game logic
+  // Game logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (gameStatus === 'playing' && gameTimer > 0 && lastAnswerCorrect === null) {
-      interval = setInterval(() => {
-        setGameTimer(prev => prev - 1);
-      }, 1000);
-    } else if (gameTimer === 0 && gameStatus === 'playing' && lastAnswerCorrect === null) {
-      // Time's up
-      handleWrongAnswer('¡Tiempo agotado!');
+      if (gameMode === 'time_attack') {
+        interval = setInterval(() => {
+          setGameTimer(prev => {
+            if (prev <= 1) {
+              setGameStatus('gameover');
+              setPlayerName('');
+              setIsScoreSaved(false);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
     }
     return () => clearInterval(interval);
-  }, [gameStatus, gameTimer, lastAnswerCorrect]);
+  }, [gameStatus, gameTimer, lastAnswerCorrect, gameMode]);
 
   useEffect(() => {
     const savedHistory = localStorage.getItem('contabilidad_game_history');
@@ -3217,6 +3614,27 @@ export default function App() {
     return Array.from(new Map(accounts.map(item => [item.code, item])).values());
   };
 
+  // Helper helper to get definitions for game
+  const getAccountDefinition = (code: string, lang: 'es' | 'en'): string => {
+    if (ACCOUNT_DEFINITIONS[code]) {
+      return lang === 'en' ? ACCOUNT_DEFINITIONS[code].en : ACCOUNT_DEFINITIONS[code].es;
+    }
+    const name = lang === 'en' ? (ACCOUNT_MAPPING_EN[code] || code) : (ACCOUNT_MAPPING[code] || code);
+    return lang === 'en'
+      ? `Register or track operations corresponding to the account: ${name}.`
+      : `Registrar y realizar el seguimiento de las operaciones de la cuenta: ${name}.`;
+  };
+
+  // Modern helper to shuffle arrays
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
   const generateQuestion = (currentAsked?: string[]) => {
     const accounts = getAvailableAccounts();
     if (accounts.length === 0) return;
@@ -3229,35 +3647,7 @@ export default function App() {
       setAskedQuestionCodes([]);
     }
     
-    // Decide question type first to ensure distribution
-    let type: 'code' | 'balance' | 'entry' | 'section' = 'code';
-    const rand = Math.random();
-    
-    let randomAccount;
-    
-    // 50% chance for 'entry' questions
-    if (rand > 0.5) {
-      const accountsWithScenarios = availableAccounts.filter(a => a.scenarios && a.scenarios.length > 0);
-      if (accountsWithScenarios.length > 0) {
-        type = 'entry';
-        randomAccount = accountsWithScenarios[Math.floor(Math.random() * accountsWithScenarios.length)];
-      } else {
-        // Fallback if no accounts with scenarios are left in the pool
-        const subRand = Math.random();
-        if (subRand < 0.33) type = 'code';
-        else if (subRand < 0.66) type = 'balance';
-        else type = 'section';
-        randomAccount = availableAccounts[Math.floor(Math.random() * availableAccounts.length)];
-      }
-    } else {
-      // Distribution for other types (approx 16.6% each)
-      const subRand = Math.random();
-      if (subRand < 0.33) type = 'code';
-      else if (subRand < 0.66) type = 'balance';
-      else type = 'section';
-      randomAccount = availableAccounts[Math.floor(Math.random() * availableAccounts.length)];
-    }
-
+    const randomAccount = availableAccounts[Math.floor(Math.random() * availableAccounts.length)];
     setCurrentQuestion(randomAccount);
     setAskedQuestionCodes(prev => {
       if (availableAccounts.length === accounts.length && prev.length > 0) {
@@ -3265,64 +3655,55 @@ export default function App() {
       }
       return [...prev, randomAccount.code];
     });
-    
-    setGameQuestionType(type);
-    setUserAnswer('');
-    setSelectedBalances([]);
-    setSelectedSection(null);
-    setUserEntryChoice(null);
-    setCurrentScenario(null);
+
+    // Randomize sub question type: 50% Definition to Account, 50% Account to Definition
+    const type = Math.random() > 0.5 ? 'def_to_account' : 'account_to_def';
+    setCurrentGameQuestionType(type);
+    setGameSelectedOption(null);
     setLastAnswerCorrect(null);
-    
-    const difficultyTimes = {
-      facil: 30,
-      normal: 20,
-      extremo: 10
-    };
-    setGameTimer(difficultyTimes[gameDifficulty]);
-    
-    // Pick question text
-    if (type === 'entry' && randomAccount.scenarios) {
-      const scenario = randomAccount.scenarios[Math.floor(Math.random() * randomAccount.scenarios.length)];
-      setCurrentScenario(scenario);
-      setCurrentQuestionText(`CASO: ${scenario.text}`);
-    } else if (type === 'code') {
-      if (randomAccount.examples && randomAccount.examples.length > 0) {
-        const example = randomAccount.examples[Math.floor(Math.random() * randomAccount.examples.length)];
-        setCurrentQuestionText(`EJEMPLO: ${example}`);
-      } else {
-        setCurrentQuestionText(`CUENTA: ${randomAccount.name}`);
-      }
+
+    // Pick localized representations for prompt and options
+    const localizedTargetName = language === 'en' ? (ACCOUNT_MAPPING_EN[randomAccount.code] || randomAccount.name) : randomAccount.name;
+    const correctDef = getAccountDefinition(randomAccount.code, language);
+
+    if (type === 'def_to_account') {
+      setCurrentQuestionText(correctDef);
+      
+      // Correct Option: Account indicator
+      const correctOpt = `${randomAccount.code} - ${localizedTargetName}`;
+      setGameCorrectOption(correctOpt);
+
+      // Distractors
+      const pool = accounts.filter(a => a.code !== randomAccount.code);
+      const shuffledPool = shuffleArray(pool);
+      const distractors = shuffledPool.slice(0, Math.min(3, shuffledPool.length)).map(a => {
+        const dName = language === 'en' ? (ACCOUNT_MAPPING_EN[a.code] || a.name) : a.name;
+        return `${a.code} - ${dName}`;
+      });
+
+      // Shuffled set of 4 choices
+      const finalOpts = shuffleArray([correctOpt, ...distractors]);
+      setGameOptions(finalOpts);
+
     } else {
-      setCurrentQuestionText(randomAccount.name);
+      setCurrentQuestionText(`${randomAccount.code} - ${localizedTargetName}`);
+      
+      // Correct Option: Definition
+      setGameCorrectOption(correctDef);
+
+      // Distractors
+      const pool = accounts.filter(a => a.code !== randomAccount.code);
+      const shuffledPool = shuffleArray(pool);
+      const distractors = shuffledPool.slice(0, Math.min(3, shuffledPool.length)).map(a => getAccountDefinition(a.code, language));
+
+      // Shuffled set of 4 choices
+      const finalOpts = shuffleArray([correctDef, ...distractors]);
+      setGameOptions(finalOpts);
     }
   };
 
   const handleWrongAnswer = (message?: string) => {
-    setGameLives(prev => {
-      const newLives = prev - 1;
-      if (newLives <= 0) {
-        setTimeout(() => {
-          setGameStatus('gameover');
-          setPlayerName('');
-          setIsScoreSaved(false);
-        }, 1500); // Show the loss for a moment
-      }
-      return newLives;
-    });
-    setGameScore(prev => Math.max(0, prev - 5));
-    setLastAnswerCorrect(false);
-    if (message) {
-      setShowToast({ message, type: 'error' });
-    }
-    setTimeout(() => {
-      setLastAnswerCorrect(null);
-      setUserAnswer('');
-      setSelectedBalances([]);
-      if (gameStatus === 'playing' && gameLives > 1) {
-        generateQuestion();
-      }
-    }, 2000); // Increased delay to show the error state
+    // Legacy fallback, logic merged to submitAnswer
   };
 
   const startGame = () => {
@@ -3336,113 +3717,102 @@ export default function App() {
       return;
     }
     setGameScore(0);
-    setGameLives(5);
+    setGameStreak(0);
+    setGameMaxStreak(0);
+    setGameQuestionIndex(1);
     setGameStatus('playing');
     setAskedQuestionCodes([]);
     setMissedQuestions([]);
+    setGameSelectedOption(null);
+    setLastAnswerCorrect(null);
+
+    if (gameMode === 'time_attack') {
+      setGameLives(3);
+      setGameTimer(300); // 5 minutes Time Attack!
+    } else {
+      setGameLives(5); // In practice mode, we can show a relaxed indicator
+      setGameTimer(0);
+    }
+
+    // Delay a bit or execute instantly
     generateQuestion([]);
   };
 
-  const handleGameAnswer = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentQuestion) return;
+  const submitAnswer = (selectedOpt: string) => {
+    if (gameSelectedOption !== null || lastAnswerCorrect !== null) return;
+    setGameSelectedOption(selectedOpt);
 
-    if (gameQuestionType === 'code') {
-      if (userAnswer.trim() === currentQuestion.code) {
-        setGameScore(prev => prev + 10);
-        setLastAnswerCorrect(true);
-        setTimeout(() => {
-          generateQuestion();
-        }, 1000);
-      } else {
-        setMissedQuestions(prev => [...prev, {
-          question: currentQuestionText || currentQuestion.name,
-          code: currentQuestion.code,
-          correctAnswer: currentQuestion.code,
-          userAnswer: userAnswer.trim(),
-          type: 'Código de cuenta'
-        }]);
-        handleWrongAnswer();
-      }
-    } else if (gameQuestionType === 'entry') {
-      const isCodeCorrect = userAnswer.trim() === currentQuestion.code;
-      const isActionCorrect = userEntryChoice === currentScenario?.action;
+    const isCorrect = selectedOpt === gameCorrectOption;
+    if (isCorrect) {
+      setLastAnswerCorrect(true);
+      const newStreak = gameStreak + 1;
+      setGameStreak(newStreak);
+      setGameMaxStreak(prev => Math.max(prev, newStreak));
 
-      if (isCodeCorrect && isActionCorrect) {
-        setGameScore(prev => prev + 20); // Higher reward for complex question
-        setLastAnswerCorrect(true);
-        setTimeout(() => {
+      const points = 10 + (newStreak >= 3 ? 5 : 0); // Bonus points for streak
+      setGameScore(prev => prev + points);
+
+      setTimeout(() => {
+        // Advance
+        if (gameMode === 'casual' && gameQuestionIndex >= 15) {
+          setGameStatus('gameover');
+          setPlayerName('');
+          setIsScoreSaved(false);
+        } else {
+          setGameQuestionIndex(prev => prev + 1);
           generateQuestion();
-        }, 1000);
-      } else {
-        let msg = "";
-         if (!isCodeCorrect && !isActionCorrect) {
-          msg = language === 'en' ? "Incorrect code and action" : "Código y acción incorrectos";
-         } else if (!isCodeCorrect) {
-          msg = language === 'en' ? "Incorrect account code" : "Código de cuenta incorrecto";
-         } else {
-          msg = language === 'en' 
-            ? "The account must be " + (currentScenario?.action === 'debit' ? "debited (Debe)" : "credited (Haber)")
-            : "La cuenta debe " + (currentScenario?.action === 'debit' ? "cargarse (Debe)" : "abonarse (Haber)");
-         }
-        
-        setMissedQuestions(prev => [...prev, {
-          question: currentQuestionText,
-          code: currentQuestion.code,
-          correctAnswer: `${currentQuestion.code} (${currentScenario?.action === 'debit' ? 'Debe' : 'Haber'})`,
-          userAnswer: `${userAnswer.trim()} (${userEntryChoice === 'debit' ? 'Debe' : userEntryChoice === 'credit' ? 'Haber' : '?'})`,
-          type: 'Asiento contable'
-        }]);
-        handleWrongAnswer(msg);
-      }
-    } else if (gameQuestionType === 'section') {
-      const correct = getAccountBalanceSection(currentQuestion.code);
-      if (selectedSection === correct) {
-        setGameScore(prev => prev + 12);
-        setLastAnswerCorrect(true);
-        setTimeout(() => {
-          generateQuestion();
-        }, 1000);
-      } else {
-        setMissedQuestions(prev => [...prev, {
-          question: `${currentQuestion.code} - ${currentQuestion.name}`,
-          code: currentQuestion.code,
-          correctAnswer: correct,
-          userAnswer: selectedSection || 'Sin respuesta',
-          type: 'Sección del balance'
-        }]);
-        const correctTranslated = SECTION_DISPLAY[correct] || correct;
-        handleWrongAnswer(language === 'en' 
-          ? `Incorrect. The correct section is: ${correctTranslated}` 
-          : `Incorrecto. La sección correcta es: ${correct}`
-        );
-      }
+        }
+      }, 1500);
+
     } else {
-      const correct = getCorrectBalances(currentQuestion.code);
-      const isCorrect = 
-        selectedBalances.length === correct.length && 
-        selectedBalances.every(b => correct.includes(b));
+      setLastAnswerCorrect(false);
+      setGameStreak(0);
 
-      if (isCorrect) {
-        setGameScore(prev => prev + 15); // Bonus for balance questions
-        setLastAnswerCorrect(true);
-        setTimeout(() => {
-          generateQuestion();
-        }, 1000);
-      } else {
-        setMissedQuestions(prev => [...prev, {
-          question: `${currentQuestion.code} - ${currentQuestion.name}`,
-          code: currentQuestion.code,
-          correctAnswer: correct.join(', '),
-          userAnswer: selectedBalances.length > 0 ? selectedBalances.join(', ') : 'Sin respuesta',
-          type: 'Saldos posibles'
-        }]);
-        const correctTranslated = correct.map(b => BALANCE_DISPLAY[b] || b).join(', ');
-        handleWrongAnswer(language === 'en' 
-          ? `Incorrect. The correct balances are: ${correctTranslated}` 
-          : `Incorrecto. Los saldos correctos son: ${correct.join(', ')}`
-        );
+      const targetLabel = language === 'en' ? 'Correct answer: ' : 'Respuesta correcta: ';
+      setShowToast({
+        message: `${targetLabel} ${gameCorrectOption}`,
+        type: 'error'
+      });
+
+      // Register missed
+      setMissedQuestions(prev => [...prev, {
+        question: currentGameQuestionType === 'def_to_account'
+          ? (language === 'en' ? `What account records: "${currentQuestionText}"?` : `¿Qué cuenta recoge lo siguiente?: "${currentQuestionText}"?`)
+          : (language === 'en' ? `What records the account: "${currentQuestion?.code} - ${(language === 'en' ? (ACCOUNT_MAPPING_EN[currentQuestion?.code || ''] || currentQuestion?.name) : currentQuestion?.name)}"?` : `¿Qué recoge la cuenta: "${currentQuestion?.code} - ${currentQuestion?.name}"?`),
+        code: currentQuestion?.code || '',
+        correctAnswer: gameCorrectOption,
+        userAnswer: selectedOpt,
+        type: currentGameQuestionType === 'def_to_account'
+          ? (language === 'en' ? 'Definition to Account' : 'Definición a Cuenta')
+          : (language === 'en' ? 'Account to Definition' : 'Cuenta a Definición')
+      }]);
+
+      if (gameMode === 'time_attack') {
+        setGameLives(prev => {
+          const newLives = prev - 1;
+          if (newLives <= 0) {
+            setTimeout(() => {
+              setGameStatus('gameover');
+              setPlayerName('');
+              setIsScoreSaved(false);
+            }, 2000);
+          }
+          return newLives;
+        });
       }
+
+      setTimeout(() => {
+        if (gameMode === 'casual' && gameQuestionIndex >= 15) {
+          setGameStatus('gameover');
+          setPlayerName('');
+          setIsScoreSaved(false);
+        } else if (gameMode === 'time_attack' && gameLives <= 1) {
+          // Will transition to gameover
+        } else {
+          setGameQuestionIndex(prev => prev + 1);
+          generateQuestion();
+        }
+      }, 2500);
     }
   };
 
@@ -3457,62 +3827,78 @@ export default function App() {
       return gameSortDirection === 'asc' ? comparison : -comparison;
     });
 
+    const isEn = language === 'en';
+
     return (
       <div className="min-h-screen bg-zinc-50 font-sans p-4 md:p-8">
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-[2rem] border border-zinc-100 shadow-sm">
             <div className="flex items-center gap-4">
               <button 
-                onClick={() => setCurrentView('home')}
-                className="p-2 bg-white rounded-xl shadow-sm border border-zinc-200 hover:bg-zinc-100 transition-colors"
+                onClick={() => {
+                  if (gameStatus === 'playing') {
+                    if (confirm(isEn ? 'Are you sure you want to exit the current game?' : '¿Seguro que deseas salir de la partida actual?')) {
+                      setGameStatus('selection');
+                    }
+                  } else {
+                    setCurrentView('home');
+                  }
+                }}
+                className="p-2.5 bg-zinc-50 rounded-xl border border-zinc-200 hover:bg-zinc-100 transition-all"
               >
-                <X className="w-6 h-6 text-zinc-600" />
+                <X className="w-5 h-5 text-zinc-600" />
               </button>
-              <h2 className="text-2xl font-black text-zinc-900 tracking-tight uppercase">
-                {language === 'en' ? 'Review Accounts' : 'Repasar Cuentas'}
-              </h2>
+              <div>
+                <h2 className="text-xl font-black text-zinc-900 tracking-tight uppercase">
+                  {isEn ? 'Account Quiz Trainer' : 'Juego de Repaso de Cuentas'}
+                </h2>
+                <p className="text-xs text-zinc-500 font-semibold font-mono">
+                  {isEn ? 'MASTER ACCOUNT DEFINITIONS CASUALLY' : 'DOMINA LAS CUENTAS JUGANDO'}
+                </p>
+              </div>
             </div>
+
             {gameStatus === 'playing' && (
-              <div className="flex items-center gap-6">
-                <div className="relative w-16 h-16 flex items-center justify-center">
-                  <div className={`absolute inset-0 rounded-full blur-xl transition-all duration-500 ${
-                    gameTimer <= 3 ? 'bg-red-500/20 opacity-100' : 'bg-emerald-500/10 opacity-0'
-                  }`} />
-                  <svg className="w-full h-full -rotate-90 drop-shadow-sm">
-                    <circle 
-                      cx="32" cy="32" r="28" 
-                      fill="white" stroke="#F3F4F6" strokeWidth="6" 
-                    />
-                    <motion.circle 
-                      cx="32" cy="32" r="28" 
-                      fill="none" 
-                      stroke={gameTimer <= 3 ? "#EF4444" : "#10B981"} 
-                      strokeWidth="6" 
-                      strokeDasharray="175.9"
-                      animate={{ strokeDashoffset: 175.9 * (1 - gameTimer / (gameDifficulty === 'facil' ? 30 : gameDifficulty === 'normal' ? 20 : 10)) }}
-                      transition={{ duration: 0.3, ease: "linear" }}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span className={`absolute font-black text-xl tabular-nums ${
-                    gameTimer <= 3 ? 'text-red-600 animate-pulse scale-110' : 'text-zinc-700'
-                  } transition-all duration-300`}>
-                    {gameTimer}
-                  </span>
+              <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-4 sm:pt-0 border-zinc-100">
+                {/* Timer / Progress */}
+                {gameMode === 'time_attack' ? (
+                  <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-2xl border border-amber-100">
+                    <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
+                    <span className="text-sm font-black text-amber-800 font-mono">
+                      {Math.floor(gameTimer / 60)}:{(gameTimer % 60).toString().padStart(2, '0')}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="bg-zinc-100 px-4 py-2 rounded-2xl font-black text-zinc-700 font-mono text-sm">
+                    {isEn ? `Q: ${gameQuestionIndex}/15` : `Pregunta: ${gameQuestionIndex}/15`}
+                  </div>
+                )}
+
+                {/* Score */}
+                <div className="flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100 text-emerald-800">
+                  <Trophy className="w-4 h-4 text-emerald-600" />
+                  <span className="text-sm font-black font-mono">{gameScore} pts</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-amber-500" />
-                  <span className="text-xl font-black text-zinc-900">{gameScore}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Heart 
-                      key={i} 
-                      className={`w-5 h-5 ${i < gameLives ? 'text-red-500 fill-red-500' : 'text-zinc-300'}`} 
-                    />
-                  ))}
-                </div>
+
+                {/* Streak */}
+                {gameStreak >= 2 && (
+                  <div className="flex items-center gap-1.5 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-full border border-orange-200 text-xs font-black uppercase animate-bounce">
+                    🔥 x{gameStreak}
+                  </div>
+                )}
+
+                {/* Lives only for Time Attack */}
+                {gameMode === 'time_attack' && (
+                  <div className="flex items-center gap-1">
+                    {[...Array(3)].map((_, i) => (
+                      <Heart 
+                        key={i} 
+                        className={`w-5 h-5 transition-all ${i < gameLives ? 'text-red-500 fill-red-500 scale-110' : 'text-zinc-200'}`} 
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -3524,26 +3910,31 @@ export default function App() {
               className="grid md:grid-cols-2 gap-8"
             >
               <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-zinc-100 space-y-6">
-                <h3 className="text-xl font-bold text-zinc-900">
-                  {language === 'en' ? 'Select Modules' : 'Selecciona Módulos'}
-                </h3>
-                <div className="space-y-3">
-                  {/* Master Option: Contabilidad Financiera I */}
+                <div className="space-y-1">
+                  <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight">
+                    {isEn ? '1. Select Modules' : '1. Selecciona Módulos'}
+                  </h3>
+                  <p className="text-xs text-zinc-400 font-medium">
+                    {isEn ? 'Choose which module accounts to include in the quiz pool' : 'Especifica qué módulos repasar en el juego'}
+                  </p>
+                </div>
+
+                <div className="space-y-2.5">
                   <label 
-                    className={`flex items-center justify-between p-4 pl-2 rounded-2xl border-2 cursor-pointer transition-all ${
+                    className={`flex items-center justify-between p-4 pl-3 rounded-2xl border-2 cursor-pointer transition-all ${
                       gameSelectedModules.length === 5 
-                        ? 'border-emerald-600 bg-emerald-100' 
+                        ? 'border-emerald-600 bg-emerald-50' 
                         : 'border-zinc-200 bg-zinc-50 hover:border-zinc-300'
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
                         gameSelectedModules.length === 5 ? 'bg-emerald-600 border-emerald-600' : 'border-zinc-300 bg-white'
                       }`}>
-                        {gameSelectedModules.length === 5 && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        {gameSelectedModules.length === 5 && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                       </div>
-                      <span className="font-black text-zinc-900 text-sm uppercase tracking-tight">
-                        {language === 'en' ? 'Financial Accounting I' : 'Contabilidad Financiera I'}
+                      <span className="font-extrabold text-zinc-900 text-xs uppercase tracking-tight">
+                        {isEn ? 'Financial Accounting I (All Modules)' : 'Contabilidad Financiera I (Todos)'}
                       </span>
                     </div>
                     <input 
@@ -3557,71 +3948,96 @@ export default function App() {
                     />
                   </label>
 
-                  <div className="h-px bg-zinc-100 my-2" />
-
-                  {[1, 2, 3, 4, 5].map(m => (
-                    <label 
-                      key={m} 
-                      className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                        gameSelectedModules.includes(m) 
-                          ? 'border-emerald-500 bg-emerald-50' 
-                          : 'border-zinc-100 hover:border-zinc-200'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${
-                          gameSelectedModules.includes(m) ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-300'
-                        }`}>
-                          {gameSelectedModules.includes(m) && <CheckCircle2 className="w-4 h-4 text-white" />}
-                        </div>
-                        <span className="font-bold text-zinc-700">
-                          {language === 'en' ? `Module ${m}` : `Módulo ${m}`}
-                        </span>
-                      </div>
-                      <input 
-                        type="checkbox" 
-                        className="hidden"
-                        checked={gameSelectedModules.includes(m)}
-                        onChange={() => {
-                          setGameSelectedModules(prev => 
-                            prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
-                          );
-                        }}
-                      />
-                    </label>
-                  ))}
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-xl font-bold text-zinc-900">
-                    {language === 'en' ? 'Difficulty' : 'Dificultad'}
-                  </h3>
-                  <div className="grid grid-cols-3 gap-3">
-                    {(['facil', 'normal', 'extremo'] as const).map((d) => (
-                      <button
-                        key={d}
-                        onClick={() => setGameDifficulty(d)}
-                        className={`py-3 px-2 rounded-2xl border-2 font-bold text-xs uppercase tracking-wider transition-all ${
-                          gameDifficulty === d
-                            ? 'border-emerald-600 bg-emerald-100 text-emerald-700'
-                            : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {[1, 2, 3, 4, 5].map(m => (
+                      <label 
+                        key={m} 
+                        className={`flex items-center justify-between p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                          gameSelectedModules.includes(m) 
+                            ? 'border-emerald-500 bg-emerald-50/50' 
+                            : 'border-zinc-100 bg-zinc-50/50 hover:border-zinc-200'
                         }`}
                       >
-                        {d === 'facil' 
-                          ? (language === 'en' ? 'Easy (30s)' : 'Fácil (30s)') 
-                          : d === 'normal' 
-                          ? (language === 'en' ? 'Normal (20s)' : 'Normal (20s)') 
-                          : (language === 'en' ? 'Extreme (10s)' : 'Extremo (10s)')}
-                      </button>
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                            gameSelectedModules.includes(m) ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-300 bg-white'
+                          }`}>
+                            {gameSelectedModules.includes(m) && <CheckCircle2 className="w-3 h-3 text-white" />}
+                          </div>
+                          <span className="text-xs font-bold text-zinc-800">
+                            {isEn ? `Module ${m}` : `Módulo ${m}`}
+                          </span>
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          className="hidden"
+                          checked={gameSelectedModules.includes(m)}
+                          onChange={() => {
+                            setGameSelectedModules(prev => 
+                              prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]
+                            );
+                          }}
+                        />
+                      </label>
                     ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight">
+                      {isEn ? '2. Game Mode' : '2. Modo de Juego'}
+                    </h3>
+                    <p className="text-xs text-zinc-400 font-medium">
+                      {isEn ? 'Select a casual study or time-attack method' : 'Configura tu estilo de repaso'}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setGameMode('casual')}
+                      className={`flex flex-col text-left p-4 rounded-2xl border-2 transition-all ${
+                        gameMode === 'casual'
+                          ? 'border-emerald-500 bg-emerald-50/40 text-emerald-950'
+                          : 'border-zinc-100 bg-white hover:border-zinc-300 text-zinc-600'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 font-black text-sm uppercase tracking-wider">
+                        <span>🎓</span>
+                        <span>{isEn ? 'Relaxed Practice' : 'Práctica Relajada'}</span>
+                      </div>
+                      <p className="text-xs text-zinc-500 font-medium mt-1 leading-normal">
+                        {isEn ? '15 randomized questions focusing strictly on account descriptions. Direct, self-paced, infinite lives.' : '15 preguntas aleatorias enfocadas en repasos de definiciones. Sin tiempo, con ritmo propio.'}
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setGameMode('time_attack')}
+                      className={`flex flex-col text-left p-4 rounded-2xl border-2 transition-all ${
+                        gameMode === 'time_attack'
+                          ? 'border-emerald-500 bg-emerald-50/40 text-emerald-950'
+                          : 'border-zinc-100 bg-white hover:border-zinc-300 text-zinc-600'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 font-black text-sm uppercase tracking-wider">
+                        <span>⚡</span>
+                        <span>{isEn ? 'Time Attack (5 Minutes)' : 'Contra Reloj (5 Minutos)'}</span>
+                      </div>
+                      <p className="text-xs text-zinc-500 font-medium mt-1 leading-normal">
+                        {isEn ? 'A dynamic 5-minute single-player countdown with 3 lives. Get as many points as possible before the timer runs out!' : 'Batalla contra el reloj de 5 minutos individuales con 3 vidas. ¡Verifica cuántas clavas antes de que expire el tiempo!'}
+                      </p>
+                    </button>
                   </div>
                 </div>
 
                 <button 
                   onClick={startGame}
-                  className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-lg shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95"
+                  className="w-full py-4.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-base shadow-lg shadow-emerald-200/50 transition-all flex items-center justify-center gap-2 tracking-widest uppercase mt-4 active:scale-95"
                 >
-                  {language === 'en' ? 'START GAME' : 'EMPEZAR JUEGO'}
+                  <span>🎮</span>
+                  <span>{isEn ? 'START DESAFÍO' : 'COMENZAR DESAFÍO'}</span>
                 </button>
               </div>
 
@@ -3629,8 +4045,8 @@ export default function App() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <History className="w-5 h-5 text-zinc-400" />
-                    <h3 className="text-xl font-bold text-zinc-900">
-                      {language === 'en' ? 'Latest Scores' : 'Últimas Puntuaciones'}
+                    <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight">
+                      {isEn ? 'Personal Records' : 'Clasificaciones Personales'}
                     </h3>
                   </div>
                   {gameHistory.length > 0 && (
@@ -3644,7 +4060,7 @@ export default function App() {
                           gameSortCriteria === 'date' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
                         }`}
                       >
-                        {language === 'en' ? 'Date' : 'Fecha'} {gameSortCriteria === 'date' && (gameSortDirection === 'asc' ? '↑' : '↓')}
+                        {isEn ? 'Date' : 'Fecha'} {gameSortCriteria === 'date' && (gameSortDirection === 'asc' ? '↑' : '↓')}
                       </button>
                       <button 
                         onClick={() => {
@@ -3655,22 +4071,21 @@ export default function App() {
                           gameSortCriteria === 'score' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
                         }`}
                       >
-                        {language === 'en' ? 'Points' : 'Puntos'} {gameSortCriteria === 'score' && (gameSortDirection === 'asc' ? '↑' : '↓')}
+                        {isEn ? 'Points' : 'Puntos'} {gameSortCriteria === 'score' && (gameSortDirection === 'asc' ? '↑' : '↓')}
                       </button>
                     </div>
                   )}
                 </div>
                 {gameHistory.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-zinc-400 space-y-2">
-                    <Trophy className="w-12 h-12 opacity-20" />
-                    <p className="font-medium">
-                      {language === 'en' ? 'No games played yet' : 'Aún no hay partidas'}
+                  <div className="flex flex-col items-center justify-center py-16 text-zinc-400 space-y-3">
+                    <Trophy className="w-12 h-12 opacity-25" />
+                    <p className="font-semibold text-sm">
+                      {isEn ? 'No game matches logged yet' : 'Aún no se registran partidas'}
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
                     {sortedHistory.map((entry, i) => {
-                      // Find original index in gameHistory for editing
                       const originalIndex = gameHistory.findIndex(h => h === entry);
                       return (
                         <div key={i} className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
@@ -3705,15 +4120,15 @@ export default function App() {
                               ) : (
                                 <div className="flex items-center gap-2 group">
                                   <span className="text-sm font-black text-zinc-900">
-                                    {entry.name || (language === 'en' ? 'Anonymous' : 'Anónimo')}
+                                    {entry.name || (isEn ? 'Anonymous' : 'Anónimo')}
                                   </span>
                                   <button 
                                     onClick={() => {
                                       setEditingHistoryIndex(originalIndex);
-                                      setEditingHistoryName(entry.name || (language === 'en' ? 'Anonymous' : 'Anónimo'));
+                                      setEditingHistoryName(entry.name || (isEn ? 'Anonymous' : 'Anónimo'));
                                     }}
                                     className="p-1 text-zinc-400 hover:text-emerald-600 opacity-0 group-hover:opacity-100 transition-all"
-                                    title={language === 'en' ? 'Edit name' : 'Editar nombre'}
+                                    title={isEn ? 'Edit name' : 'Editar nombre'}
                                   >
                                     <Settings className="w-3 h-3" />
                                   </button>
@@ -3723,8 +4138,8 @@ export default function App() {
                             </div>
                             <span className="text-xs font-bold text-zinc-600">
                               {entry.modules.length === 5 
-                                ? (language === 'en' ? 'Financial Accounting I' : 'Contabilidad Financiera I') 
-                                : (language === 'en' ? `Modules: ${entry.modules.join(', ')}` : `Módulos: ${entry.modules.join(', ')}`)}
+                                ? (isEn ? 'Financial Accounting I' : 'Contabilidad Financiera I') 
+                                : (isEn ? `Modules: ${entry.modules.join(', ')}` : `Módulos: ${entry.modules.join(', ')}`)}
                             </span>
                           </div>
                           <span className="text-xl font-black text-emerald-600 shrink-0">{entry.score}</span>
@@ -3740,344 +4155,190 @@ export default function App() {
           {gameStatus === 'playing' && currentQuestion && (
             <motion.div 
               key={currentQuestion.code}
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               className="max-w-2xl mx-auto"
             >
-              <div className="bg-white p-12 rounded-[3rem] shadow-2xl border border-zinc-100 text-center space-y-10 relative overflow-hidden">
-                {/* Heart Break Animation */}
-                <AnimatePresence>
-                  {lastAnswerCorrect === false && (
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm"
-                    >
-                      <div className="relative w-32 h-32">
-                        {/* Left half of the heart */}
-                        <motion.div
-                          initial={{ x: 0, rotate: 0, opacity: 1 }}
-                          animate={{ x: -40, rotate: -25, y: 20, opacity: 0 }}
-                          transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-                          className="absolute inset-0 flex items-center justify-center"
-                        >
-                          <Heart className="w-32 h-32 text-red-500 fill-red-500" style={{ clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' }} />
-                        </motion.div>
-                        {/* Right half of the heart */}
-                        <motion.div
-                          initial={{ x: 0, rotate: 0, opacity: 1 }}
-                          animate={{ x: 40, rotate: 25, y: 20, opacity: 0 }}
-                          transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-                          className="absolute inset-0 flex items-center justify-center"
-                        >
-                          <Heart className="w-32 h-32 text-red-500 fill-red-500" style={{ clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)' }} />
-                        </motion.div>
-                        {/* Initial full heart pop then disappear */}
-                        <motion.div
-                          initial={{ scale: 0, opacity: 1 }}
-                          animate={{ scale: [0, 1.2, 1], opacity: [1, 1, 0] }}
-                          transition={{ 
-                            scale: { duration: 0.3 },
-                            opacity: { delay: 0.3, duration: 0.01 }
-                          }}
-                          className="absolute inset-0 flex items-center justify-center"
-                        >
-                          <Heart className="w-32 h-32 text-red-500 fill-red-500" />
-                        </motion.div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="space-y-4">
-                  <span className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em]">
-                    {language === 'en' ? (
-                      gameQuestionType === 'code' ? 'What is the account number?' : 
-                      gameQuestionType === 'entry' ? 'Indicate the account number and whether it is debited or credited' :
-                      gameQuestionType === 'section' ? 'Where is this account placed in the balance sheet?' :
-                      'What balances can this account have?'
-                    ) : (
-                      gameQuestionType === 'code' ? '¿Cuál es el número de cuenta?' : 
-                      gameQuestionType === 'entry' ? 'Indica el número de cuenta y si se carga o abona' :
-                      gameQuestionType === 'section' ? '¿Dónde figura esta cuenta en el balance?' :
-                      '¿Qué saldos puede tener esta cuenta?'
-                    )}
+              <div className="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-zinc-100 space-y-8 relative overflow-hidden">
+                <div className="space-y-3 text-center">
+                  <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full inline-block">
+                    {currentGameQuestionType === 'def_to_account'
+                      ? (isEn ? 'IDENTIFY THE CORRESPONDING ACCOUNT' : 'ADIVINA LA CUENTA CORRESPONDIENTE')
+                      : (isEn ? 'IDENTIFY WHAT CONTINUES IN THIS ACCOUNT' : '¿QUÉ HECHO REGISTRA ESTA CUENTA?')}
                   </span>
-                  <div className="flex flex-col items-center gap-2">
-                    <h3 className="text-4xl font-black text-zinc-900 leading-tight">
-                      {gameQuestionType === 'balance' || gameQuestionType === 'section' 
-                        ? `${currentQuestion.code} - ${(language === 'en' ? (ACCOUNT_MAPPING_EN[currentQuestion.code] || currentQuestion.name) : currentQuestion.name)}`
-                        : (language === 'en' ? translateScenarioText(currentQuestionText, 'en') : currentQuestionText)}
-                    </h3>
+                  
+                  <div className="p-6 md:p-8 bg-zinc-50 rounded-2xl border border-zinc-100 flex flex-col items-center justify-center min-h-[140px]">
+                    {currentGameQuestionType === 'def_to_account' ? (
+                      <p className="text-lg md:text-xl font-bold text-zinc-900 leading-normal tracking-tight balance-title">
+                        {currentQuestionText}
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        <span className="text-5xl font-black text-emerald-600 font-mono tracking-tight block">
+                          {currentQuestion.code}
+                        </span>
+                        <span className="text-lg font-extrabold text-zinc-700 tracking-tight block uppercase">
+                          {isEn ? (ACCOUNT_MAPPING_EN[currentQuestion.code] || currentQuestion.name) : currentQuestion.name}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <form onSubmit={handleGameAnswer} className="space-y-6">
-                  {gameQuestionType === 'code' || gameQuestionType === 'entry' ? (
-                    <div className="space-y-8">
-                       <div className="relative">
-                        <input 
-                          autoFocus
-                          type="text"
-                          value={userAnswer}
-                          onChange={(e) => setUserAnswer(e.target.value)}
-                          placeholder={language === 'en' ? "Account code..." : "Código de cuenta..."}
-                          className={`w-full text-center text-5xl font-black p-8 rounded-[2rem] border-4 transition-all outline-none ${
-                            lastAnswerCorrect === true ? 'border-emerald-500 bg-emerald-50 text-emerald-600' :
-                            lastAnswerCorrect === false ? 'border-red-500 bg-red-50 text-red-600 animate-shake' :
-                            'border-zinc-100 bg-zinc-50 focus:border-emerald-500 focus:bg-white'
-                          }`}
-                        />
-                        {lastAnswerCorrect === true && (
-                          <motion.div 
-                            initial={{ scale: 0 }} animate={{ scale: 1 }}
-                            className="absolute -top-4 -right-4 w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg"
-                          >
-                            <CheckCircle2 className="w-6 h-6 text-white" />
-                          </motion.div>
-                        )}
-                        {lastAnswerCorrect === false && (
-                          <motion.div 
-                            initial={{ scale: 0 }} animate={{ scale: 1 }}
-                            className="absolute -top-4 -right-4 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center shadow-lg"
-                          >
-                            <X className="w-6 h-6 text-white" />
-                          </motion.div>
-                        )}
-                      </div>
+                {/* Multiple choices options list */}
+                <div className="grid grid-cols-1 gap-3.5 pt-2">
+                  {gameOptions.map((opt, idx) => {
+                    const isSelected = gameSelectedOption === opt;
+                    const isCorrect = opt === gameCorrectOption;
+                    const showFeedback = gameSelectedOption !== null;
 
-                      {gameQuestionType === 'entry' && (
-                        <div className="grid grid-cols-2 gap-4">
-                          <button
-                            type="button"
-                            onClick={() => setUserEntryChoice('debit')}
-                            className={`py-6 rounded-2xl border-4 font-black text-xl transition-all ${
-                              userEntryChoice === 'debit'
-                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                                : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'
-                            }`}
-                          >
-                            {language === 'en' ? 'DEBIT' : 'CARGA (DEBE)'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setUserEntryChoice('credit')}
-                            className={`py-6 rounded-2xl border-4 font-black text-xl transition-all ${
-                              userEntryChoice === 'credit'
-                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                                : 'border-zinc-100 bg-zinc-50 text-zinc-400 hover:border-zinc-200'
-                            }`}
-                          >
-                            {language === 'en' ? 'CREDIT' : 'ABONA (HABER)'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ) : gameQuestionType === 'section' ? (
-                    <div className="grid grid-cols-1 gap-3">
-                      {[
-                        'Activo no corriente',
-                        'Activo corriente',
-                        'Patrimonio neto',
-                        'Pasivo no corriente',
-                        'Pasivo corriente'
-                      ].map(section => (
-                        <button
-                          key={section}
-                          type="button"
-                          onClick={() => setSelectedSection(section)}
-                          className={`p-5 rounded-2xl border-4 font-bold text-xl transition-all flex items-center justify-between ${
-                            selectedSection === section
-                              ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                              : 'border-zinc-100 bg-zinc-50 text-zinc-500 hover:border-zinc-200'
-                          }`}
-                        >
-                          {language === 'en' ? (SECTION_DISPLAY[section] || section) : section}
-                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                            selectedSection === section ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-300'
-                          }`}>
-                            {selectedSection === section && <div className="w-2 h-2 bg-white rounded-full" />}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3">
-                      {['Saldo deudor', 'Saldo acreedor', 'Saldo nulo'].map(balance => (
-                        <button
-                          key={balance}
-                          type="button"
-                          onClick={() => {
-                            setSelectedBalances(prev => 
-                              prev.includes(balance) ? prev.filter(b => b !== balance) : [...prev, balance]
-                            );
-                          }}
-                          className={`p-5 rounded-2xl border-4 font-bold text-xl transition-all flex items-center justify-between ${
-                            selectedBalances.includes(balance)
-                              ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                              : 'border-zinc-100 bg-zinc-50 text-zinc-500 hover:border-zinc-200'
-                          } ${
-                            lastAnswerCorrect === false && getCorrectBalances(currentQuestion.code).includes(balance)
-                              ? 'border-emerald-200 bg-emerald-50'
-                              : ''
-                          }`}
-                        >
-                          {language === 'en' ? (BALANCE_DISPLAY[balance] || balance) : balance}
-                          <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${
-                            selectedBalances.includes(balance) ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-300'
-                          }`}>
-                            {selectedBalances.includes(balance) && <CheckCircle2 className="w-4 h-4 text-white" />}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <button 
-                    type="submit"
-                    disabled={
-                      (gameQuestionType === 'balance' && selectedBalances.length === 0) ||
-                      (gameQuestionType === 'section' && !selectedSection) ||
-                      (gameQuestionType === 'entry' && (!userAnswer.trim() || !userEntryChoice))
+                    let btnStyles = "border-zinc-200 hover:border-zinc-300 bg-white text-zinc-800";
+                    if (showFeedback) {
+                      if (isCorrect) {
+                        btnStyles = "border-emerald-600 bg-emerald-50 text-emerald-950 scale-[1.01]";
+                      } else if (isSelected) {
+                        btnStyles = "border-red-600 bg-red-50 text-red-950 animate-shake";
+                      } else {
+                        btnStyles = "border-zinc-100 bg-zinc-50/50 text-zinc-400 opacity-60";
+                      }
                     }
-                    className="w-full py-5 bg-zinc-900 text-white rounded-[1.5rem] font-black text-xl shadow-xl hover:bg-black transition-all active:scale-95 disabled:opacity-50"
-                  >
-                    {gameQuestionType === 'balance' || gameQuestionType === 'section' 
-                      ? (language === 'en' ? 'CONFIRM SELECTION' : 'CONFIRMAR SELECCIÓN') 
-                      : (language === 'en' ? 'CHECK' : 'COMPROBAR')}
-                  </button>
-                </form>
+
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => submitAnswer(opt)}
+                        disabled={showFeedback}
+                        className={`p-5 rounded-2xl border-2 font-bold text-sm md:text-base text-left flex items-start justify-between transition-all gap-3 ${btnStyles}`}
+                      >
+                        <span className="leading-tight">{opt}</span>
+                        {showFeedback && isCorrect && (
+                          <div className="w-5 h-5 bg-emerald-600 text-white rounded-full flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          </div>
+                        )}
+                        {showFeedback && isSelected && !isCorrect && (
+                          <div className="w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center shrink-0">
+                            <X className="w-3.5 h-3.5" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </motion.div>
           )}
 
           {gameStatus === 'gameover' && (
             <motion.div 
-               initial={{ opacity: 0, scale: 0.9 }}
+               initial={{ opacity: 0, scale: 0.95 }}
                animate={{ opacity: 1, scale: 1 }}
-               className={`${isScoreSaved && missedQuestions.length > 0 ? 'max-w-xl' : 'max-w-md'} mx-auto w-full transition-all duration-500`}
+               className="max-w-2xl mx-auto w-full"
             >
-              <div className="bg-white p-12 rounded-[3rem] shadow-2xl border border-zinc-100 text-center space-y-8">
-                <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-                  <AlertCircle className="w-12 h-12 text-red-600" />
+              <div className="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-zinc-100 text-center space-y-8">
+                <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto">
+                  <Trophy className="w-10 h-10 text-emerald-600" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-4xl font-black text-zinc-900 uppercase tracking-tight">GAME OVER</h3>
-                  <p className="text-zinc-500 font-medium">
-                    {language === 'en' ? 'You have run out of lives!' : '¡Te has quedado sin vidas!'}
+                  <h3 className="text-3xl font-black text-zinc-950 uppercase tracking-tight">
+                    {isEn ? 'Match Completed!' : '¡Prueba Completada!'}
+                  </h3>
+                  <p className="text-zinc-500 font-medium text-sm">
+                    {isEn ? 'Review your results and continuous stats' : 'Verifica tu progreso y repasa los resultados'}
                   </p>
                 </div>
-                <div className="p-6 bg-zinc-50 rounded-3xl border border-zinc-100">
-                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest block mb-1">
-                    {language === 'en' ? 'Final Score' : 'Puntuación Final'}
-                  </span>
-                  <span className="text-5xl font-black text-emerald-600">{gameScore}</span>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-5 bg-zinc-50 rounded-2xl border border-zinc-100 text-center">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">
+                      {isEn ? 'Points Achieved' : 'Puntos Conseguidos'}
+                    </span>
+                    <span className="text-3xl font-black text-emerald-600">{gameScore}</span>
+                  </div>
+                  <div className="p-5 bg-zinc-50 rounded-2xl border border-zinc-100 text-center">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">
+                      {isEn ? 'Max Streak' : 'Racha Máxima'}
+                    </span>
+                    <span className="text-3xl font-black text-orange-600">🔥 {gameMaxStreak}</span>
+                  </div>
                 </div>
                 
-                {!isScoreSaved ? (
+                {!isScoreSaved && gameMode === 'time_attack' ? (
                   <div className="space-y-4">
                     <div className="text-left space-y-1.5">
-                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-4">
-                        {language === 'en' ? 'Your Name' : 'Tu Nombre'}
+                      <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">
+                        {isEn ? 'Your Name' : 'Tu Nombre'}
                       </label>
                       <input 
                         type="text"
                         value={playerName}
                         onChange={(e) => setPlayerName(e.target.value)}
-                        placeholder={language === 'en' ? "Write your name..." : "Escribe tu nombre..."}
-                        className="w-full p-4 bg-zinc-50 border-2 border-zinc-100 rounded-2xl focus:border-emerald-500 outline-none font-bold text-zinc-700 transition-all"
+                        placeholder={isEn ? "Write your name..." : "Escribe tu nombre..."}
+                        className="w-full p-4 bg-zinc-50 border-2 border-zinc-100 rounded-2xl focus:border-emerald-500 outline-none font-bold text-zinc-700 transition-all text-sm"
                         autoFocus
                       />
                     </div>
                     <button 
                       onClick={() => saveScore(gameScore, playerName)}
-                      className="w-full py-5 bg-zinc-900 text-white rounded-[1.5rem] font-black text-xl shadow-xl hover:bg-black transition-all active:scale-95"
+                      className="w-full py-4.5 bg-zinc-900 text-white hover:bg-black rounded-2xl font-black text-base shadow-xl transition-all active:scale-95 text-center uppercase tracking-wider"
                     >
-                      {language === 'en' ? 'SAVE SCORE' : 'GUARDAR PUNTUACIÓN'}
+                      {isEn ? 'SAVE RECORD' : 'GUARDAR RECORD'}
                     </button>
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center gap-2 text-emerald-700 font-bold">
-                      <CheckCircle2 className="w-5 h-5" />
-                      {language === 'en' ? 'Score saved!' : '¡Puntuación guardada!'}
-                    </div>
+                    {gameMode === 'time_attack' && (
+                      <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center gap-2 text-emerald-700 font-bold text-sm">
+                        <CheckCircle2 className="w-4 h-4" />
+                        {isEn ? 'Score successfully recorded!' : '¡Puntuación guardada con éxito!'}
+                      </div>
+                    )}
 
                     {missedQuestions.length > 0 && (
-                      <div className="space-y-4 text-left">
-                        <div className="flex items-center gap-2 px-2">
+                      <div className="space-y-4 text-left border-t border-zinc-100 pt-6">
+                        <div className="flex items-center gap-2 px-1">
                           <AlertCircle className="w-4 h-4 text-red-500" />
-                          <h4 className="text-sm font-bold text-zinc-900 uppercase tracking-widest">
-                            {language === 'en' ? 'Review errors' : 'Repaso de errores'}
+                          <h4 className="text-xs font-black text-zinc-900 uppercase tracking-widest">
+                            {isEn ? 'Review Mistakes' : 'Repaso de Errores cometidos'}
                           </h4>
                         </div>
-                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-zinc-200">
-                          {missedQuestions.map((q, i) => {
-                            const getLocalizedValue = (val: string) => {
-                              if (language !== 'en') return val;
-                              return val.split(', ').map(v => {
-                                const trimmed = v.trim();
-                                if (SECTION_DISPLAY[trimmed]) return SECTION_DISPLAY[trimmed];
-                                if (BALANCE_DISPLAY[trimmed]) return BALANCE_DISPLAY[trimmed];
-                                const match = trimmed.match(/^(\d+)\s*\((Debe|Haber|\?)\)$/i);
-                                if (match) {
-                                  const code = match[1];
-                                  const action = match[2];
-                                  const localizedAction = action === 'Debe' ? 'Debit' : action === 'Haber' ? 'Credit' : '?';
-                                  return `${code} (${localizedAction})`;
-                                }
-                                if (trimmed === 'Sin respuesta') return 'No answer';
-                                return trimmed;
-                              }).join(', ');
-                            };
-
-                            const localizedType = q.type === 'Código de cuenta' 
-                              ? (language === 'en' ? 'Account code' : 'Código de cuenta') 
-                              : q.type === 'Asiento contable' 
-                              ? (language === 'en' ? 'Accounting entry' : 'Asiento contable') 
-                              : q.type === 'Sección del balance' 
-                              ? (language === 'en' ? 'Balance section' : 'Sección del balance') 
-                              : (language === 'en' ? 'Possible balances' : 'Saldos posibles');
-
-                            const localizedQuestion = language === 'en' 
-                              ? (q.type === 'Sección del balance' || q.type === 'Saldos posibles'
-                                  ? `${q.code} - ${(ACCOUNT_MAPPING_EN[q.code] || q.question.split(' - ')[1])}`
-                                  : translateScenarioText(q.question, 'en'))
-                              : q.question;
-
-                            return (
-                              <div key={i} className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 space-y-2">
-                                <div className="flex justify-between items-start gap-2">
-                                  <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">{localizedType}</span>
-                                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">#{q.code}</span>
+                        <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
+                          {missedQuestions.map((q, i) => (
+                            <div key={i} className="p-4.5 bg-zinc-50 rounded-2xl border border-zinc-100 space-y-3.5">
+                              <div className="flex justify-between items-start gap-2">
+                                <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2.5 py-1 rounded-md">
+                                  {q.type}
+                                </span>
+                                <span className="text-[10px] font-bold text-zinc-400 font-mono">#{q.code}</span>
+                              </div>
+                              <p className="text-sm font-extrabold text-zinc-800 leading-normal">{q.question}</p>
+                              
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-zinc-100/60">
+                                <div className="space-y-0.5">
+                                  <span className="text-[9px] font-black text-red-500 uppercase tracking-widest block">
+                                    {isEn ? 'Your Choice' : 'Tu Selección'}
+                                  </span>
+                                  <span className="text-xs font-bold text-red-600 leading-normal">{q.userAnswer}</span>
                                 </div>
-                                <p className="text-sm font-bold text-zinc-800 leading-tight">{localizedQuestion}</p>
-                                <div className="grid grid-cols-2 gap-2 pt-1">
-                                  <div>
-                                    <span className="text-[9px] font-bold text-red-400 uppercase tracking-widest block">
-                                      {language === 'en' ? 'Your answer' : 'Tu respuesta'}
-                                    </span>
-                                    <span className="text-xs font-medium text-red-600 line-clamp-2">{getLocalizedValue(q.userAnswer)}</span>
-                                  </div>
-                                  <div>
-                                    <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest block">
-                                      {language === 'en' ? 'Correct' : 'Correcta'}
-                                    </span>
-                                    <span className="text-xs font-bold text-emerald-700 line-clamp-2">{getLocalizedValue(q.correctAnswer)}</span>
-                                  </div>
+                                <div className="space-y-0.5">
+                                  <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest block">
+                                    {isEn ? 'Correct Match' : 'Cuentas Correctas'}
+                                  </span>
+                                  <span className="text-xs font-black text-emerald-700 leading-normal">{q.correctAnswer}</span>
                                 </div>
                               </div>
-                            );
-                          })}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
 
                     <button 
                       onClick={() => setGameStatus('selection')}
-                      className="w-full py-5 bg-emerald-600 text-white rounded-[1.5rem] font-black text-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95"
+                      className="w-full py-4.5 bg-emerald-600 text-white rounded-2xl font-black text-base shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95 text-center uppercase tracking-widest"
                     >
-                      {language === 'en' ? 'TRY AGAIN' : 'VOLVER A INTENTAR'}
+                      {isEn ? 'PLAY ANOTHER ROUND' : 'JUGAR OTRA PARTIDA'}
                     </button>
                   </div>
                 )}
