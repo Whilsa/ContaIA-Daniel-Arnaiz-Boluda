@@ -28,7 +28,9 @@ import {
   History,
   Monitor,
   Globe,
-  Clock
+  Clock,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DigitalWhiteboard } from './components/DigitalWhiteboard';
@@ -2675,6 +2677,113 @@ export default function App() {
   const [gameSelectedOption, setGameSelectedOption] = useState<string | null>(null);
   const [currentGameQuestionType, setCurrentGameQuestionType] = useState<'def_to_account' | 'account_to_def'>('def_to_account');
   
+  // Game enhancements (XP, Audio & Ranks)
+  const [gameAudioMuted, setGameAudioMuted] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('contabilidad_game_audio_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [totalXP, setTotalXP] = useState<number>(() => {
+    try {
+      return Number(localStorage.getItem('accounting_total_xp')) || 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [showRankInfo, setShowRankInfo] = useState(false);
+  const [xpEarnedThisMatch, setXpEarnedThisMatch] = useState(0);
+
+  const getPlayerRank = (score: number, isEn: boolean) => {
+    if (score >= 300) return isEn ? "✨ Financial Guru ✨" : "✨ Gurú Financiero ✨";
+    if (score >= 200) return isEn ? "🔍 Master Auditor 🔍" : "🔍 Auditor Certificado 🔍";
+    if (score >= 100) return isEn ? "⚡ Senior Ledger Master ⚡" : "⚡ Tenedor de Libros Senior ⚡";
+    if (score >= 50) return isEn ? "📊 Account Specialist 📊" : "📊 Especialista Contable 📊";
+    return isEn ? "🎓 Accounting Apprentice" : "🎓 Aprendiz de Contabilidad";
+  };
+
+  const getRankColor = (score: number) => {
+    if (score >= 300) return "from-amber-500 to-orange-500 text-amber-600 bg-amber-50 border-amber-200";
+    if (score >= 200) return "from-purple-500 to-pink-500 text-purple-600 bg-purple-50 border-purple-200";
+    if (score >= 100) return "from-blue-500 to-indigo-500 text-blue-600 bg-blue-50 border-blue-200";
+    if (score >= 50) return "from-emerald-500 to-teal-500 text-emerald-600 bg-emerald-50 border-emerald-200";
+    return "from-zinc-500 to-slate-500 text-zinc-600 bg-zinc-50 border-zinc-200";
+  };
+
+  const playSynthSound = (type: 'click' | 'correct' | 'wrong' | 'streak' | 'gameover') => {
+    if (gameAudioMuted) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      const now = ctx.currentTime;
+      
+      if (type === 'click') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(580, now);
+        osc.frequency.exponentialRampToValueAtTime(290, now + 0.08);
+        gainNode.gain.setValueAtTime(0.12, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === 'correct') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.18); // C6
+        gainNode.gain.setValueAtTime(0.18, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+        osc.start(now);
+        osc.stop(now + 0.22);
+      } else if (type === 'streak') {
+        // High-pitched retro positive chime! Double sweet beep
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.07); // E5
+        osc.frequency.setValueAtTime(783.99, now + 0.14); // G5
+        osc.frequency.setValueAtTime(1046.50, now + 0.21); // C6
+        gainNode.gain.setValueAtTime(0.15, now);
+        gainNode.gain.setValueAtTime(0.15, now + 0.07);
+        gainNode.gain.setValueAtTime(0.15, now + 0.14);
+        gainNode.gain.setValueAtTime(0.2, now + 0.21);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.36);
+      } else if (type === 'wrong') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(90, now + 0.28);
+        gainNode.gain.setValueAtTime(0.12, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'gameover') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(330, now);
+        osc.frequency.linearRampToValueAtTime(165, now + 0.5);
+        gainNode.gain.setValueAtTime(0.15, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.55);
+        osc.start(now);
+        osc.stop(now + 0.55);
+      }
+    } catch (err) {
+      // Audio context might be restricted or unsupported on first render, swallow error gracefully
+    }
+  };
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const pizarraContainerRef = useRef<HTMLDivElement>(null);
@@ -3750,11 +3859,29 @@ export default function App() {
       setGameMaxStreak(prev => Math.max(prev, newStreak));
 
       const points = 10 + (newStreak >= 3 ? 5 : 0); // Bonus points for streak
-      setGameScore(prev => prev + points);
+      const currentFinalScore = gameScore + points;
+      setGameScore(currentFinalScore);
+
+      // Play correct sounds and streak cues
+      if (newStreak >= 3) {
+        playSynthSound('streak');
+      } else {
+        playSynthSound('correct');
+      }
 
       setTimeout(() => {
         // Advance
         if (gameMode === 'casual' && gameQuestionIndex >= 15) {
+          const matchXp = currentFinalScore * 10;
+          setXpEarnedThisMatch(matchXp);
+          setTotalXP(prev => {
+            const nextXp = prev + matchXp;
+            try {
+              localStorage.setItem('accounting_total_xp', String(nextXp));
+            } catch (e) {}
+            return nextXp;
+          });
+          playSynthSound('gameover');
           setGameStatus('gameover');
           setPlayerName('');
           setIsScoreSaved(false);
@@ -3767,6 +3894,7 @@ export default function App() {
     } else {
       setLastAnswerCorrect(false);
       setGameStreak(0);
+      playSynthSound('wrong');
 
       const targetLabel = language === 'en' ? 'Correct answer: ' : 'Respuesta correcta: ';
       setShowToast({
@@ -3787,32 +3915,53 @@ export default function App() {
           : (language === 'en' ? 'Account to Definition' : 'Cuenta a Definición')
       }]);
 
+      let willBeGameOver = false;
+
       if (gameMode === 'time_attack') {
-        setGameLives(prev => {
-          const newLives = prev - 1;
-          if (newLives <= 0) {
-            setTimeout(() => {
-              setGameStatus('gameover');
-              setPlayerName('');
-              setIsScoreSaved(false);
-            }, 2000);
-          }
-          return newLives;
-        });
+        const nextLives = gameLives - 1;
+        setGameLives(nextLives);
+        if (nextLives <= 0) {
+          willBeGameOver = true;
+          const matchXp = gameScore * 10;
+          setXpEarnedThisMatch(matchXp);
+          setTotalXP(prev => {
+            const nextXp = prev + matchXp;
+            try {
+              localStorage.setItem('accounting_total_xp', String(nextXp));
+            } catch (e) {}
+            return nextXp;
+          });
+          playSynthSound('gameover');
+          setTimeout(() => {
+            setGameStatus('gameover');
+            setPlayerName('');
+            setIsScoreSaved(false);
+          }, 2000);
+        }
       }
 
-      setTimeout(() => {
-        if (gameMode === 'casual' && gameQuestionIndex >= 15) {
-          setGameStatus('gameover');
-          setPlayerName('');
-          setIsScoreSaved(false);
-        } else if (gameMode === 'time_attack' && gameLives <= 1) {
-          // Will transition to gameover
-        } else {
-          setGameQuestionIndex(prev => prev + 1);
-          generateQuestion();
-        }
-      }, 2500);
+      if (!willBeGameOver) {
+        setTimeout(() => {
+          if (gameMode === 'casual' && gameQuestionIndex >= 15) {
+            const matchXp = gameScore * 10;
+            setXpEarnedThisMatch(matchXp);
+            setTotalXP(prev => {
+              const nextXp = prev + matchXp;
+              try {
+                localStorage.setItem('accounting_total_xp', String(nextXp));
+              } catch (e) {}
+              return nextXp;
+            });
+            playSynthSound('gameover');
+            setGameStatus('gameover');
+            setPlayerName('');
+            setIsScoreSaved(false);
+          } else {
+            setGameQuestionIndex(prev => prev + 1);
+            generateQuestion();
+          }
+        }, 2500);
+      }
     }
   };
 
@@ -3833,10 +3982,11 @@ export default function App() {
       <div className="min-h-screen bg-zinc-50 font-sans p-4 md:p-8">
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-[2rem] border border-zinc-100 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-[2rem] border border-zinc-100 shadow-sm">
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => {
+                  playSynthSound('click');
                   if (gameStatus === 'playing') {
                     if (confirm(isEn ? 'Are you sure you want to exit the current game?' : '¿Seguro que deseas salir de la partida actual?')) {
                       setGameStatus('selection');
@@ -3845,62 +3995,92 @@ export default function App() {
                     setCurrentView('home');
                   }
                 }}
-                className="p-2.5 bg-zinc-50 rounded-xl border border-zinc-200 hover:bg-zinc-100 transition-all"
+                className="p-2.5 bg-zinc-50 rounded-xl border border-zinc-200 hover:bg-zinc-100 transition-all shrink-0"
               >
                 <X className="w-5 h-5 text-zinc-600" />
               </button>
               <div>
-                <h2 className="text-xl font-black text-zinc-900 tracking-tight uppercase">
-                  {isEn ? 'Account Quiz Trainer' : 'Juego de Repaso de Cuentas'}
-                </h2>
-                <p className="text-xs text-zinc-500 font-semibold font-mono">
-                  {isEn ? 'MASTER ACCOUNT DEFINITIONS CASUALLY' : 'DOMINA LAS CUENTAS JUGANDO'}
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-xl font-black text-zinc-900 tracking-tight uppercase">
+                    {isEn ? 'Account Quiz Arena' : 'Arena de Repaso de Cuentas'}
+                  </h2>
+                  <div className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm shadow-emerald-200">
+                    ⭐ NV. {Math.floor(Math.sqrt(totalXP / 100)) + 1}
+                  </div>
+                </div>
+                <p className="text-xs text-zinc-500 font-bold font-mono mt-0.5">
+                  {getPlayerRank(totalXP / 10, isEn)} ({totalXP} XP)
                 </p>
               </div>
             </div>
 
-            {gameStatus === 'playing' && (
-              <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-4 sm:pt-0 border-zinc-100">
-                {/* Timer / Progress */}
-                {gameMode === 'time_attack' ? (
-                  <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-2xl border border-amber-100">
-                    <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
-                    <span className="text-sm font-black text-amber-800 font-mono">
-                      {Math.floor(gameTimer / 60)}:{(gameTimer % 60).toString().padStart(2, '0')}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="bg-zinc-100 px-4 py-2 rounded-2xl font-black text-zinc-700 font-mono text-sm">
-                    {isEn ? `Q: ${gameQuestionIndex}/15` : `Pregunta: ${gameQuestionIndex}/15`}
-                  </div>
-                )}
+            {/* Sound Toggle & Stats */}
+            <div className="flex items-center gap-3 self-end sm:self-auto">
+              <button
+                onClick={() => {
+                  const nextMuted = !gameAudioMuted;
+                  setGameAudioMuted(nextMuted);
+                  try {
+                    localStorage.setItem('contabilidad_game_audio_muted', String(nextMuted));
+                  } catch (e) {}
+                  if (!nextMuted) {
+                    // Play a quick test sound
+                    setTimeout(() => playSynthSound('click'), 50);
+                  }
+                }}
+                className={`p-2.5 rounded-xl border transition-all ${
+                  gameAudioMuted 
+                    ? 'bg-red-50 border-red-200 text-red-500 hover:bg-red-100' 
+                    : 'bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100'
+                }`}
+                title={isEn ? "Toggle Sound" : "Activar/Desactivar Sonido"}
+              >
+                {gameAudioMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </button>
 
-                {/* Score */}
-                <div className="flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100 text-emerald-800">
-                  <Trophy className="w-4 h-4 text-emerald-600" />
-                  <span className="text-sm font-black font-mono">{gameScore} pts</span>
+              {gameStatus === 'playing' && (
+                <div className="flex items-center gap-3">
+                  {/* Timer / Progress */}
+                  {gameMode === 'time_attack' ? (
+                    <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-2xl border border-amber-100">
+                      <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
+                      <span className="text-sm font-black text-amber-800 font-mono">
+                        {Math.floor(gameTimer / 60)}:{(gameTimer % 60).toString().padStart(2, '0')}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="bg-zinc-100 px-4 py-2 rounded-2xl font-black text-zinc-700 font-mono text-xs">
+                      {isEn ? `Q: ${gameQuestionIndex}/15` : `Pregunta: ${gameQuestionIndex}/15`}
+                    </div>
+                  )}
+
+                  {/* Score */}
+                  <div className="flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100 text-emerald-800">
+                    <Trophy className="w-4 h-4 text-emerald-600" />
+                    <span className="text-sm font-black font-mono">{gameScore} pts</span>
+                  </div>
+
+                  {/* Streak */}
+                  {gameStreak >= 2 && (
+                    <div className="flex items-center gap-1.5 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-full border border-orange-200 text-xs font-black uppercase animate-bounce">
+                      🔥 x{gameStreak}
+                    </div>
+                  )}
+
+                  {/* Lives only for Time Attack */}
+                  {gameMode === 'time_attack' && (
+                    <div className="flex items-center gap-1">
+                      {[...Array(3)].map((_, i) => (
+                        <Heart 
+                          key={i} 
+                          className={`w-4 h-4 transition-all ${i < gameLives ? 'text-red-500 fill-red-500 scale-110' : 'text-zinc-200'}`} 
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
-
-                {/* Streak */}
-                {gameStreak >= 2 && (
-                  <div className="flex items-center gap-1.5 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-full border border-orange-200 text-xs font-black uppercase animate-bounce">
-                    🔥 x{gameStreak}
-                  </div>
-                )}
-
-                {/* Lives only for Time Attack */}
-                {gameMode === 'time_attack' && (
-                  <div className="flex items-center gap-1">
-                    {[...Array(3)].map((_, i) => (
-                      <Heart 
-                        key={i} 
-                        className={`w-5 h-5 transition-all ${i < gameLives ? 'text-red-500 fill-red-500 scale-110' : 'text-zinc-200'}`} 
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {gameStatus === 'selection' && (
@@ -3909,10 +4089,14 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               className="grid md:grid-cols-2 gap-8"
             >
+              {/* Left Column: Game Setup */}
               <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-zinc-100 space-y-6">
                 <div className="space-y-1">
-                  <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight">
-                    {isEn ? '1. Select Modules' : '1. Selecciona Módulos'}
+                  <span className="text-[10px] font-black tracking-widest text-emerald-600 uppercase bg-emerald-50 px-2.5 py-1 rounded-full">
+                    {isEn ? 'STEP 1' : 'PASO 1'}
+                  </span>
+                  <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight pt-1">
+                    {isEn ? 'Select Modules' : 'Selecciona Módulos'}
                   </h3>
                   <p className="text-xs text-zinc-400 font-medium">
                     {isEn ? 'Choose which module accounts to include in the quiz pool' : 'Especifica qué módulos repasar en el juego'}
@@ -3923,9 +4107,10 @@ export default function App() {
                   <label 
                     className={`flex items-center justify-between p-4 pl-3 rounded-2xl border-2 cursor-pointer transition-all ${
                       gameSelectedModules.length === 5 
-                        ? 'border-emerald-600 bg-emerald-50' 
+                        ? 'border-emerald-600 bg-emerald-50/60 shadow-sm' 
                         : 'border-zinc-200 bg-zinc-50 hover:border-zinc-300'
                     }`}
+                    onClick={() => playSynthSound('click')}
                   >
                     <div className="flex items-center gap-2">
                       <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
@@ -3954,9 +4139,10 @@ export default function App() {
                         key={m} 
                         className={`flex items-center justify-between p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
                           gameSelectedModules.includes(m) 
-                            ? 'border-emerald-500 bg-emerald-50/50' 
+                            ? 'border-emerald-500 bg-emerald-50/30' 
                             : 'border-zinc-100 bg-zinc-50/50 hover:border-zinc-200'
                         }`}
+                        onClick={() => playSynthSound('click')}
                       >
                         <div className="flex items-center gap-2.5">
                           <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
@@ -3985,8 +4171,11 @@ export default function App() {
 
                 <div className="space-y-3 pt-2">
                   <div className="space-y-1">
-                    <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight">
-                      {isEn ? '2. Game Mode' : '2. Modo de Juego'}
+                    <span className="text-[10px] font-black tracking-widest text-emerald-600 uppercase bg-emerald-50 px-2.5 py-1 rounded-full">
+                      {isEn ? 'STEP 2' : 'PASO 2'}
+                    </span>
+                    <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight pt-1">
+                      {isEn ? 'Game Mode' : 'Modo de Juego'}
                     </h3>
                     <p className="text-xs text-zinc-400 font-medium">
                       {isEn ? 'Select a casual study or time-attack method' : 'Configura tu estilo de repaso'}
@@ -3996,36 +4185,42 @@ export default function App() {
                   <div className="grid grid-cols-1 gap-3">
                     <button
                       type="button"
-                      onClick={() => setGameMode('casual')}
+                      onClick={() => {
+                        playSynthSound('click');
+                        setGameMode('casual');
+                      }}
                       className={`flex flex-col text-left p-4 rounded-2xl border-2 transition-all ${
                         gameMode === 'casual'
-                          ? 'border-emerald-500 bg-emerald-50/40 text-emerald-950'
-                          : 'border-zinc-100 bg-white hover:border-zinc-300 text-zinc-600'
+                          ? 'border-emerald-500 bg-emerald-50/50 text-emerald-950 shadow-sm scale-[1.01]'
+                          : 'border-zinc-100 bg-white hover:border-zinc-200 text-zinc-600'
                       }`}
                     >
-                      <div className="flex items-center gap-2 font-black text-sm uppercase tracking-wider">
+                      <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-emerald-800">
                         <span>🎓</span>
                         <span>{isEn ? 'Relaxed Practice' : 'Práctica Relajada'}</span>
                       </div>
-                      <p className="text-xs text-zinc-500 font-medium mt-1 leading-normal">
+                      <p className="text-[11px] text-zinc-500 font-semibold mt-1 leading-normal">
                         {isEn ? '15 randomized questions focusing strictly on account descriptions. Direct, self-paced, infinite lives.' : '15 preguntas aleatorias enfocadas en repasos de definiciones. Sin tiempo, con ritmo propio.'}
                       </p>
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => setGameMode('time_attack')}
+                      onClick={() => {
+                        playSynthSound('click');
+                        setGameMode('time_attack');
+                      }}
                       className={`flex flex-col text-left p-4 rounded-2xl border-2 transition-all ${
                         gameMode === 'time_attack'
-                          ? 'border-emerald-500 bg-emerald-50/40 text-emerald-950'
-                          : 'border-zinc-100 bg-white hover:border-zinc-300 text-zinc-600'
+                          ? 'border-emerald-500 bg-emerald-50/50 text-emerald-950 shadow-sm scale-[1.01]'
+                          : 'border-zinc-100 bg-white hover:border-zinc-200 text-zinc-600'
                       }`}
                     >
-                      <div className="flex items-center gap-2 font-black text-sm uppercase tracking-wider">
+                      <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-amber-600">
                         <span>⚡</span>
                         <span>{isEn ? 'Time Attack (5 Minutes)' : 'Contra Reloj (5 Minutos)'}</span>
                       </div>
-                      <p className="text-xs text-zinc-500 font-medium mt-1 leading-normal">
+                      <p className="text-[11px] text-zinc-500 font-semibold mt-1 leading-normal">
                         {isEn ? 'A dynamic 5-minute single-player countdown with 3 lives. Get as many points as possible before the timer runs out!' : 'Batalla contra el reloj de 5 minutos individuales con 3 vidas. ¡Verifica cuántas clavas antes de que expire el tiempo!'}
                       </p>
                     </button>
@@ -4033,49 +4228,107 @@ export default function App() {
                 </div>
 
                 <button 
-                  onClick={startGame}
-                  className="w-full py-4.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-base shadow-lg shadow-emerald-200/50 transition-all flex items-center justify-center gap-2 tracking-widest uppercase mt-4 active:scale-95"
+                  onClick={() => {
+                    playSynthSound('click');
+                    startGame();
+                  }}
+                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm shadow-lg shadow-emerald-200/50 transition-all flex items-center justify-center gap-2 tracking-widest uppercase mt-4 active:scale-95 cursor-pointer"
                 >
                   <span>🎮</span>
                   <span>{isEn ? 'START DESAFÍO' : 'COMENZAR DESAFÍO'}</span>
                 </button>
               </div>
 
-              <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-zinc-100 space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <History className="w-5 h-5 text-zinc-400" />
-                    <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight">
-                      {isEn ? 'Personal Records' : 'Clasificaciones Personales'}
-                    </h3>
-                  </div>
-                  {gameHistory.length > 0 && (
-                    <div className="flex items-center gap-2 bg-zinc-100 p-1 rounded-xl">
-                      <button 
-                        onClick={() => {
-                          if (gameSortCriteria === 'date') setGameSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-                          else { setGameSortCriteria('date'); setGameSortDirection('desc'); }
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
-                          gameSortCriteria === 'date' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
-                        }`}
-                      >
-                        {isEn ? 'Date' : 'Fecha'} {gameSortCriteria === 'date' && (gameSortDirection === 'asc' ? '↑' : '↓')}
-                      </button>
-                      <button 
-                        onClick={() => {
-                          if (gameSortCriteria === 'score') setGameSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-                          else { setGameSortCriteria('score'); setGameSortDirection('desc'); }
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
-                          gameSortCriteria === 'score' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
-                        }`}
-                      >
-                        {isEn ? 'Points' : 'Puntos'} {gameSortCriteria === 'score' && (gameSortDirection === 'asc' ? '↑' : '↓')}
-                      </button>
+              {/* Right Column: Profile Mastery & Rankings */}
+              <div className="space-y-6">
+                {/* Visual Level & XP Card */}
+                {(() => {
+                  const currentLevel = Math.floor(Math.sqrt(totalXP / 100)) + 1;
+                  const xpForCurrentLevel = (currentLevel - 1) * (currentLevel - 1) * 100;
+                  const xpForNextLevel = currentLevel * currentLevel * 100;
+                  const progressValue = totalXP - xpForCurrentLevel;
+                  const progressLimit = xpForNextLevel - xpForCurrentLevel;
+                  const levelProgressPercent = progressLimit === 0 ? 0 : Math.min(100, Math.floor((progressValue / progressLimit) * 100));
+
+                  return (
+                    <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 text-white p-7 rounded-[2.5rem] shadow-xl space-y-5 border border-zinc-800 relative overflow-hidden">
+                      {/* background ambient decoration */}
+                      <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-black tracking-widest text-emerald-400 uppercase bg-emerald-950/80 px-2.5 py-1 rounded-md border border-emerald-800">
+                            {isEn ? 'ACCOUNTING LEVEL' : 'NIVEL DE CUENTAS'}
+                          </span>
+                          <h4 className="text-xl font-black tracking-tight uppercase mt-1">
+                            {isEn ? `Rank: Level ${currentLevel}` : `Nivel: ${currentLevel}`}
+                          </h4>
+                        </div>
+                        <span className="text-4xl">🏆</span>
+                      </div>
+
+                      {/* Rank ribbon */}
+                      <div className="p-3 bg-zinc-900/60 rounded-xl border border-zinc-800/80 text-xs font-bold text-zinc-300">
+                        👑 {getPlayerRank(totalXP / 10, isEn)}
+                      </div>
+
+                      {/* Cumulative Progress Bar */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-[10px] font-mono text-zinc-400 font-extrabold">
+                          <span>{totalXP} XP acumulados</span>
+                          <span>{xpForNextLevel} XP para Niv. {currentLevel + 1}</span>
+                        </div>
+                        <div className="w-full bg-zinc-800 h-2.5 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-1000"
+                            style={{ width: `${levelProgressPercent}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-400 block text-right font-mono uppercase tracking-wider">
+                          {levelProgressPercent}% completado
+                        </span>
+                      </div>
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
+
+                <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-zinc-100 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <History className="w-5 h-5 text-zinc-400" />
+                      <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight">
+                        {isEn ? 'Personal Records' : 'Clasificaciones Personales'}
+                      </h3>
+                    </div>
+                    {gameHistory.length > 0 && (
+                      <div className="flex items-center gap-2 bg-zinc-100 p-1 rounded-xl">
+                        <button 
+                          onClick={() => {
+                            playSynthSound('click');
+                            if (gameSortCriteria === 'date') setGameSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setGameSortCriteria('date'); setGameSortDirection('desc'); }
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
+                            gameSortCriteria === 'date' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
+                          }`}
+                        >
+                          {isEn ? 'Date' : 'Fecha'} {gameSortCriteria === 'date' && (gameSortDirection === 'asc' ? '↑' : '↓')}
+                        </button>
+                        <button 
+                          onClick={() => {
+                            playSynthSound('click');
+                            if (gameSortCriteria === 'score') setGameSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+                            else { setGameSortCriteria('score'); setGameSortDirection('desc'); }
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
+                            gameSortCriteria === 'score' ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
+                          }`}
+                        >
+                          {isEn ? 'Points' : 'Puntos'} {gameSortCriteria === 'score' && (gameSortDirection === 'asc' ? '↑' : '↓')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 {gameHistory.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-zinc-400 space-y-3">
                     <Trophy className="w-12 h-12 opacity-25" />
@@ -4149,8 +4402,9 @@ export default function App() {
                   </div>
                 )}
               </div>
-            </motion.div>
-          )}
+            </div>
+          </motion.div>
+        )}
 
           {gameStatus === 'playing' && currentQuestion && (
             <motion.div 
@@ -4160,17 +4414,26 @@ export default function App() {
               className="max-w-2xl mx-auto"
             >
               <div className="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-zinc-100 space-y-8 relative overflow-hidden">
-                <div className="space-y-3 text-center">
-                  <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full inline-block">
-                    {currentGameQuestionType === 'def_to_account'
+                {/* Visual Game Progress Bar */}
+                <div className="absolute top-0 left-0 right-0 h-2 bg-zinc-100">
+                  <div 
+                    className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full transition-all duration-300"
+                    style={{ width: `${(Math.min(15, gameQuestionIndex) / 15) * 100}%` }}
+                  />
+                </div>
+
+                <div className="space-y-4 text-center mt-2">
+                  <div className="flex justify-between items-center px-1 text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full">
+                    <span>{currentGameQuestionType === 'def_to_account'
                       ? (isEn ? 'IDENTIFY THE CORRESPONDING ACCOUNT' : 'ADIVINA LA CUENTA CORRESPONDIENTE')
-                      : (isEn ? 'IDENTIFY WHAT CONTINUES IN THIS ACCOUNT' : '¿QUÉ HECHO REGISTRA ESTA CUENTA?')}
-                  </span>
+                      : (isEn ? 'IDENTIFY WHAT IS RECORDED IN THIS ACCOUNT' : '¿QUÉ HECHO REGISTRA ESTA CUENTA?')}</span>
+                    <span className="font-mono">{isEn ? `Q: ${gameQuestionIndex}/15` : `PREG: ${gameQuestionIndex}/15`}</span>
+                  </div>
                   
-                  <div className="p-6 md:p-8 bg-zinc-50 rounded-2xl border border-zinc-100 flex flex-col items-center justify-center min-h-[140px]">
+                  <div className="p-6 md:p-8 bg-zinc-50 rounded-2xl border border-zinc-100 flex flex-col items-center justify-center min-h-[140px] shadow-inner">
                     {currentGameQuestionType === 'def_to_account' ? (
-                      <p className="text-lg md:text-xl font-bold text-zinc-900 leading-normal tracking-tight balance-title">
-                        {currentQuestionText}
+                      <p className="text-lg md:text-xl font-black text-zinc-900 leading-normal tracking-tight balance-title">
+                        "{currentQuestionText}"
                       </p>
                     ) : (
                       <div className="space-y-2">
@@ -4191,15 +4454,16 @@ export default function App() {
                     const isSelected = gameSelectedOption === opt;
                     const isCorrect = opt === gameCorrectOption;
                     const showFeedback = gameSelectedOption !== null;
+                    const optionLetter = ['A', 'B', 'C', 'D'][idx];
 
-                    let btnStyles = "border-zinc-200 hover:border-zinc-300 bg-white text-zinc-800";
+                    let btnStyles = "border-zinc-200 hover:border-emerald-200 hover:bg-emerald-50/20 bg-white text-zinc-800 hover:translate-y-[-1px] active:translate-y-[1px]";
                     if (showFeedback) {
                       if (isCorrect) {
-                        btnStyles = "border-emerald-600 bg-emerald-50 text-emerald-950 scale-[1.01]";
+                        btnStyles = "border-emerald-500 bg-emerald-50 text-emerald-950 scale-[1.01] shadow-md shadow-emerald-100";
                       } else if (isSelected) {
-                        btnStyles = "border-red-600 bg-red-50 text-red-950 animate-shake";
+                        btnStyles = "border-red-500 bg-red-50 text-red-950 animate-shake";
                       } else {
-                        btnStyles = "border-zinc-100 bg-zinc-50/50 text-zinc-400 opacity-60";
+                        btnStyles = "border-zinc-100 bg-zinc-50/50 text-zinc-400 opacity-60 pointer-events-none";
                       }
                     }
 
@@ -4207,19 +4471,34 @@ export default function App() {
                       <button
                         key={idx}
                         type="button"
-                        onClick={() => submitAnswer(opt)}
+                        onClick={() => {
+                          playSynthSound('click');
+                          submitAnswer(opt);
+                        }}
                         disabled={showFeedback}
-                        className={`p-5 rounded-2xl border-2 font-bold text-sm md:text-base text-left flex items-start justify-between transition-all gap-3 ${btnStyles}`}
+                        className={`p-5 rounded-2xl border-2 font-bold text-sm md:text-base text-left flex items-start justify-between transition-all gap-3 cursor-pointer ${btnStyles}`}
                       >
-                        <span className="leading-tight">{opt}</span>
+                        <div className="flex items-start gap-3">
+                          <span className={`font-mono text-xs font-black px-2.5 py-1 rounded-lg shrink-0 mt-0.5 ${
+                            showFeedback && isCorrect 
+                              ? 'bg-emerald-600 text-white' 
+                              : showFeedback && isSelected && !isCorrect 
+                                ? 'bg-red-600 text-white' 
+                                : 'bg-zinc-100 text-zinc-500'
+                          }`}>
+                            {optionLetter}
+                          </span>
+                          <span className="leading-tight pt-0.5">{opt}</span>
+                        </div>
+
                         {showFeedback && isCorrect && (
-                          <div className="w-5 h-5 bg-emerald-600 text-white rounded-full flex items-center justify-center shrink-0">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          <div className="w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center shrink-0 shadow">
+                            <CheckCircle2 className="w-4 h-4" />
                           </div>
                         )}
                         {showFeedback && isSelected && !isCorrect && (
-                          <div className="w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center shrink-0">
-                            <X className="w-3.5 h-3.5" />
+                          <div className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center shrink-0 shadow">
+                            <X className="w-4 h-4" />
                           </div>
                         )}
                       </button>
@@ -4236,27 +4515,43 @@ export default function App() {
                animate={{ opacity: 1, scale: 1 }}
                className="max-w-2xl mx-auto w-full"
             >
-              <div className="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-zinc-100 text-center space-y-8">
-                <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto">
+              <div className="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-zinc-100 text-center space-y-8 relative overflow-hidden">
+                <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto shadow-inner">
                   <Trophy className="w-10 h-10 text-emerald-600" />
                 </div>
                 <div className="space-y-2">
+                  <span className="text-xs font-black uppercase text-emerald-600 tracking-widest block bg-emerald-50/80 px-4 py-1 rounded-full w-max mx-auto border border-emerald-100">
+                    {getPlayerRank(gameScore, isEn)}
+                  </span>
                   <h3 className="text-3xl font-black text-zinc-950 uppercase tracking-tight">
-                    {isEn ? 'Match Completed!' : '¡Prueba Completada!'}
+                    {isEn ? 'Match Completed!' : '¡Partida Completada!'}
                   </h3>
                   <p className="text-zinc-500 font-medium text-sm">
-                    {isEn ? 'Review your results and continuous stats' : 'Verifica tu progreso y repasa los resultados'}
+                    {isEn ? 'Review your results and claimed accounting experience' : 'Verifica tus resultados y reclama tus puntos acumulados'}
+                  </p>
+                </div>
+
+                {/* XP Claimed Box */}
+                <div className="p-6 bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white rounded-3xl space-y-1 shadow-lg shadow-emerald-100/80">
+                  <div className="text-[9px] font-black tracking-widest text-emerald-100 uppercase">
+                    {isEn ? "EXPERIENCE POINTS CLAIMED!" : "¡EXPERIENCIA RECLAMADA PARPADEANDO!"}
+                  </div>
+                  <div className="text-4xl font-extrabold flex items-center justify-center gap-2">
+                    🌟 +{xpEarnedThisMatch} XP
+                  </div>
+                  <p className="text-[10px] text-emerald-50 font-bold uppercase tracking-wider">
+                    {isEn ? 'Successfully committed to your student profile!' : '¡Inscritos con éxito en tu ficha de alumno!'}
                   </p>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-5 bg-zinc-50 rounded-2xl border border-zinc-100 text-center">
+                  <div className="p-5 bg-zinc-50 rounded-2xl border border-zinc-100 text-center shadow-sm">
                     <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">
                       {isEn ? 'Points Achieved' : 'Puntos Conseguidos'}
                     </span>
                     <span className="text-3xl font-black text-emerald-600">{gameScore}</span>
                   </div>
-                  <div className="p-5 bg-zinc-50 rounded-2xl border border-zinc-100 text-center">
+                  <div className="p-5 bg-zinc-50 rounded-2xl border border-zinc-100 text-center shadow-sm">
                     <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">
                       {isEn ? 'Max Streak' : 'Racha Máxima'}
                     </span>
@@ -4280,8 +4575,11 @@ export default function App() {
                       />
                     </div>
                     <button 
-                      onClick={() => saveScore(gameScore, playerName)}
-                      className="w-full py-4.5 bg-zinc-900 text-white hover:bg-black rounded-2xl font-black text-base shadow-xl transition-all active:scale-95 text-center uppercase tracking-wider"
+                      onClick={() => {
+                        playSynthSound('click');
+                        saveScore(gameScore, playerName);
+                      }}
+                      className="w-full py-4.5 bg-zinc-900 text-white hover:bg-black rounded-2xl font-black text-base shadow-xl transition-all active:scale-95 text-center uppercase tracking-wider cursor-pointer"
                     >
                       {isEn ? 'SAVE RECORD' : 'GUARDAR RECORD'}
                     </button>
@@ -4335,8 +4633,11 @@ export default function App() {
                     )}
 
                     <button 
-                      onClick={() => setGameStatus('selection')}
-                      className="w-full py-4.5 bg-emerald-600 text-white rounded-2xl font-black text-base shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95 text-center uppercase tracking-widest"
+                      onClick={() => {
+                        playSynthSound('click');
+                        setGameStatus('selection');
+                      }}
+                      className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-sm shadow-md hover:bg-emerald-700 transition-all active:scale-95 text-center uppercase tracking-widest cursor-pointer"
                     >
                       {isEn ? 'PLAY ANOTHER ROUND' : 'JUGAR OTRA PARTIDA'}
                     </button>
