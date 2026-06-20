@@ -1757,6 +1757,30 @@ const ACCOUNT_DEFINITIONS: Record<string, { es: string; en: string }> = {
   '769': {
     es: 'Cualquier otro tipo de ingreso de índole puramente financiera que no encaje en los demás.',
     en: 'Any other type of purely financial revenue that does not explicitly fit elsewhere.'
+  },
+  '240': {
+    es: 'Inversiones a largo plazo en derechos sobre el patrimonio (acciones o participaciones de capital) de empresas del mismo grupo, asociadas o vinculadas.',
+    en: 'Long-term investments in equity instruments (shares or capital stakes) of group, associated, or related companies.'
+  },
+  '241': {
+    es: 'Inversiones a largo plazo en valores de renta fija (obligaciones, bonos, pagarés, etc.) emitidos por empresas del mismo grupo, asociadas o vinculadas.',
+    en: 'Long-term investments in fixed-income securities (bonds, promissory notes, etc.) issued by group, associated, or related companies.'
+  },
+  '250': {
+    es: 'Inversiones a largo plazo en derechos sobre el patrimonio (acciones o participaciones) de empresas que no pertenecen al mismo grupo.',
+    en: 'Long-term investments in equity instruments (shares or stakes) of third-party companies outside the corporate group.'
+  },
+  '251': {
+    es: 'Inversiones de carácter permanente a largo plazo en obligaciones, bonos, pagarés y otros títulos de deuda de empresas ajenas al grupo.',
+    en: 'Long-term permanent investments in bonds, debentures, promissory notes, and other debt instruments of companies outside the corporate group.'
+  },
+  '252': {
+    es: 'Préstamos y otros créditos no comerciales de carácter financiero concedidos a terceros, con vencimiento superior a un año.',
+    en: 'Long-term loans and non-commercial financial credits granted to third parties, with maturity over one year.'
+  },
+  '258': {
+    es: 'Saldos a favor de la empresa depositados en bancos u otras entidades de crédito bajo la modalidad de plazo fijo a largo plazo.',
+    en: 'Balances in favor of the company in credit institutions held in long-term fixed-decimal accounts.'
   }
 };
 
@@ -3730,8 +3754,8 @@ export default function App() {
     }
     const name = lang === 'en' ? (ACCOUNT_MAPPING_EN[code] || code) : (ACCOUNT_MAPPING[code] || code);
     return lang === 'en'
-      ? `Register or track operations corresponding to the account: ${name}.`
-      : `Registrar y realizar el seguimiento de las operaciones de la cuenta: ${name}.`;
+      ? `Represents the control, recording, and valuation of elements for the account "${name}" in accordance with PGC standards.`
+      : `Representa el control, registro y valoración de los elementos constitutivos de la cuenta "${name}" bajo los criterios y normas del Plan General de Contabilidad.`;
   };
 
   // Modern helper to shuffle arrays
