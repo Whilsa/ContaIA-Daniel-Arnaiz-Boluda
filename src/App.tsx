@@ -1784,6 +1784,147 @@ const ACCOUNT_DEFINITIONS: Record<string, { es: string; en: string }> = {
   }
 };
 
+const TETRIS_CHALLENGES = [
+  {
+    code: '600',
+    es: { text: '600 Compra de mercaderías (1.000 €)', desc: 'Cuenta de gastos del grupo 6. Se anota en el DEBE al registrarse la adquisición de productos conforme al PGC.' },
+    en: { text: '600 Purchase of merchandise (1,000 €)', desc: 'Group 6 expense account. Entered on the DEBIT (DEBE) side upon recording merchandise purchases.' },
+    side: 'debe'
+  },
+  {
+    code: '700',
+    es: { text: '700 Venta de mercaderías (2.500 €)', desc: 'Cuenta de ingresos del grupo 7. Se anota en el HABER cuando se devenga la venta de bienes.' },
+    en: { text: '700 Sales of merchandise (2,500 €)', desc: 'Group 7 revenue account. Credited (HABER) when the merchandise sale earns revenue.' },
+    side: 'haber'
+  },
+  {
+    code: '572',
+    es: { text: '572 Bancos - Cobro de factura por transferencia (+850 €)', desc: 'Cuenta de activo. Al recibir dinero, el activo aumenta, anotándose en el DEBE.' },
+    en: { text: '572 Banks - Customer wire transfer payment received (+850 €)', desc: 'Asset account. Cash increases our active storage, requiring DEBIT (DEBE).' },
+    side: 'debe'
+  },
+  {
+    code: '572',
+    es: { text: '572 Bancos - Pago de cuota de préstamo (-400 €)', desc: 'Cuenta de activo. Al salir dinero de la cuenta corriente, disminuye nuestro activo, por lo que se anota en el HABER.' },
+    en: { text: '572 Banks - Bank loan installment payment (-400 €)', desc: 'Asset account. Cash outflow from current account reduces assets, requiring CREDIT (HABER).' },
+    side: 'haber'
+  },
+  {
+    code: '100',
+    es: { text: '100 Capital Social aportado por los socios (45.000 €)', desc: 'Cuenta de patrimonio neto. Al crearse o aumentarse con aportaciones, se anota en el HABER.' },
+    en: { text: '100 Social Capital contributed by founders (45,000 €)', desc: 'Equity account. Created or increased with shareholder contributions, requiring CREDIT (HABER).' },
+    side: 'haber'
+  },
+  {
+    code: '170',
+    es: { text: '170 Concesión de préstamo a largo plazo por el banco (+10.000 €) [ALTA/ABONO]', desc: 'Cuenta de pasivo no corriente. Al concedernos el banco este préstamo, se incrementa nuestra deuda (obligación de pago futura) con la entidad, por lo que aumenta el pasivo anotándose en el HABER.' },
+    en: { text: '170 Long-term bank loan granted to us (+10,000 €) [ACCRUAL/CREDIT]', desc: 'Non-current liability account. Being granted this loan increases our long-term payment obligations to the bank, which increases liabilities on the CREDIT (HABER) side.' },
+    side: 'haber'
+  },
+  {
+    code: '211',
+    es: { text: '211 Adquisición de local comercial (85.000 €)', desc: 'Cuenta de activo no corriente (Inmovilizado). Un nuevo inmueble incrementa el activo de la empresa, cargándose en el DEBE.' },
+    en: { text: '211 Acquisition of business premises (85,000 €)', desc: 'Non-current asset (Property). A new building increases active physical assets, requiring DEBIT (DEBE).' },
+    side: 'debe'
+  },
+  {
+    code: '400',
+    es: { text: '400 Proveedor: Compra de mercadería a crédito (+950 €)', desc: 'Cuenta de pasivo corriente. Al comprar sin pagar al contado, nace una obligación de pago que aumenta nuestro pasivo en el HABER.' },
+    en: { text: '400 Supplier: Merchandise purchase on credit (+950 €)', desc: 'Current liability. Buying on credit creates a vendor payment obligation, increasing liabilities on CREDIT (HABER).' },
+    side: 'haber'
+  },
+  {
+    code: '430',
+    es: { text: '430 Clientes: Derechos de cobro por venta aplazada (+1.200 €)', desc: 'Cuenta de activo corriente. Al vender a crédito, nace un derecho de cobro a favor de la empresa, incrementando el activo en el DEBE.' },
+    en: { text: '430 Customers: Bill receivable for deferred sale (+1,200 €)', desc: 'Current asset. Selling on credit generates a claim (receivable) for the firm, increasing assets on DEBIT (DEBE).' },
+    side: 'debe'
+  },
+  {
+    code: '621',
+    es: { text: '621 Alquiler mensual devengado de las oficinas (750 €)', desc: 'Cuenta de gastos de explotación del grupo 6. Conforme al PGC, los gastos se debitan al devengarse en el DEBE.' },
+    en: { text: '621 Monthly office rent expense incurred (750 €)', desc: 'Operating expense of group 6. According to PGC, expenses are debited on the DEBIT (DEBE) side upon accrual.' },
+    side: 'debe'
+  },
+  {
+    code: '628',
+    es: { text: '628 Facturas de electricidad y suministros (180 €)', desc: 'Cuenta de gastos de explotación. Los consumos de agua o luz disminuyen el patrimonio neto, anotándose en el DEBE.' },
+    en: { text: '628 Electricity and water utilities invoices (180 €)', desc: 'Operating expense. Consumption of utilities reduces equity, writing on the DEBIT (DEBE) side.' },
+    side: 'debe'
+  },
+  {
+    code: '752',
+    es: { text: '752 Alquiler cobrado de un local de la empresa (+600 €)', desc: 'Cuenta de ingresos accesorios. Los ingresos nacen y se anotan en el HABER de acuerdo al principio de devengo.' },
+    en: { text: '752 Lease revenue received for rented property (+600 €)', desc: 'Accessory operating revenue. Revenues originate and accrue on the CREDIT (HABER) side.' },
+    side: 'haber'
+  },
+  {
+    code: '400',
+    es: { text: '400 Pago parcial de la deuda con Proveedores (-500 €)', desc: 'Cuenta de pasivo. Al amortizar o pagar una deuda comercial, la obligación disminuye, anotándose en el DEBE.' },
+    en: { text: '400 Partial payment of vendor account (-500 €)', desc: 'Liability account. Reducing commercial obligations decreases liability side, resulting in DEBIT (DEBE).' },
+    side: 'debe'
+  },
+  {
+    code: '430',
+    es: { text: '430 Cobro de saldo pendiente de un Cliente (-700 €)', desc: 'Cuenta de activo. Al cobrar la factura del cliente, disminuye el derecho de cobro que teníamos sobre él, registrándose en el HABER.' },
+    en: { text: '430 Settlement payment received from a Customer (-700 €)', desc: 'Asset account. Collecting receivables reduces our open invoice rights over the client, registered on CREDIT (HABER).' },
+    side: 'haber'
+  },
+  {
+    code: '602',
+    es: { text: '602 Compra de material de oficina consumible (125 €)', desc: 'Cuenta de gastos. Los aprovisionamientos de material consumible disminuyen el beneficio acumulado, anotándose en el DEBE.' },
+    en: { text: '602 Purchase of office consumables (125 €)', desc: 'Expense account. Office consumable supplies reduce retained earnings, written under DEBIT (DEBE).' },
+    side: 'debe'
+  },
+  {
+    code: '5200',
+    es: { text: '5200 Préstamo a C/P obtenido o deuda reclasificada de L/P a C/P (+5.000 €) [ALTA/ABONO]', desc: 'Cuenta de pasivo a corto plazo. Al recibir el dinero del préstamo o al reclasificar deuda desde largo plazo, aumenta nuestra obligación contractual, registrándose en el HABER.' },
+    en: { text: '5200 Short-term loan obtained or long-term debt reclassified (+5,000 €) [ISSUE/CREDIT]', desc: 'Short-term liability account. When receiving funds or reclassifying from long-term, payment obligations rise, requiring CREDIT (HABER).' },
+    side: 'haber'
+  },
+  {
+    code: '5200',
+    es: { text: '5200 Préstamo a C/P - Pago / amortización de la cuota del crédito (-1.000 €) [PAGO/CARGO]', desc: 'Cuenta de pasivo a corto plazo. Al pagar o amortizar la deuda de corto plazo, la obligación ante la entidad financiera disminuye, por lo que se carga en el DEBE.' },
+    en: { text: '5200 Short-term loan - Installment payment / amortization (-1,000 €) [PAYMENT/DEBIT]', desc: 'Short-term liability. Paying off short-term debt decreases obligations to the bank, written under DEBIT (DEBE).' },
+    side: 'debe'
+  },
+  {
+    code: '218',
+    es: { text: '218 Compra de motocicleta para reparto local (+3.500 €)', desc: 'Cuenta de activo no corriente. El nuevo elemento de transporte de la empresa incrementa el activo fijo, anotándose en el DEBE.' },
+    en: { text: '218 Purchase of delivery motorcycle (+3,500 €)', desc: 'Non-current asset. New vehicle increases active machinery/equipment assets on DEBIT (DEBE).' },
+    side: 'debe'
+  },
+  {
+    code: '760',
+    es: { text: '760 Intereses y dividendos devengados a nuestro favor (+250 €)', desc: 'Cuenta de ingresos financieros. Se anota en el HABER para reflejar el rendimiento ganado de nuestras inversiones.' },
+    en: { text: '760 Earned dividends and interest on stakes (+250 €)', desc: 'Financial revenue. Formally credited on the CREDIT (HABER) side to record asset investment yields.' },
+    side: 'haber'
+  },
+  {
+    code: '625',
+    es: { text: '625 Pago de la prima anual de seguros contra incendicios (350 €)', desc: 'Cuenta de gastos de explotación (servicios exteriores). Se anota en el DEBE al devengarse el derecho de cobertura.' },
+    en: { text: '625 Annual payment of fire insurance premium (350 €)', desc: 'Operating services expense. Debited on DEBIT (DEBE) side upon insurance binder accrual.' },
+    side: 'debe'
+  },
+  {
+    code: '472',
+    es: { text: '472 HP, IVA soportado deducible por la compra de mercaderías (+210 €) [COMPRA/CARGO]', desc: 'Cuenta de activo por derecho ante la Hacienda Pública. El IVA pagado en las compras u operaciones de gasto nos concede un derecho a deducir, anotándose en el DEBE.' },
+    en: { text: '472 Public Treasury, deductible Input VAT on purchases (+210 €) [PURCHASE/DEBIT]', desc: 'Asset account representing public claim. Input VAT paid on purchases grants a credit claim against the state, written under DEBIT (DEBE).' },
+    side: 'debe'
+  },
+  {
+    code: '472',
+    es: { text: '472 HP, IVA soportado por devolución de compras o descuento comercial (-50 €) [CORRECCIÓN/ABONO]', desc: 'Cuenta de activo. Al devolver una compra o recibir un descuento comercial, el IVA soportado deducible original se rectifica y corrige, anotándose en el HABER.' },
+    en: { text: '472 Public Treasury, input VAT returned on purchase discount (-50 €) [CORRECTION/CREDIT]', desc: 'Asset account. Returning purchases or receiving commercial discounts requires reversing the original input VAT claim, hence registered on CREDIT (HABER).' },
+    side: 'haber'
+  },
+  {
+    code: '477',
+    es: { text: '477 Hacienda Pública, IVA repercutido facturado (525 €)', desc: 'Cuenta de pasivo (obligación frente a Hacienda). El IVA cobrado en ventas genera una obligación de pago, anotándose en el HABER.' },
+    en: { text: '477 Public Treasury, output VAT billed to customers (525 €)', desc: 'Liability account (payable to State). Output VAT collected on sales forms a tax obligation on CREDIT (HABER).' },
+    side: 'haber'
+  }
+];
+
 const SECTION_DISPLAY: Record<string, string> = {
   'Activo no corriente': 'Non-current assets',
   'Activo corriente': 'Current assets',
@@ -2702,6 +2843,36 @@ export default function App() {
   const [currentGameQuestionType, setCurrentGameQuestionType] = useState<'def_to_account' | 'account_to_def'>('def_to_account');
   
   // Game enhancements (XP, Audio & Ranks)
+  const [activeGameType, setActiveGameType] = useState<'quiz' | 'tetris'>('quiz');
+
+  // Tetris Mode Game States
+  const [tetrisStatus, setTetrisStatus] = useState<'selection' | 'playing' | 'gameover'>('selection');
+  const [tetrisScore, setTetrisScore] = useState(0);
+  const [tetrisLives, setTetrisLives] = useState(3);
+  const [tetrisStreak, setTetrisStreak] = useState(0);
+  const [tetrisMaxStreak, setTetrisMaxStreak] = useState(0);
+  const [tetrisXPClaimed, setTetrisXPClaimed] = useState(false);
+  const [tetrisFallingBlock, setTetrisFallingBlock] = useState<{
+    code: string;
+    text: string;
+    desc: string;
+    correctSide: 'debe' | 'haber';
+    y: number;
+    color: string;
+  } | null>(null);
+  const [tetrisLevel, setTetrisLevel] = useState(1);
+  const [tetrisFeedback, setTetrisFeedback] = useState<{
+    type: 'correct' | 'wrong' | 'timeup';
+    message: string;
+    sideChosen: 'debe' | 'haber' | 'none';
+  } | null>(null);
+  const [tetrisHistory, setTetrisHistory] = useState<{
+    text: string;
+    correctSide: 'debe' | 'haber';
+    sideChosen: 'debe' | 'haber' | 'none';
+    isCorrect: boolean;
+  }[]>([]);
+
   const [gameAudioMuted, setGameAudioMuted] = useState<boolean>(() => {
     try {
       return localStorage.getItem('contabilidad_game_audio_muted') === 'true';
@@ -3709,6 +3880,239 @@ export default function App() {
     return () => clearInterval(interval);
   }, [gameStatus, gameTimer, lastAnswerCorrect, gameMode]);
 
+  // Tetris Fall Loop Effect
+  useEffect(() => {
+    let tetrisInterval: NodeJS.Timeout;
+
+    if (activeGameType === 'tetris' && tetrisStatus === 'playing' && tetrisFallingBlock && !tetrisFeedback) {
+      // Slower, smoother, and friendlier tick rate and speed steps for better readability
+      const tickRate = 120; // ms
+      const speedStep = 0.5 + (tetrisLevel * 0.15); // Level 1: 0.65 (Takes ~18 seconds to fall). Level 5: 1.25 (Takes ~10 seconds).
+
+      tetrisInterval = setInterval(() => {
+        setTetrisFallingBlock(prev => {
+          if (!prev) return null;
+          const nextY = prev.y + speedStep;
+          if (nextY >= 100) {
+            // Reached bottom without choosing! Trigger Time Out
+            clearInterval(tetrisInterval);
+
+            // Trigger timeout feedback safely
+            setTimeout(() => {
+              playSynthSound('wrong');
+              setTetrisStreak(0);
+              
+              const nextLives = Math.max(0, tetrisLives - 1);
+              setTetrisLives(nextLives);
+
+              setTetrisHistory(h => [...h, {
+                text: prev.text,
+                correctSide: prev.correctSide,
+                sideChosen: 'none',
+                isCorrect: false
+              }]);
+
+              setTetrisFeedback({
+                type: 'timeup',
+                message: language === 'en'
+                  ? `Out of time! "${prev.text}" belongs in the ${prev.correctSide.toUpperCase()}.`
+                  : `¡Tiempo agotado! "${prev.text}" se anota en el ${prev.correctSide.toUpperCase()}.`,
+                sideChosen: 'none'
+              });
+            }, 0);
+
+            return { ...prev, y: 100 };
+          }
+          return { ...prev, y: nextY };
+        });
+      }, tickRate);
+    }
+
+    return () => clearInterval(tetrisInterval);
+  }, [activeGameType, tetrisStatus, tetrisFallingBlock, tetrisFeedback, tetrisLevel, tetrisLives, language]);
+
+  // Tetris Keyboard Handles
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (activeGameType !== 'tetris' || tetrisStatus !== 'playing' || !tetrisFallingBlock || tetrisFeedback) {
+        return;
+      }
+
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        e.preventDefault();
+        handleTetrisChoice('debe');
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        e.preventDefault();
+        handleTetrisChoice('haber');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeGameType, tetrisStatus, tetrisFallingBlock, tetrisFeedback]);
+
+  // Generate random block for falling game
+  const generateTetrisBlock = () => {
+    setTetrisFeedback(null);
+    const randomIndex = Math.floor(Math.random() * TETRIS_CHALLENGES.length);
+    const item = TETRIS_CHALLENGES[randomIndex];
+    const colors = [
+      'from-emerald-500 to-teal-500',
+      'from-sky-500 to-blue-500',
+      'from-amber-500 to-orange-500',
+      'from-violet-500 to-indigo-500'
+    ];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+    setTetrisFallingBlock({
+      code: item.code,
+      text: language === 'en' ? item.en.text : item.es.text,
+      desc: language === 'en' ? item.en.desc : item.es.desc,
+      correctSide: item.side as 'debe' | 'haber',
+      y: 0,
+      color: randomColor
+    });
+  };
+
+  // Start Tetris game function
+  const startTetrisGame = () => {
+    setTetrisScore(0);
+    setTetrisLives(3);
+    setTetrisStreak(0);
+    setTetrisMaxStreak(0);
+    setTetrisLevel(1);
+    setTetrisXPClaimed(false);
+    setTetrisFeedback(null);
+    setTetrisHistory([]);
+    setTetrisStatus('playing');
+    
+    // Generate first block after a brief delay
+    setTimeout(() => {
+      const firstIndex = Math.floor(Math.random() * TETRIS_CHALLENGES.length);
+      const item = TETRIS_CHALLENGES[firstIndex];
+      const colors = [
+        'from-emerald-500 to-teal-500',
+        'from-sky-500 to-blue-500',
+        'from-amber-500 to-orange-500',
+        'from-violet-500 to-indigo-500'
+      ];
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+      setTetrisFallingBlock({
+        code: item.code,
+        text: language === 'en' ? item.en.text : item.es.text,
+        desc: language === 'en' ? item.en.desc : item.es.desc,
+        correctSide: item.side as 'debe' | 'haber',
+        y: 0,
+        color: randomColor
+      });
+    }, 150);
+  };
+
+  // Handle choice (Debe or Haber) in Tetris game
+  const handleTetrisChoice = (chosenSide: 'debe' | 'haber') => {
+    if (!tetrisFallingBlock || tetrisFeedback) return;
+
+    const isCorrect = chosenSide === tetrisFallingBlock.correctSide;
+    const currentBlockText = tetrisFallingBlock.text;
+    const currentCorrectSide = tetrisFallingBlock.correctSide;
+    const currentDesc = tetrisFallingBlock.desc;
+
+    // Register in history
+    setTetrisHistory(prev => [...prev, {
+      text: currentBlockText,
+      correctSide: currentCorrectSide,
+      sideChosen: chosenSide,
+      isCorrect
+    }]);
+
+    if (isCorrect) {
+      playSynthSound('correct');
+      const pointGain = 10;
+      const nextScore = tetrisScore + pointGain;
+      setTetrisScore(nextScore);
+      
+      let finalStreak = 0;
+      setTetrisStreak(prev => {
+        const next = prev + 1;
+        finalStreak = next;
+        if (next > tetrisMaxStreak) setTetrisMaxStreak(next);
+        return next;
+      });
+
+      // Every 4 correct answers (40 points), speed up level
+      const currentSuccessCount = Math.floor(nextScore / 10);
+      if (currentSuccessCount % 4 === 0) {
+        setTetrisLevel(prev => Math.min(5, prev + 1));
+      }
+
+      // Dopamine-activating positive statements
+      const spanishTriumphs = [
+        '¡Excelente balance! 🎯',
+        '¡Asiento contable perfecto! 💎',
+        '¡Dominio absoluto del PGC! 👑',
+        '¡Activos cuadradísimos! 🏦',
+        '¡Racha inmejorable! 🔥',
+        '¡Flujo de caja impecable! 💸',
+        '¡Socio auditor de honor! 💼',
+        '¡Dopamina patrimonial extra! ⚡',
+        '¡Auditoría superada con honores! 🛡️'
+      ];
+      const englishTriumphs = [
+        'Double-entry perfection! 🎯',
+        'Assets are perfectly balanced! 👑',
+        'Absolute ledger mastery! 💎',
+        'Superb accounting instinct! 🏦',
+        'Unstoppable transaction streak! 🔥',
+        'Flawless cash flow check! 💸',
+        'Auditor of the Month vibes! 💼',
+        'High-voltage bookkeeping! ⚡',
+        'Security review approved! 🛡️'
+      ];
+
+      const randomTriumph = language === 'en'
+        ? englishTriumphs[Math.floor(Math.random() * englishTriumphs.length)]
+        : spanishTriumphs[Math.floor(Math.random() * spanishTriumphs.length)];
+
+      setTetrisFeedback({
+        type: 'correct',
+        message: `${randomTriumph}\n\n+${pointGain} pts. ${currentDesc}`,
+        sideChosen: chosenSide
+      });
+
+      // Load next block in 2 seconds
+      setTimeout(() => {
+        generateTetrisBlock();
+      }, 2000);
+
+    } else {
+      playSynthSound('wrong');
+      setTetrisStreak(0);
+      
+      const nextLives = Math.max(0, tetrisLives - 1);
+      setTetrisLives(nextLives);
+
+      setTetrisFeedback({
+        type: 'wrong',
+        message: language === 'en' 
+          ? `Wrong side! "${currentBlockText}" belongs in the ${currentCorrectSide.toUpperCase()}.\n\nReason: ${currentDesc}`
+          : `¡Fallo de clasificación! "${currentBlockText}" se anota en el ${currentCorrectSide.toUpperCase()}.\n\nNorma PGC: ${currentDesc}`,
+        sideChosen: chosenSide
+      });
+    }
+  };
+
+  const proceedAfterTetrisFeedback = () => {
+    playSynthSound('click');
+    setTetrisFeedback(null);
+    if (tetrisLives === 0) {
+      setTetrisStatus('gameover');
+      playSynthSound('gameover');
+    } else {
+      generateTetrisBlock();
+    }
+  };
+
   useEffect(() => {
     const savedHistory = localStorage.getItem('contabilidad_game_history');
     if (savedHistory) {
@@ -4011,9 +4415,12 @@ export default function App() {
               <button 
                 onClick={() => {
                   playSynthSound('click');
-                  if (gameStatus === 'playing') {
+                  const isPlayingQuiz = gameStatus === 'playing';
+                  const isPlayingTetris = tetrisStatus === 'playing';
+                  if (isPlayingQuiz || isPlayingTetris) {
                     if (confirm(isEn ? 'Are you sure you want to exit the current game?' : '¿Seguro que deseas salir de la partida actual?')) {
                       setGameStatus('selection');
+                      setTetrisStatus('selection');
                     }
                   } else {
                     setCurrentView('home');
@@ -4062,7 +4469,7 @@ export default function App() {
                 {gameAudioMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
 
-              {gameStatus === 'playing' && (
+              {activeGameType === 'quiz' && gameStatus === 'playing' && (
                 <div className="flex items-center gap-3">
                   {/* Timer / Progress */}
                   {gameMode === 'time_attack' ? (
@@ -4104,10 +4511,76 @@ export default function App() {
                   )}
                 </div>
               )}
+
+              {activeGameType === 'tetris' && tetrisStatus === 'playing' && (
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Level speed bonus indicator */}
+                  <div className="bg-sky-50 text-sky-800 px-3 py-1.5 rounded-2xl border border-sky-100 text-xs font-extrabold uppercase">
+                    ⚡ {isEn ? `Lv. ${tetrisLevel}` : `Niv. ${tetrisLevel}`}
+                  </div>
+
+                  {/* Lives remaining (out of 3) */}
+                  <div className="flex items-center gap-1.5 bg-red-50 px-3 py-1.5 rounded-2xl border border-red-100">
+                    {[...Array(3)].map((_, i) => (
+                      <Heart 
+                        key={i} 
+                        className={`w-4 h-4 transition-all ${i < tetrisLives ? 'text-red-500 fill-red-500 scale-110 animate-pulse' : 'text-zinc-200'}`} 
+                      />
+                    ))}
+                  </div>
+
+                  {/* Score cumulative */}
+                  <div className="flex items-center gap-2 bg-emerald-50 px-4 py-1.5 rounded-2xl border border-emerald-100 text-emerald-800 font-extrabold text-sm font-mono shadow-sm">
+                    <Trophy className="w-4 h-4 text-emerald-600" />
+                    <span>{tetrisScore} pts</span>
+                  </div>
+
+                  {/* Combo state */}
+                  {tetrisStreak >= 2 && (
+                    <div className="flex items-center gap-1 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-full border border-orange-200 text-xs font-black uppercase tracking-wider animate-bounce">
+                      🔥 x{tetrisStreak}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {gameStatus === 'selection' && (
+          {/* Game Type Switch tabs */}
+          {gameStatus === 'selection' && tetrisStatus === 'selection' && (
+            <div className="bg-zinc-100 p-1.5 rounded-[2rem] border border-zinc-200/50 flex shadow-inner">
+              <button
+                onClick={() => {
+                  playSynthSound('click');
+                  setActiveGameType('quiz');
+                }}
+                className={`flex-1 py-4 px-6 rounded-[1.6rem] font-black text-xs md:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
+                  activeGameType === 'quiz'
+                    ? 'bg-white text-zinc-950 shadow-md scale-[1.01]'
+                    : 'text-zinc-500 hover:text-zinc-850'
+                }`}
+              >
+                <span className="text-base">📝</span>
+                <span>{isEn ? 'Quiz Arena (Multiple Choice)' : 'Cuestionario de Cuentas (Tipo Test)'}</span>
+              </button>
+              <button
+                onClick={() => {
+                  playSynthSound('click');
+                  setActiveGameType('tetris');
+                }}
+                className={`flex-1 py-4 px-6 rounded-[1.6rem] font-black text-xs md:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
+                  activeGameType === 'tetris'
+                    ? 'bg-emerald-600 text-white shadow-md scale-[1.01]'
+                    : 'text-zinc-500 hover:text-emerald-700'
+                }`}
+              >
+                <span className="text-base animate-bounce">🕹️</span>
+                <span>{isEn ? 'Debit/Credit Fall (Warmup Arcade)' : 'Debe o Haber Caída (Express Arcade)'}</span>
+              </button>
+            </div>
+          )}
+
+          {activeGameType === 'quiz' && gameStatus === 'selection' && (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -4430,7 +4903,7 @@ export default function App() {
           </motion.div>
         )}
 
-          {gameStatus === 'playing' && currentQuestion && (
+          {activeGameType === 'quiz' && gameStatus === 'playing' && currentQuestion && (
             <motion.div 
               key={currentQuestion.code}
               initial={{ opacity: 0, scale: 0.98, y: 10 }}
@@ -4533,7 +5006,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {gameStatus === 'gameover' && (
+          {activeGameType === 'quiz' && gameStatus === 'gameover' && (
             <motion.div 
                initial={{ opacity: 0, scale: 0.95 }}
                animate={{ opacity: 1, scale: 1 }}
@@ -4667,6 +5140,368 @@ export default function App() {
                     </button>
                   </div>
                 )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* TETRIS EXPRESS FALLING ARCADE VIEWS */}
+          {activeGameType === 'tetris' && tetrisStatus === 'selection' && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-xl border border-zinc-100 max-w-2xl mx-auto space-y-8 text-center relative overflow-hidden"
+            >
+              {/* background atmospheric glow */}
+              <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="space-y-3">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-50 rounded-full text-3xl animate-bounce">
+                  🕹️
+                </div>
+                <h3 className="text-2xl font-black text-zinc-950 uppercase tracking-tight">
+                  {isEn ? 'Debit or Credit Fall' : 'Debe o Haber Caída (Tetris Express)'}
+                </h3>
+                <p className="text-zinc-500 text-sm max-w-md mx-auto leading-relaxed font-semibold">
+                  {isEn 
+                    ? 'A retro-inspired, fast-paced game to test your accounting reflexes! Warm up in just 5 minutes.' 
+                    : 'Un juego de velocidad e intuición contable. Ideal para calentar en 5 minutos repasando dónde cargar y abonar partidas.'}
+                </p>
+              </div>
+
+              {/* Rules / Tutorial Card */}
+              <div className="grid sm:grid-cols-3 gap-4 text-left pt-2">
+                <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 space-y-1">
+                  <span className="text-xl">📥</span>
+                  <h4 className="font-extrabold text-xs text-zinc-900 uppercase tracking-tight">{isEn ? '1. Falling Blocks' : '1. Caen bloques'}</h4>
+                  <p className="text-[11px] text-zinc-400 font-medium leading-normal font-semibold">
+                    {isEn ? 'Entries like "600 Purchases" fall from the sky.' : 'Asientos y movimientos como "600 compras" bajan gradualmente.'}
+                  </p>
+                </div>
+                <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 space-y-1">
+                  <span className="text-xl">↔️</span>
+                  <h4 className="font-extrabold text-xs text-zinc-900 uppercase tracking-tight">{isEn ? '2. Move & Sort' : '2. Clasifica'}</h4>
+                  <p className="text-[11px] text-zinc-400 font-medium leading-normal font-semibold">
+                    {isEn ? 'Move left (DEBIT) or right (CREDIT) with keys or buttons.' : 'Desvía a la izquierda (DEBE) o derecha (HABER).'}
+                  </p>
+                </div>
+                <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 space-y-1">
+                  <span className="text-zinc-500 text-xs font-mono font-bold font-black bg-red-100/80 text-red-600 px-2 py-0.5 rounded-full inline-block">3 ❤️</span>
+                  <h4 className="font-extrabold text-xs text-zinc-900 uppercase tracking-tight pt-1">{isEn ? '3. Don\'t Crash' : '3. Evita Quiebra'}</h4>
+                  <p className="text-[11px] text-zinc-400 font-medium leading-normal font-semibold">
+                    {isEn ? '3 placement errors or elapsed times and you go bankrupt!' : 'Si fallas 3 veces o dejas caer la cuenta, ¡la empresa quiebra!'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Controls guide */}
+              <div className="bg-zinc-50/60 p-4 rounded-2xl border border-zinc-150 inline-flex items-center justify-center gap-6 text-xs text-zinc-500 font-extrabold mx-auto flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <kbd className="px-2 py-1 bg-white border border-zinc-300 rounded shadow-sm text-[10px]">⬅️</kbd>
+                  <kbd className="px-2 py-1 bg-white border border-zinc-300 rounded shadow-sm text-[10px]">A</kbd>
+                  <span>= DEBE (Debit)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <kbd className="px-2 py-1 bg-white border border-zinc-300 rounded shadow-sm text-[10px]">➡️</kbd>
+                  <kbd className="px-2 py-1 bg-white border border-zinc-300 rounded shadow-sm text-[10px]">D</kbd>
+                  <span>= HABER (Credit)</span>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => {
+                  playSynthSound('click');
+                  startTetrisGame();
+                }}
+                className="w-full max-w-xs mx-auto py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs shadow-xl shadow-emerald-200/50 transition-all flex items-center justify-center gap-2.5 tracking-widest uppercase active:scale-95 cursor-pointer"
+              >
+                <span>⚡</span>
+                <span>{isEn ? 'START FALL GAME' : 'INICIAR CALENTAMIENTO'}</span>
+              </button>
+            </motion.div>
+          )}
+
+          {activeGameType === 'tetris' && tetrisStatus === 'playing' && tetrisFallingBlock && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.99 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-2xl mx-auto space-y-6 px-4"
+            >
+              {/* Gameplay Screen with dynamic glow border depending on combo or status */}
+              <div className={`bg-zinc-950 p-6 rounded-[2.5rem] shadow-2xl relative border-4 transition-all duration-300 flex flex-col h-[465px] overflow-hidden select-none ${
+                tetrisStreak >= 4 
+                  ? 'border-orange-500 shadow-orange-500/20' 
+                  : tetrisStreak >= 2 
+                    ? 'border-emerald-500 shadow-emerald-500/10' 
+                    : 'border-zinc-800'
+              }`}>
+                {/* Score background watermark and atmospheric sparks */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
+                  <span className="text-white text-9xl font-mono tracking-tighter">PGC PLAY</span>
+                </div>
+                {tetrisStreak >= 3 && (
+                  <div className="absolute inset-x-0 top-[20%] flex justify-center pointer-events-none animate-pulse">
+                    <span className="text-[100px] opacity-[0.04] text-orange-400 select-none">🔥</span>
+                  </div>
+                )}
+
+                {/* Left/Right Column backgrounds */}
+                <div className="absolute inset-y-0 left-0 w-1/2 border-r border-zinc-800/40 bg-gradient-to-tr from-sky-950/25 to-transparent pointer-events-none" />
+                <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-tl from-amber-950/15 to-transparent pointer-events-none" />
+
+                {/* Vertical Column Labels with neon indicator bulbs */}
+                <div className="absolute top-4 left-4 text-xs font-black text-sky-400 uppercase tracking-widest pointer-events-none flex items-center gap-1.5 bg-sky-950/50 px-2.5 py-1 rounded-full border border-sky-850">
+                  <span className="w-1.5 h-1.5 bg-sky-400 rounded-full animate-ping shrink-0" />
+                  <span>{isEn ? 'DEBE (DEBIT)' : 'COLUMNA DEBE'}</span>
+                </div>
+                <div className="absolute top-4 right-4 text-xs font-black text-amber-500 uppercase tracking-widest pointer-events-none text-right flex items-center gap-1.5 bg-amber-950/50 px-2.5 py-1 rounded-full border border-amber-850">
+                  <span>{isEn ? 'HABER (CREDIT)' : 'COLUMNA HABER'}</span>
+                  <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-ping shrink-0" />
+                </div>
+
+                {/* Falling Area */}
+                <div className="relative flex-grow w-full pt-8">
+                  {/* The actual falling block */}
+                  {tetrisFeedback === null ? (
+                    <motion.div
+                      style={{ top: `${tetrisFallingBlock.y}%` }}
+                      className="absolute left-1/2 transform -translate-x-1/2 w-[90%] sm:w-[80%] transition-all duration-100"
+                    >
+                      <div className={`p-4 rounded-2xl bg-gradient-to-r ${tetrisFallingBlock.color} text-white shadow-2xl border-2 border-white/30 text-center relative overflow-hidden group`}>
+                        {/* Shimmer effect to make it feel expensive */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
+                        
+                        <div className="font-mono text-[9px] font-extrabold tracking-widest uppercase opacity-85 text-white/90">
+                          {isEn ? 'FALLING LEDGER TRANSACTION' : 'CONCEPTO CONTABLE ACTIVO'}
+                        </div>
+                        <h4 className="text-xs sm:text-sm font-black tracking-tight mt-1 leading-snug drop-shadow-md text-white">
+                          {tetrisFallingBlock.text}
+                        </h4>
+                        
+                        {/* Down arrow height tracker */}
+                        <div className="absolute -bottom-3.5 left-1/2 transform -translate-x-1/2 text-[9px] bg-zinc-950 text-emerald-400 border border-emerald-800/60 rounded-full px-2.5 py-0.5 flex items-center gap-1 font-mono font-bold">
+                          <span className="animate-bounce">⬇</span>
+                          <span>{Math.floor(tetrisFallingBlock.y)}%</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    // Feedback / Evaluation pause screen - Extremely beautiful & dopaminergic
+                    <div className="absolute inset-0 flex items-center justify-center p-4 z-20">
+                      <motion.div 
+                        initial={{ scale: 0.9, opacity: 0, rotate: tetrisFeedback.type === 'correct' ? 1 : -1 }}
+                        animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                        className={`p-6 rounded-[2rem] text-center shadow-2xl max-w-sm border-2 relative overflow-hidden ${
+                          tetrisFeedback.type === 'correct'
+                            ? 'bg-gradient-to-br from-emerald-900 to-teal-980 border-emerald-500 text-emerald-100 shadow-emerald-500/20'
+                            : 'bg-gradient-to-br from-red-950 to-red-900 border-red-500 text-red-100 shadow-red-500/20'
+                        }`}
+                      >
+                        {/* Dopamine confetti indicators */}
+                        {tetrisFeedback.type === 'correct' && (
+                          <div className="absolute top-2 right-2 text-lg animate-spin">✨</div>
+                        )}
+                        {tetrisFeedback.type === 'correct' && (
+                          <div className="absolute top-2 left-2 text-lg animate-bounce">🎉</div>
+                        )}
+
+                        <div className="text-xl sm:text-2xl font-black tracking-tight mb-2.5 flex items-center justify-center gap-2">
+                          {tetrisFeedback.type === 'correct' ? (
+                            <>
+                              <span className="text-xl">🌟</span>
+                              <span className="text-emerald-300 drop-shadow-md">{isEn ? 'EXCELLENT' : '¡ACIERTO SOBERBIO!'}</span>
+                              <span className="text-xl">🌟</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>⚠️</span>
+                              <span className="text-red-400 drop-shadow-md">{isEn ? 'OOPS' : '¡CORRECCIÓN!'}</span>
+                            </>
+                          )}
+                        </div>
+
+                        <p className="text-xs sm:text-sm font-bold leading-relaxed whitespace-pre-line text-zinc-100 px-1">
+                          {tetrisFeedback.message}
+                        </p>
+
+                        {tetrisFeedback.type === 'correct' ? (
+                          <div className="mt-4 text-[9px] font-mono uppercase tracking-widest bg-white/10 px-3 py-1.5 rounded-full inline-block animate-pulse text-white/95 font-extrabold border border-white/10">
+                            {isEn ? 'Preparing next asset...' : 'Alistando siguiente asiento...'}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={proceedAfterTetrisFeedback}
+                            className="mt-4.5 px-6 py-2.5 bg-white text-red-950 hover:bg-zinc-100 rounded-xl font-black text-xs uppercase tracking-wider shadow-lg transition-all active:scale-95 inline-flex items-center gap-1.5 border border-white/30 cursor-pointer animate-pulse"
+                          >
+                            <span>{isEn ? 'GOT IT, CONTINUE ➡️' : 'ENTENDIDO, CONTINUAR ➡️'}</span>
+                          </button>
+                        )}
+                      </motion.div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Score buckets / baseline columns representation */}
+                <div className="grid grid-cols-2 gap-4 mt-auto pt-4 border-t border-zinc-800">
+                  <button
+                    onClick={() => handleTetrisChoice('debe')}
+                    disabled={!!tetrisFeedback}
+                    className={`p-4 rounded-xl border-2 transition-all text-center flex flex-col items-center justify-center cursor-pointer ${
+                      tetrisFeedback?.sideChosen === 'debe'
+                        ? tetrisFeedback.type === 'correct'
+                          ? 'bg-emerald-900/30 border-emerald-500 text-emerald-400'
+                          : 'bg-red-900/40 border-red-500 text-red-400'
+                        : 'bg-sky-950/20 border-sky-900/50 hover:border-sky-500/80 text-sky-400 hover:bg-sky-950/40'
+                    }`}
+                  >
+                    <span className="font-extrabold text-base uppercase tracking-wider font-sans">⬅️ DEBE</span>
+                    <span className="text-[10px] font-semibold opacity-65 mt-0.5 font-sans">{isEn ? 'Debit / Charges' : 'Cargar / Activos y Gastos'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleTetrisChoice('haber')}
+                    disabled={!!tetrisFeedback}
+                    className={`p-4 rounded-xl border-2 transition-all text-center flex flex-col items-center justify-center cursor-pointer ${
+                      tetrisFeedback?.sideChosen === 'haber'
+                        ? tetrisFeedback.type === 'correct'
+                          ? 'bg-emerald-900/30 border-emerald-500 text-emerald-400'
+                          : 'bg-red-900/40 border-red-500 text-red-400'
+                        : 'bg-amber-950/20 border-amber-900/50 hover:border-amber-500/80 text-amber-500 hover:bg-amber-950/40'
+                    }`}
+                  >
+                    <span className="font-extrabold text-base uppercase tracking-wider font-sans">HABER ➡️</span>
+                    <span className="text-[10px] font-semibold opacity-65 mt-0.5 font-sans">{isEn ? 'Credit / Abonos' : 'Abonar / Pasivo e Ingresos'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Mobile / touch tip */}
+              <p className="text-zinc-450 text-center font-bold text-[11px] leading-relaxed">
+                💡 {isEn ? 'Press Left/Right arrow keys or keyboard letters A and D to sort fast!' : '¡Pulsa Flecha Izquierda/Derecha o letras A y D del teclado para clasificar súper rápido!'}
+              </p>
+            </motion.div>
+          )}
+
+          {activeGameType === 'tetris' && tetrisStatus === 'gameover' && (
+            <motion.div 
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-zinc-100 max-w-2xl mx-auto space-y-8"
+            >
+              <div className="text-center space-y-2">
+                <div className="text-5xl">🏮</div>
+                <h3 className="text-2xl font-black text-red-650 uppercase tracking-tight">
+                  {isEn ? 'Bankruptcy! (Game Over)' : '¡Quiebra Financiera! (Fin de Juego)'}
+                </h3>
+                <p className="text-zinc-400 text-xs font-bold font-mono">
+                  {isEn ? 'YOUR REGISTRATION STREAK ENDED WITH 3 FAILS' : 'TU HISTORIAL DE REGISTROS ALCANZÓ EL LÍMITE DE ERRORES'}
+                </p>
+              </div>
+
+              {/* Stats display */}
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-100">
+                  <span className="text-[9px] font-black text-zinc-400 block uppercase tracking-wider">{isEn ? 'Final Score' : 'Puntos Logrados'}</span>
+                  <span className="text-2xl font-black text-zinc-900">{tetrisScore}</span>
+                </div>
+                <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-100">
+                  <span className="text-[9px] font-black text-zinc-400 block uppercase tracking-wider">{isEn ? 'Max Streak' : 'Racha de Aciertos'}</span>
+                  <span className="text-2xl font-black text-zinc-900">🔥 {tetrisMaxStreak}</span>
+                </div>
+                <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-100">
+                  <span className="text-[9px] font-black text-zinc-400 block uppercase tracking-wider">{isEn ? 'Difficulty Limit' : 'Nivel Máximo'}</span>
+                  <span className="text-2xl font-black text-zinc-900">⚡ Niv. {tetrisLevel}</span>
+                </div>
+              </div>
+
+              {/* Claim XP Section */}
+              {!tetrisXPClaimed && tetrisScore > 0 && (
+                <div className="p-5 bg-emerald-50 rounded-2xl border border-emerald-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="text-center sm:text-left space-y-0.5">
+                    <h4 className="font-extrabold text-sm text-emerald-950 uppercase tracking-tight">
+                      {isEn ? 'Claim accounting XP experience!' : '¡Inscribe tus puntos en tu perfil!'}
+                    </h4>
+                    <p className="text-xs text-emerald-600 font-semibold">
+                      {isEn 
+                        ? `Convert your ${tetrisScore} points to +${tetrisScore * 2} XP to power-up your user level.` 
+                        : `Suma tus ${tetrisScore} puntos como +${tetrisScore * 2} XP extra a tu nivel global de contabilidad.`}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      playSynthSound('streak');
+                      const xpReward = tetrisScore * 2;
+                      const nextXP = totalXP + xpReward;
+                      setTotalXP(nextXP);
+                      try {
+                        localStorage.setItem('accounting_total_xp', String(nextXP));
+                      } catch(e) {}
+                      setTetrisXPClaimed(true);
+                      setShowToast({
+                        message: isEn 
+                          ? `Added +${xpReward} XP to your global accounting mastery!` 
+                          : `¡Sumados +${xpReward} XP a tu nivel de maestría contable!`,
+                        type: 'success'
+                      });
+                    }}
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                  >
+                    {isEn ? 'Claim XP' : 'Inscribir XP'}
+                  </button>
+                </div>
+              )}
+
+              {/* History / Mistakes Review */}
+              <div className="space-y-3">
+                <h4 className="font-extrabold text-xs text-zinc-400 uppercase tracking-wider font-mono">
+                  {isEn ? 'PGC TRANSIT REVIEW' : 'REVISIÓN DE TRANSACCIONES REGISTRADAS'}
+                </h4>
+                <div className="max-h-[220px] overflow-y-auto pr-2 space-y-2">
+                  {tetrisHistory.map((item, i) => (
+                    <div 
+                      key={i}
+                      className={`p-3 rounded-xl border text-xs flex justify-between items-start gap-4 ${
+                        item.isCorrect 
+                          ? 'bg-emerald-50/50 border-emerald-100 text-emerald-950' 
+                          : 'bg-red-50/50 border-red-100 text-red-950'
+                      }`}
+                    >
+                      <div className="space-y-0.5">
+                        <span className="font-bold block">{item.text}</span>
+                        <span className="text-[10px] text-zinc-500 font-medium font-mono">
+                          {isEn 
+                            ? `Correct place: ${item.correctSide.toUpperCase()} | You chose: ${item.sideChosen.toUpperCase()}`
+                            : `Registro correcto: ${item.correctSide.toUpperCase()} | Tu elección: ${item.sideChosen.toUpperCase()}`}
+                        </span>
+                      </div>
+                      <span className={`text-sm shrink-0 ${item.isCorrect ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {item.isCorrect ? '✓' : '✗'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Restart buttons */}
+              <div className="flex gap-4">
+                <button
+                  onClick={() => {
+                    playSynthSound('click');
+                    startTetrisGame();
+                  }}
+                  className="flex-grow py-4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer text-center"
+                >
+                  {isEn ? 'Play Again ⚡' : 'Volver a Jugar ⚡'}
+                </button>
+                <button
+                  onClick={() => {
+                    playSynthSound('click');
+                    setTetrisStatus('selection');
+                  }}
+                  className="flex-grow py-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-2xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer text-center border border-zinc-200"
+                >
+                  {isEn ? 'Setup Lobby' : 'Lobby de Selección'}
+                </button>
               </div>
             </motion.div>
           )}
